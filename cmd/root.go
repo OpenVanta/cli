@@ -23,16 +23,16 @@ var (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "vanta",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Short: "Manage Vanta resources from the command line",
+	Long: `Vanta CLI for querying and updating resources through the Vanta API.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+Start by running "vanta login" to save your OAuth client credentials and default API base.
+Then use resource commands like controls, policies, documents, tests, people, and frameworks.
+
+Examples:
+  vanta controls list --page-size 50
+  vanta policies get --id code-of-conduct-bsi
+  vanta documents upload-file --id doc_123 --file ./policy.pdf`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

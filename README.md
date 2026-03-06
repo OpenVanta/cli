@@ -1,51 +1,75 @@
 # hackday-cli
 
-Experimental Vanta CLI in Rust.
+Vanta CLI for querying and mutating resources in the Vanta API.
 
-## What it supports
+## Supported resources
 
-- `vanta controls create --json '<payload>'`
-- `vanta controls list`
-- `vanta controls get --id <control_id>`
+- `controls`
+- `policies`
+- `documents`
+- `tests`
+- `people`
+- `frameworks`
 
 ## Quick start
 
-1. Install Rust
-2. Configure OAuth client credentials (recommended via CLI login):
+1. Build the CLI:
 
 ```bash
-go run . login
+go build -o vanta
+```
+
+2. Configure auth and API base (saved to `~/.vanta/config.json`):
+
+```bash
+./vanta login
 ```
 
 3. Run commands:
 
 ```bash
-cargo run -- controls list
-cargo run -- controls get --id ctrl_123
-cargo run -- controls create --json '{"name":"Example Control"}'
+./vanta controls list --page-size 50
+./vanta policies get --id code-of-conduct-bsi
+./vanta frameworks list-controls --id soc2
 ```
 
-## Go implementation
-
-A parallel hand-rolled Go CLI is available in `go-cli/` with the same command surface and global flags.
-
-Run it with:
+## Common examples
 
 ```bash
-cd go-cli
-export VANTA_CLIENT_ID="your_client_id"
-export VANTA_CLIENT_SECRET="your_client_secret"
-go run . controls list
-go run . controls get --id ctrl_123
-go run . controls create --json '{"name":"Example Control"}'
+# Create/update style commands accept --json or --file
+./vanta controls create --json '{"name":"Example Control"}'
+./vanta people update --id 65e1efde08e8478f143a8ff9 --file ./person-update.json
+
+# Documents
+./vanta documents list --page-size 25
+./vanta documents upload-file --id access-requests --file ./policy.pdf
+./vanta documents download-file --id access-requests --uploaded-file-id 123 --output ./downloaded.pdf
+
+# Tests
+./vanta tests list --status-filter NEEDS_ATTENTION
+./vanta tests list-entities --id aws-account-access-removed-on-termination --entity-status FAILING
+```
+
+## Pagination
+
+List responses include pagination metadata:
+
+- `pageInfo`
+- `totalCount` (when provided by the API)
+- `nextCursor`
+
+Use `nextCursor` with `--page-cursor` to fetch the next page:
+
+```bash
+./vanta controls list --page-size 50 --page-cursor "<nextCursor>"
 ```
 
 ## Global flags
 
-- `--client-id` (or env `VANTA_CLIENT_ID`)
-- `--client-secret` (or env `VANTA_CLIENT_SECRET`)
-- `--scope` (or env `VANTA_OAUTH_SCOPE`, default `vanta-api.all:read vanta-api.all:write`)
-- `--api-base` (or env `VANTA_API_BASE`, saved by `login`, default `https://api.vanta.com/v1`)
-- `--dry-run` (print request details without sending)
-- `--pretty` (defaults to true; set `--pretty=false` for compact JSON)
-- `--verbose` (logs request metadata to stderr)
+- `--client-id`: OAuth client ID (or env `VANTA_CLIENT_ID`)
+- `--client-secret`: OAuth client secret (or env `VANTA_CLIENT_SECRET`)
+- `--scope`: OAuth scope (or env `VANTA_OAUTH_SCOPE`, default `vanta-api.all:read vanta-api.all:write`)
+- `--api-base`: API base URL (or env `VANTA_API_BASE`, saved by `login`, default `https://api.vanta.com/v1`)
+- `--dry-run`: print request details without sending
+- `--pretty`: pretty-print JSON (default `true`; set `--pretty=false` for compact output)
+- `--verbose`: log request metadata to stderr
