@@ -9,7 +9,7 @@ metadata:
       bins: ["vanta"]
 ---
 
-# gws — Shared Reference
+# Vanta CLI
 
 ## Installation
 
