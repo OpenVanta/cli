@@ -53,7 +53,7 @@ vanta <resource> [sub-resource] <method> [flags]
 
 ## API Rate Limits
 
-- Vanta API rate limit is **5 requests per minute**; batch work and pace repeated calls accordingly.
+- Vanta API rate limit is **50 requests per minute**; batch work and pace repeated calls accordingly.
 
 ## Security Rules
 
