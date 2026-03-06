@@ -16,27 +16,41 @@ import (
 // loginCmd represents the login command
 var loginCmd = &cobra.Command{
 	Use:   "login",
-	Short: "Save an API token for the CLI",
-	Long:  "Prompts for your Vanta API token and saves it for future CLI commands.",
+	Short: "Save OAuth credentials for the CLI",
+	Long:  "Prompts for your Vanta OAuth client credentials, validates them by requesting an access token, and saves them for future CLI commands.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Fprint(cmd.OutOrStdout(), "Paste your Vanta API token: ")
-
 		reader := bufio.NewReader(cmd.InOrStdin())
-		tokenRaw, err := reader.ReadString('\n')
-		if err != nil && !errors.Is(err, io.EOF) {
-			return fmt.Errorf("failed to read api token: %w", err)
+		clientID, err := promptValue(cmd, reader, "OAuth client ID", loginClientID, false)
+		if err != nil {
+			return fmt.Errorf("failed to read oauth client id: %w", err)
 		}
 
-		token := strings.TrimSpace(tokenRaw)
-		if token == "" {
-			return errors.New("api token cannot be empty")
+		clientSecret, err := promptValue(cmd, reader, "OAuth client secret", loginClientSecret, true)
+		if err != nil {
+			return fmt.Errorf("failed to read oauth client secret: %w", err)
 		}
 
-		if err := saveToken(token); err != nil {
-			return fmt.Errorf("failed to save api token: %w", err)
+		scopeDefault := strings.TrimSpace(loginScope)
+		if scopeDefault == "" {
+			scopeDefault = defaultOAuthScope
 		}
-		if err := setTokenEnvironment(token); err != nil {
-			return fmt.Errorf("failed to set token environment: %w", err)
+		scope, err := promptValue(cmd, reader, fmt.Sprintf("OAuth scope (default: %s)", scopeDefault), scopeDefault, false)
+		if err != nil {
+			return fmt.Errorf("failed to read oauth scope: %w", err)
+		}
+		if strings.TrimSpace(scope) == "" {
+			scope = scopeDefault
+		}
+
+		accessToken, expiresAt, err := requestOAuthToken(apiBaseFlag, clientID, clientSecret, scope)
+		if err != nil {
+			return fmt.Errorf("oauth token request failed: %w", err)
+		}
+		if err := saveOAuthCredentials(clientID, clientSecret, scope); err != nil {
+			return fmt.Errorf("failed to save oauth credentials: %w", err)
+		}
+		if err := cacheAccessToken(accessToken, "Bearer", expiresAt); err != nil {
+			return fmt.Errorf("failed to cache access token: %w", err)
 		}
 
 		path, err := configFilePath()
@@ -44,21 +58,45 @@ var loginCmd = &cobra.Command{
 			return fmt.Errorf("failed to resolve config path: %w", err)
 		}
 
-		fmt.Fprintf(cmd.OutOrStdout(), "API token saved to %s\n", path)
+		fmt.Fprintf(cmd.OutOrStdout(), "OAuth credentials saved to %s\n", path)
+		fmt.Fprintf(cmd.OutOrStdout(), "Access token cached (expires at %s)\n", expiresAt.UTC().Format("2006-01-02T15:04:05Z"))
 		return nil
 	},
 }
 
+var (
+	loginClientID     string
+	loginClientSecret string
+	loginScope        string
+)
+
+func promptValue(cmd *cobra.Command, reader *bufio.Reader, label, defaultValue string, required bool) (string, error) {
+	prompt := label
+	if strings.TrimSpace(defaultValue) != "" {
+		prompt = fmt.Sprintf("%s [%s]", label, defaultValue)
+	}
+	prompt += ": "
+	fmt.Fprint(cmd.OutOrStdout(), prompt)
+
+	valueRaw, err := reader.ReadString('\n')
+	if err != nil && !errors.Is(err, io.EOF) {
+		return "", err
+	}
+
+	value := strings.TrimSpace(valueRaw)
+	if value == "" {
+		value = strings.TrimSpace(defaultValue)
+	}
+	if required && value == "" {
+		return "", errors.New("value cannot be empty")
+	}
+
+	return value, nil
+}
+
 func init() {
 	rootCmd.AddCommand(loginCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// loginCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// loginCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	loginCmd.Flags().StringVar(&loginClientID, "client-id", "", "OAuth client ID")
+	loginCmd.Flags().StringVar(&loginClientSecret, "client-secret", "", "OAuth client secret")
+	loginCmd.Flags().StringVar(&loginScope, "scope", defaultOAuthScope, "OAuth scope")
 }

@@ -1,17 +1,24 @@
 /*
 Copyright © 2026 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 )
 
+var (
+	apiBaseFlag string
+	dryRunFlag  bool
+	prettyFlag  bool
+	verboseFlag bool
 
+	oauthClientIDFlag     string
+	oauthClientSecretFlag string
+	oauthScopeFlag        string
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -23,12 +30,6 @@ examples and usage of using your application. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		if err := loadTokenIntoEnvironment(); err != nil {
-			return fmt.Errorf("failed to load api token: %w", err)
-		}
-		return nil
-	},
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -44,15 +45,11 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.hackday-cli.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().StringVar(&apiBaseFlag, "api-base", defaultAPIBase, "Base API URL")
+	rootCmd.PersistentFlags().BoolVar(&dryRunFlag, "dry-run", false, "Print request details without sending")
+	rootCmd.PersistentFlags().BoolVar(&prettyFlag, "pretty", false, "Pretty-print JSON responses")
+	rootCmd.PersistentFlags().BoolVar(&verboseFlag, "verbose", false, "Log request metadata to stderr")
+	rootCmd.PersistentFlags().StringVar(&oauthClientIDFlag, "client-id", "", "OAuth client ID (overrides saved login)")
+	rootCmd.PersistentFlags().StringVar(&oauthClientSecretFlag, "client-secret", "", "OAuth client secret (overrides saved login)")
+	rootCmd.PersistentFlags().StringVar(&oauthScopeFlag, "scope", "", "OAuth scope (default: vanta-api.all:read vanta-api.all:write)")
 }
-
-

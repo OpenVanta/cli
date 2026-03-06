@@ -11,10 +11,10 @@ Experimental Vanta CLI in Rust.
 ## Quick start
 
 1. Install Rust
-2. Set your API token:
+2. Configure OAuth client credentials (recommended via CLI login):
 
 ```bash
-export VANTA_API_KEY="your_token_here"
+go run . login
 ```
 
 3. Run commands:
@@ -33,7 +33,8 @@ Run it with:
 
 ```bash
 cd go-cli
-export VANTA_API_KEY="your_token_here"
+export VANTA_CLIENT_ID="your_client_id"
+export VANTA_CLIENT_SECRET="your_client_secret"
 go run . --pretty controls list
 go run . --pretty controls get --id ctrl_123
 go run . --pretty controls create --json '{"name":"Example Control"}'
@@ -41,7 +42,9 @@ go run . --pretty controls create --json '{"name":"Example Control"}'
 
 ## Global flags
 
-- `--token` (or env `VANTA_API_KEY`)
+- `--client-id` (or env `VANTA_CLIENT_ID`)
+- `--client-secret` (or env `VANTA_CLIENT_SECRET`)
+- `--scope` (or env `VANTA_OAUTH_SCOPE`, default `vanta-api.all:read vanta-api.all:write`)
 - `--api-base` (default `https://api.vanta.com/v1`)
 - `--dry-run` (print request details without sending)
 - `--pretty` (pretty-print JSON)
