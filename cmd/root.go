@@ -45,9 +45,9 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&apiBaseFlag, "api-base", defaultAPIBase, "Base API URL")
+	rootCmd.PersistentFlags().StringVar(&apiBaseFlag, "api-base", "", "Base API URL (overrides saved config; default https://api.vanta.com/v1)")
 	rootCmd.PersistentFlags().BoolVar(&dryRunFlag, "dry-run", false, "Print request details without sending")
-	rootCmd.PersistentFlags().BoolVar(&prettyFlag, "pretty", false, "Pretty-print JSON responses")
+	rootCmd.PersistentFlags().BoolVar(&prettyFlag, "pretty", true, "Pretty-print JSON responses (set --pretty=false for compact output)")
 	rootCmd.PersistentFlags().BoolVar(&verboseFlag, "verbose", false, "Log request metadata to stderr")
 	rootCmd.PersistentFlags().StringVar(&oauthClientIDFlag, "client-id", "", "OAuth client ID (overrides saved login)")
 	rootCmd.PersistentFlags().StringVar(&oauthClientSecretFlag, "client-secret", "", "OAuth client secret (overrides saved login)")

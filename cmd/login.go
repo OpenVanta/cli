@@ -20,6 +20,16 @@ var loginCmd = &cobra.Command{
 	Long:  "Prompts for your Vanta OAuth client credentials, validates them by requesting an access token, and saves them for future CLI commands.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		reader := bufio.NewReader(cmd.InOrStdin())
+
+		apiBaseDefault, err := resolveAPIBase()
+		if err != nil {
+			return fmt.Errorf("failed to resolve api base: %w", err)
+		}
+		apiBase, err := promptValue(cmd, reader, "API base URL", apiBaseDefault, true)
+		if err != nil {
+			return fmt.Errorf("failed to read api base: %w", err)
+		}
+
 		clientID, err := promptValue(cmd, reader, "OAuth client ID", loginClientID, false)
 		if err != nil {
 			return fmt.Errorf("failed to read oauth client id: %w", err)
@@ -42,11 +52,11 @@ var loginCmd = &cobra.Command{
 			scope = scopeDefault
 		}
 
-		accessToken, expiresAt, err := requestOAuthToken(apiBaseFlag, clientID, clientSecret, scope)
+		accessToken, expiresAt, err := requestOAuthToken(apiBase, clientID, clientSecret, scope)
 		if err != nil {
 			return fmt.Errorf("oauth token request failed: %w", err)
 		}
-		if err := saveOAuthCredentials(clientID, clientSecret, scope); err != nil {
+		if err := saveOAuthCredentials(apiBase, clientID, clientSecret, scope); err != nil {
 			return fmt.Errorf("failed to save oauth credentials: %w", err)
 		}
 		if err := cacheAccessToken(accessToken, "Bearer", expiresAt); err != nil {
@@ -59,6 +69,7 @@ var loginCmd = &cobra.Command{
 		}
 
 		fmt.Fprintf(cmd.OutOrStdout(), "OAuth credentials saved to %s\n", path)
+		fmt.Fprintf(cmd.OutOrStdout(), "API base saved as %s\n", apiBase)
 		fmt.Fprintf(cmd.OutOrStdout(), "Access token cached (expires at %s)\n", expiresAt.UTC().Format("2006-01-02T15:04:05Z"))
 		return nil
 	},

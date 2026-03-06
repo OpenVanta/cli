@@ -23,9 +23,9 @@ type apiClient struct {
 }
 
 func newAPIClient(cmd *cobra.Command) (*apiClient, error) {
-	base := strings.TrimSpace(apiBaseFlag)
-	if base == "" {
-		base = defaultAPIBase
+	base, err := resolveAPIBase()
+	if err != nil {
+		return nil, fmt.Errorf("resolve api base: %w", err)
 	}
 
 	token, err := resolveAccessToken(base)
@@ -59,7 +59,14 @@ func (c *apiClient) requestWithQuery(cmd *cobra.Command, method, path string, qu
 	if c.dryRun {
 		fmt.Fprintf(cmd.OutOrStdout(), "DRY RUN %s %s\n", method, url)
 		if len(body) > 0 {
-			fmt.Fprintf(cmd.OutOrStdout(), "%s\n", body)
+			formattedBody := body
+			var val any
+			if err := json.Unmarshal(body, &val); err == nil {
+				if prettyBody, err := json.MarshalIndent(val, "", "  "); err == nil {
+					formattedBody = prettyBody
+				}
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "%s\n", formattedBody)
 		}
 		return nil, nil
 	}
@@ -103,18 +110,20 @@ func (c *apiClient) requestWithQuery(cmd *cobra.Command, method, path string, qu
 
 func printJSON(cmd *cobra.Command, raw []byte) error {
 	if len(raw) == 0 {
-		fmt.Fprintln(cmd.OutOrStdout(), "{}")
+		fmt.Fprintln(cmd.OutOrStdout(), "No response body.")
 		return nil
 	}
 
+	normalized := unwrapResultsData(raw)
+
 	if !prettyFlag {
-		fmt.Fprintln(cmd.OutOrStdout(), string(raw))
+		fmt.Fprintln(cmd.OutOrStdout(), string(normalized))
 		return nil
 	}
 
 	var val any
-	if err := json.Unmarshal(raw, &val); err != nil {
-		fmt.Fprintln(cmd.OutOrStdout(), string(raw))
+	if err := json.Unmarshal(normalized, &val); err != nil {
+		fmt.Fprintln(cmd.OutOrStdout(), string(normalized))
 		return nil
 	}
 
@@ -125,4 +134,48 @@ func printJSON(cmd *cobra.Command, raw []byte) error {
 
 	fmt.Fprintln(cmd.OutOrStdout(), string(prettyRaw))
 	return nil
+}
+
+func unwrapResultsData(raw []byte) []byte {
+	var payload map[string]any
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return raw
+	}
+
+	resultsRaw, ok := payload["results"]
+	if !ok {
+		return raw
+	}
+
+	results, ok := resultsRaw.(map[string]any)
+	if !ok {
+		return raw
+	}
+
+	data, ok := results["data"]
+	if !ok {
+		return raw
+	}
+
+	normalized := map[string]any{
+		"data": data,
+	}
+	if pageInfo, ok := results["pageInfo"]; ok {
+		normalized["pageInfo"] = pageInfo
+		if pageInfoMap, ok := pageInfo.(map[string]any); ok {
+			if endCursor, ok := pageInfoMap["endCursor"]; ok {
+				normalized["nextCursor"] = endCursor
+			}
+		}
+	}
+	if totalCount, ok := results["totalCount"]; ok {
+		normalized["totalCount"] = totalCount
+	}
+
+	out, err := json.Marshal(normalized)
+	if err != nil {
+		return raw
+	}
+
+	return out
 }

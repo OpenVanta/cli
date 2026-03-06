@@ -17,9 +17,11 @@ import (
 const oauthClientIDEnvVar = "VANTA_CLIENT_ID"
 const oauthClientSecretEnvVar = "VANTA_CLIENT_SECRET"
 const oauthScopeEnvVar = "VANTA_OAUTH_SCOPE"
+const apiBaseEnvVar = "VANTA_API_BASE"
 const defaultOAuthScope = "vanta-api.all:read vanta-api.all:write"
 
 type cliConfig struct {
+	APIBase            string `json:"api_base,omitempty"`
 	OAuthClientID      string `json:"oauth_client_id,omitempty"`
 	OAuthClientSecret  string `json:"oauth_client_secret,omitempty"`
 	OAuthScope         string `json:"oauth_scope,omitempty"`
@@ -82,12 +84,17 @@ func saveConfig(cfg *cliConfig) error {
 	return nil
 }
 
-func saveOAuthCredentials(clientID, clientSecret, scope string) error {
+func saveOAuthCredentials(apiBase, clientID, clientSecret, scope string) error {
 	cfg, err := loadConfig()
 	if err != nil {
 		return err
 	}
 
+	if strings.TrimSpace(apiBase) == "" {
+		cfg.APIBase = defaultAPIBase
+	} else {
+		cfg.APIBase = strings.TrimSpace(apiBase)
+	}
 	cfg.OAuthClientID = strings.TrimSpace(clientID)
 	cfg.OAuthClientSecret = strings.TrimSpace(clientSecret)
 	if strings.TrimSpace(scope) == "" {
@@ -102,6 +109,25 @@ func saveOAuthCredentials(clientID, clientSecret, scope string) error {
 	cfg.CachedTokenExpires = ""
 
 	return saveConfig(cfg)
+}
+
+func resolveAPIBase() (string, error) {
+	if base := strings.TrimSpace(apiBaseFlag); base != "" {
+		return base, nil
+	}
+	if base := strings.TrimSpace(os.Getenv(apiBaseEnvVar)); base != "" {
+		return base, nil
+	}
+
+	cfg, err := loadConfig()
+	if err != nil {
+		return "", err
+	}
+	if base := strings.TrimSpace(cfg.APIBase); base != "" {
+		return base, nil
+	}
+
+	return defaultAPIBase, nil
 }
 
 func cacheAccessToken(accessToken, tokenType string, expiresAt time.Time) error {

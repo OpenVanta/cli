@@ -20,9 +20,9 @@ go run . login
 3. Run commands:
 
 ```bash
-cargo run -- controls list --pretty
-cargo run -- controls get --id ctrl_123 --pretty
-cargo run -- controls create --json '{"name":"Example Control"}' --pretty
+cargo run -- controls list
+cargo run -- controls get --id ctrl_123
+cargo run -- controls create --json '{"name":"Example Control"}'
 ```
 
 ## Go implementation
@@ -35,9 +35,9 @@ Run it with:
 cd go-cli
 export VANTA_CLIENT_ID="your_client_id"
 export VANTA_CLIENT_SECRET="your_client_secret"
-go run . --pretty controls list
-go run . --pretty controls get --id ctrl_123
-go run . --pretty controls create --json '{"name":"Example Control"}'
+go run . controls list
+go run . controls get --id ctrl_123
+go run . controls create --json '{"name":"Example Control"}'
 ```
 
 ## Global flags
@@ -45,7 +45,7 @@ go run . --pretty controls create --json '{"name":"Example Control"}'
 - `--client-id` (or env `VANTA_CLIENT_ID`)
 - `--client-secret` (or env `VANTA_CLIENT_SECRET`)
 - `--scope` (or env `VANTA_OAUTH_SCOPE`, default `vanta-api.all:read vanta-api.all:write`)
-- `--api-base` (default `https://api.vanta.com/v1`)
+- `--api-base` (or env `VANTA_API_BASE`, saved by `login`, default `https://api.vanta.com/v1`)
 - `--dry-run` (print request details without sending)
-- `--pretty` (pretty-print JSON)
+- `--pretty` (defaults to true; set `--pretty=false` for compact JSON)
 - `--verbose` (logs request metadata to stderr)
