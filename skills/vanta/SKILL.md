@@ -51,6 +51,10 @@ vanta <resource> [sub-resource] <method> [flags]
 | `--page-size <N>` | Number of results to return on list commands |
 | `--page-cursor <CURSOR>` | Pagination cursor from `nextCursor` |
 
+## API Rate Limits
+
+- Vanta API rate limit is **5 requests per minute**; batch work and pace repeated calls accordingly.
+
 ## Security Rules
 
 - **Never** output secrets (API keys, tokens) directly
