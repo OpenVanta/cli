@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,7 +13,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const defaultAPIBase = "https://api.vanta.com/v1"
+const (
+	defaultAPIBase = "https://api.vanta.com/v1"
+	cliVersion     = "0.1.0"
+	userAgent      = "vanta-cli/" + cliVersion
+)
 
 type apiClient struct {
 	baseURL string
@@ -50,6 +55,20 @@ func (c *apiClient) request(cmd *cobra.Command, method, path string, body []byte
 	return c.requestWithQuery(cmd, method, path, nil, body)
 }
 
+func (c *apiClient) newRequest(ctx context.Context, method, url string, body io.Reader, contentType string) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
+	if err != nil {
+		return nil, fmt.Errorf("build request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	req.Header.Set("User-Agent", userAgent)
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
+	}
+	return req, nil
+}
+
 func (c *apiClient) requestWithQuery(cmd *cobra.Command, method, path string, query url.Values, body []byte) ([]byte, error) {
 	url := c.baseURL + path
 	if len(query) > 0 {
@@ -75,15 +94,13 @@ func (c *apiClient) requestWithQuery(cmd *cobra.Command, method, path string, qu
 		fmt.Fprintf(cmd.ErrOrStderr(), "-> %s %s\n", method, url)
 	}
 
-	req, err := http.NewRequestWithContext(cmd.Context(), method, url, bytes.NewReader(body))
-	if err != nil {
-		return nil, fmt.Errorf("build request: %w", err)
-	}
-
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.token)
+	contentType := ""
 	if len(body) > 0 {
-		req.Header.Set("Content-Type", "application/json")
+		contentType = "application/json"
+	}
+	req, err := c.newRequest(cmd.Context(), method, url, bytes.NewReader(body), contentType)
+	if err != nil {
+		return nil, err
 	}
 
 	resp, err := c.http.Do(req)

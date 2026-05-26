@@ -536,13 +536,10 @@ func vendorsRequestMultipart(cmd *cobra.Command, client *apiClient, method, path
 		return nil, nil
 	}
 
-	req, err := http.NewRequestWithContext(cmd.Context(), method, endpoint, bytes.NewReader(body))
+	req, err := client.newRequest(cmd.Context(), method, endpoint, bytes.NewReader(body), contentType)
 	if err != nil {
-		return nil, fmt.Errorf("build request: %w", err)
+		return nil, err
 	}
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Authorization", "Bearer "+client.token)
-	req.Header.Set("Content-Type", contentType)
 
 	resp, err := client.http.Do(req)
 	if err != nil {
