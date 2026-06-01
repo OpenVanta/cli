@@ -107,6 +107,10 @@ func (c *apiClient) requestWithQuery(cmd *cobra.Command, method, path string, qu
 	if err != nil {
 		return nil, fmt.Errorf("send request: %w", err)
 	}
+	return c.readResponse(cmd, resp)
+}
+
+func (c *apiClient) readResponse(cmd *cobra.Command, resp *http.Response) ([]byte, error) {
 	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)

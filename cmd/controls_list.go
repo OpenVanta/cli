@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
+	"github.com/VantaInc/hackday-cli/internal/vantaapi"
 	"github.com/spf13/cobra"
 )
 
@@ -24,15 +27,48 @@ var controlsListCmd = &cobra.Command{
 
 		query := url.Values{}
 		controlsListPage.apply(query)
+		var frameworkMatchesAny []string
 		for _, framework := range controlsListFrameworkMatch {
-			if framework != "" {
-				query.Add("frameworkMatchesAny", framework)
+			trimmed := strings.TrimSpace(framework)
+			if trimmed != "" {
+				query.Add("frameworkMatchesAny", trimmed)
+				frameworkMatchesAny = append(frameworkMatchesAny, trimmed)
 			}
 		}
 
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, "/controls", query, nil)
-		if err != nil {
-			return err
+		var resp []byte
+		if client.dryRun {
+			resp, err = client.requestWithQuery(cmd, http.MethodGet, "/controls", query, nil)
+			if err != nil {
+				return err
+			}
+		} else {
+			controlsClient, err := client.newControlsGeneratedClient(cmd)
+			if err != nil {
+				return fmt.Errorf("build generated controls client: %w", err)
+			}
+
+			params := &vantaapi.ListControlsParams{}
+			if controlsListPage.pageSize > 0 {
+				ps := vantaapi.PageSize(controlsListPage.pageSize)
+				params.PageSize = &ps
+			}
+			if controlsListPage.pageCursor != "" {
+				pc := vantaapi.PageCursor(controlsListPage.pageCursor)
+				params.PageCursor = &pc
+			}
+			if len(frameworkMatchesAny) > 0 {
+				params.FrameworkMatchesAny = &frameworkMatchesAny
+			}
+
+			httpResp, err := controlsClient.ListControls(cmd.Context(), params)
+			if err != nil {
+				return fmt.Errorf("send request: %w", err)
+			}
+			resp, err = client.readResponse(cmd, httpResp)
+			if err != nil {
+				return err
+			}
 		}
 
 		return printJSON(cmd, resp)

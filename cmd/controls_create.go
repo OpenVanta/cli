@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
 
 	"github.com/spf13/cobra"
@@ -25,9 +27,25 @@ var controlsCreateCmd = &cobra.Command{
 			return err
 		}
 
-		resp, err := client.request(cmd, http.MethodPost, "/controls", payload)
-		if err != nil {
-			return err
+		var resp []byte
+		if client.dryRun {
+			resp, err = client.request(cmd, http.MethodPost, "/controls", payload)
+			if err != nil {
+				return err
+			}
+		} else {
+			controlsClient, err := client.newControlsGeneratedClient(cmd)
+			if err != nil {
+				return fmt.Errorf("build generated controls client: %w", err)
+			}
+			httpResp, err := controlsClient.CreateCustomControlWithBody(cmd.Context(), "application/json", bytes.NewReader(payload))
+			if err != nil {
+				return fmt.Errorf("send request: %w", err)
+			}
+			resp, err = client.readResponse(cmd, httpResp)
+			if err != nil {
+				return err
+			}
 		}
 
 		return printJSON(cmd, resp)

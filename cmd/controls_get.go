@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -18,10 +19,26 @@ var controlsGetCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/controls/" + url.PathEscape(controlID)
-		resp, err := client.request(cmd, http.MethodGet, path, nil)
-		if err != nil {
-			return err
+		var resp []byte
+		if client.dryRun {
+			path := "/controls/" + url.PathEscape(controlID)
+			resp, err = client.request(cmd, http.MethodGet, path, nil)
+			if err != nil {
+				return err
+			}
+		} else {
+			controlsClient, err := client.newControlsGeneratedClient(cmd)
+			if err != nil {
+				return fmt.Errorf("build generated controls client: %w", err)
+			}
+			httpResp, err := controlsClient.GetControl(cmd.Context(), controlID)
+			if err != nil {
+				return fmt.Errorf("send request: %w", err)
+			}
+			resp, err = client.readResponse(cmd, httpResp)
+			if err != nil {
+				return err
+			}
 		}
 
 		return printJSON(cmd, resp)
