@@ -1,4 +1,4 @@
-module github.com/VantaInc/hackday-cli
+module github.com/VantaInc/cli
 
 go 1.24.0
 
