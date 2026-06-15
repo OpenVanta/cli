@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/VantaInc/cli/internal/vantaapi"
@@ -28,14 +26,6 @@ var controlsAddFromLibraryCmd = &cobra.Command{
 			return err
 		}
 
-		if client.dryRun {
-			resp, err := client.request(cmd, http.MethodPost, "/controls/add-from-library", payload)
-			if err != nil {
-				return err
-			}
-			return printJSON(cmd, resp)
-		}
-
 		req, err := decodeRequestPayload[vantaapi.AddControlFromLibraryInput](payload)
 		if err != nil {
 			return err
@@ -43,7 +33,7 @@ var controlsAddFromLibraryCmd = &cobra.Command{
 
 		resp, err := client.ogen.AddControlFromLibrary(cmd.Context(), req)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
 		return printResponseJSON(cmd, resp)
 	},
@@ -69,15 +59,6 @@ var controlsUpdateCmd = &cobra.Command{
 			return err
 		}
 
-		if client.dryRun {
-			path := "/controls/" + url.PathEscape(controlsUpdateID)
-			resp, err := client.request(cmd, http.MethodPatch, path, payload)
-			if err != nil {
-				return err
-			}
-			return printJSON(cmd, resp)
-		}
-
 		req, err := decodeRequestPayload[vantaapi.EditControlMetadataInput](payload)
 		if err != nil {
 			return err
@@ -89,7 +70,7 @@ var controlsUpdateCmd = &cobra.Command{
 			vantaapi.UpdateControlMetadataParams{ControlId: controlsUpdateID},
 		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
 		return printResponseJSON(cmd, resp)
 	},
@@ -106,17 +87,8 @@ var controlsDeleteCmd = &cobra.Command{
 			return err
 		}
 
-		if client.dryRun {
-			path := "/controls/" + url.PathEscape(controlsDeleteID)
-			resp, err := client.request(cmd, http.MethodDelete, path, nil)
-			if err != nil {
-				return err
-			}
-			return printJSON(cmd, resp)
-		}
-
 		if err := client.ogen.DeleteControl(cmd.Context(), vantaapi.DeleteControlParams{ControlId: controlsDeleteID}); err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
 		return printResponseJSON(cmd, nil)
 	},
@@ -142,15 +114,6 @@ var controlsSetOwnerCmd = &cobra.Command{
 			return err
 		}
 
-		if client.dryRun {
-			path := "/controls/" + url.PathEscape(controlsSetOwnerID) + "/set-owner"
-			resp, err := client.request(cmd, http.MethodPost, path, payload)
-			if err != nil {
-				return err
-			}
-			return printJSON(cmd, resp)
-		}
-
 		req, err := decodeRequestPayload[vantaapi.SetOwnerForControlInput](payload)
 		if err != nil {
 			return err
@@ -162,7 +125,7 @@ var controlsSetOwnerCmd = &cobra.Command{
 			vantaapi.SetOwnerForControlParams{ControlId: controlsSetOwnerID},
 		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
 		return printResponseJSON(cmd, resp)
 	},
@@ -179,16 +142,6 @@ var controlsListLibraryCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		controlsLibraryPage.apply(query)
-		if client.dryRun {
-			resp, err := client.requestWithQuery(cmd, http.MethodGet, "/controls/controls-library", query, nil)
-			if err != nil {
-				return err
-			}
-			return printJSON(cmd, resp)
-		}
-
 		params := vantaapi.ListLibraryControlsParams{}
 		if controlsLibraryPage.pageSize > 0 {
 			params.PageSize.SetTo(vantaapi.PageSize(controlsLibraryPage.pageSize))
@@ -199,7 +152,7 @@ var controlsListLibraryCmd = &cobra.Command{
 
 		resp, err := client.ogen.ListLibraryControls(cmd.Context(), params)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
 		return printResponseJSON(cmd, resp)
 	},
@@ -219,17 +172,6 @@ var controlsListDocumentsCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		controlsListDocumentsPage.apply(query)
-		path := "/controls/" + url.PathEscape(controlsListDocumentsID) + "/documents"
-		if client.dryRun {
-			resp, err := client.requestWithQuery(cmd, http.MethodGet, path, query, nil)
-			if err != nil {
-				return err
-			}
-			return printJSON(cmd, resp)
-		}
-
 		params := vantaapi.ListDocumentsForControlParams{
 			ControlId: controlsListDocumentsID,
 		}
@@ -242,7 +184,7 @@ var controlsListDocumentsCmd = &cobra.Command{
 
 		resp, err := client.ogen.ListDocumentsForControl(cmd.Context(), params)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
 		return printResponseJSON(cmd, resp)
 	},
@@ -262,17 +204,6 @@ var controlsListTestsCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		controlsListTestsPage.apply(query)
-		path := "/controls/" + url.PathEscape(controlsListTestsID) + "/tests"
-		if client.dryRun {
-			resp, err := client.requestWithQuery(cmd, http.MethodGet, path, query, nil)
-			if err != nil {
-				return err
-			}
-			return printJSON(cmd, resp)
-		}
-
 		params := vantaapi.ListTestsForControlParams{
 			ControlId: controlsListTestsID,
 		}
@@ -285,7 +216,7 @@ var controlsListTestsCmd = &cobra.Command{
 
 		resp, err := client.ogen.ListTestsForControl(cmd.Context(), params)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
 		return printResponseJSON(cmd, resp)
 	},
@@ -311,15 +242,6 @@ var controlsAddDocumentCmd = &cobra.Command{
 			return err
 		}
 
-		if client.dryRun {
-			path := "/controls/" + url.PathEscape(controlsAddDocumentID) + "/add-document-to-control"
-			resp, err := client.request(cmd, http.MethodPost, path, payload)
-			if err != nil {
-				return err
-			}
-			return printJSON(cmd, resp)
-		}
-
 		req, err := decodeRequestPayload[vantaapi.AddControlDocumentMappingInput](payload)
 		if err != nil {
 			return err
@@ -331,7 +253,7 @@ var controlsAddDocumentCmd = &cobra.Command{
 			vantaapi.AddDocumentToControlParams{ControlId: controlsAddDocumentID},
 		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
 		return printResponseJSON(cmd, resp)
 	},
@@ -351,15 +273,6 @@ var controlsRemoveDocumentCmd = &cobra.Command{
 			return err
 		}
 
-		if client.dryRun {
-			path := "/controls/" + url.PathEscape(controlsRemoveDocumentID) + "/documents/" + url.PathEscape(controlsRemoveDocumentDocumentID)
-			resp, err := client.request(cmd, http.MethodDelete, path, nil)
-			if err != nil {
-				return err
-			}
-			return printJSON(cmd, resp)
-		}
-
 		if err := client.ogen.DeleteDocumentForcontrol(
 			cmd.Context(),
 			vantaapi.DeleteDocumentForcontrolParams{
@@ -367,7 +280,7 @@ var controlsRemoveDocumentCmd = &cobra.Command{
 				DocumentId: controlsRemoveDocumentDocumentID,
 			},
 		); err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
 		return printResponseJSON(cmd, nil)
 	},
@@ -393,15 +306,6 @@ var controlsAddTestCmd = &cobra.Command{
 			return err
 		}
 
-		if client.dryRun {
-			path := "/controls/" + url.PathEscape(controlsAddTestID) + "/add-test-to-control"
-			resp, err := client.request(cmd, http.MethodPost, path, payload)
-			if err != nil {
-				return err
-			}
-			return printJSON(cmd, resp)
-		}
-
 		req, err := decodeRequestPayload[vantaapi.AddControlTestMappingInput](payload)
 		if err != nil {
 			return err
@@ -413,7 +317,7 @@ var controlsAddTestCmd = &cobra.Command{
 			vantaapi.AddTestToControlParams{ControlId: controlsAddTestID},
 		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
 		return printResponseJSON(cmd, resp)
 	},
@@ -433,15 +337,6 @@ var controlsRemoveTestCmd = &cobra.Command{
 			return err
 		}
 
-		if client.dryRun {
-			path := "/controls/" + url.PathEscape(controlsRemoveTestID) + "/tests/" + url.PathEscape(controlsRemoveTestTestID)
-			resp, err := client.request(cmd, http.MethodDelete, path, nil)
-			if err != nil {
-				return err
-			}
-			return printJSON(cmd, resp)
-		}
-
 		if err := client.ogen.DeleteTestForControl(
 			cmd.Context(),
 			vantaapi.DeleteTestForControlParams{
@@ -449,7 +344,7 @@ var controlsRemoveTestCmd = &cobra.Command{
 				TestId:    controlsRemoveTestTestID,
 			},
 		); err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
 		return printResponseJSON(cmd, nil)
 	},

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -29,6 +30,8 @@ type apiClient struct {
 	ogen    *vantaapi.Client
 }
 
+var errOgenDryRun = errors.New("ogen dry-run")
+
 type staticBearerSecuritySource struct {
 	token string
 }
@@ -41,6 +44,7 @@ type generatedClientTransport struct {
 	base    http.RoundTripper
 	cmd     *cobra.Command
 	verbose bool
+	dryRun  bool
 }
 
 func (t *generatedClientTransport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -50,6 +54,27 @@ func (t *generatedClientTransport) RoundTrip(req *http.Request) (*http.Response,
 	}
 
 	req.Header.Set("User-Agent", userAgent)
+	if t.dryRun {
+		fmt.Fprintf(t.cmd.OutOrStdout(), "DRY RUN %s %s\n", req.Method, req.URL.String())
+		if req.Body != nil {
+			body, err := io.ReadAll(req.Body)
+			if err != nil {
+				return nil, fmt.Errorf("read dry-run request body: %w", err)
+			}
+			if len(body) > 0 {
+				formattedBody := body
+				var val any
+				if err := json.Unmarshal(body, &val); err == nil {
+					if prettyBody, err := json.MarshalIndent(val, "", "  "); err == nil {
+						formattedBody = prettyBody
+					}
+				}
+				fmt.Fprintf(t.cmd.OutOrStdout(), "%s\n", formattedBody)
+			}
+		}
+		return nil, errOgenDryRun
+	}
+
 	if t.verbose {
 		fmt.Fprintf(t.cmd.ErrOrStderr(), "-> %s %s\n", req.Method, req.URL.String())
 	}
@@ -89,25 +114,24 @@ func newAPIClient(cmd *cobra.Command) (*apiClient, error) {
 		http:    &http.Client{},
 	}
 
-	if !client.dryRun {
-		ogenHTTPClient := &http.Client{
-			Transport: &generatedClientTransport{
-				base:    http.DefaultTransport,
-				cmd:     cmd,
-				verbose: client.verbose,
-			},
-		}
-
-		ogenClient, err := vantaapi.NewClient(
-			client.baseURL,
-			staticBearerSecuritySource{token: client.token},
-			vantaapi.WithClient(ogenHTTPClient),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("init generated api client: %w", err)
-		}
-		client.ogen = ogenClient
+	ogenHTTPClient := &http.Client{
+		Transport: &generatedClientTransport{
+			base:    http.DefaultTransport,
+			cmd:     cmd,
+			verbose: client.verbose,
+			dryRun:  client.dryRun,
+		},
 	}
+
+	ogenClient, err := vantaapi.NewClient(
+		client.baseURL,
+		staticBearerSecuritySource{token: client.token},
+		vantaapi.WithClient(ogenHTTPClient),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("init generated api client: %w", err)
+	}
+	client.ogen = ogenClient
 
 	return client, nil
 }
@@ -137,17 +161,7 @@ func (c *apiClient) requestWithQuery(cmd *cobra.Command, method, path string, qu
 	}
 
 	if c.dryRun {
-		fmt.Fprintf(cmd.OutOrStdout(), "DRY RUN %s %s\n", method, url)
-		if len(body) > 0 {
-			formattedBody := body
-			var val any
-			if err := json.Unmarshal(body, &val); err == nil {
-				if prettyBody, err := json.MarshalIndent(val, "", "  "); err == nil {
-					formattedBody = prettyBody
-				}
-			}
-			fmt.Fprintf(cmd.OutOrStdout(), "%s\n", formattedBody)
-		}
+		c.handleDryRun(cmd, method, path, query, body)
 		return nil, nil
 	}
 
@@ -184,6 +198,32 @@ func (c *apiClient) requestWithQuery(cmd *cobra.Command, method, path string, qu
 	}
 
 	return respBody, nil
+}
+
+func (c *apiClient) handleDryRun(cmd *cobra.Command, method, path string, query url.Values, body []byte) bool {
+	if !c.dryRun {
+		return false
+	}
+
+	fullURL := c.baseURL + path
+	if len(query) > 0 {
+		fullURL += "?" + query.Encode()
+	}
+
+	fmt.Fprintf(cmd.OutOrStdout(), "DRY RUN %s %s\n", method, fullURL)
+	if len(body) == 0 {
+		return true
+	}
+
+	formattedBody := body
+	var val any
+	if err := json.Unmarshal(body, &val); err == nil {
+		if prettyBody, err := json.MarshalIndent(val, "", "  "); err == nil {
+			formattedBody = prettyBody
+		}
+	}
+	fmt.Fprintf(cmd.OutOrStdout(), "%s\n", formattedBody)
+	return true
 }
 
 func printJSON(cmd *cobra.Command, raw []byte) error {
@@ -232,6 +272,16 @@ func decodeRequestPayload[T any](payload []byte) (*T, error) {
 		return nil, fmt.Errorf("decode payload: %w", err)
 	}
 	return &req, nil
+}
+
+func (c *apiClient) handleOgenError(err error) error {
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, errOgenDryRun) {
+		return nil
+	}
+	return err
 }
 
 func unwrapResultsData(raw []byte) []byte {

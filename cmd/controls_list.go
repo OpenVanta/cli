@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"net/http"
-	"net/url"
 	"strings"
 
 	"github.com/VantaInc/cli/internal/vantaapi"
@@ -24,22 +22,11 @@ var controlsListCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		controlsListPage.apply(query)
 		frameworkMatchesAny := make([]string, 0, len(controlsListFrameworkMatch))
 		for _, framework := range controlsListFrameworkMatch {
 			if framework != "" {
-				query.Add("frameworkMatchesAny", framework)
 				frameworkMatchesAny = append(frameworkMatchesAny, framework)
 			}
-		}
-
-		if client.dryRun {
-			resp, err := client.requestWithQuery(cmd, http.MethodGet, "/controls", query, nil)
-			if err != nil {
-				return err
-			}
-			return printJSON(cmd, resp)
 		}
 
 		params := vantaapi.ListControlsParams{
@@ -54,7 +41,7 @@ var controlsListCmd = &cobra.Command{
 
 		resp, err := client.ogen.ListControls(cmd.Context(), params)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
 		return printResponseJSON(cmd, resp)
 	},
