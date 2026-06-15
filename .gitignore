@@ -1,3 +1,4 @@
 /target
 Cargo.lock
-./vanta
+vanta
+internal/vantaapi/*_gen.go
