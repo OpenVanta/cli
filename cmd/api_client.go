@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/VantaInc/cli/internal/vantaapi"
 	"github.com/spf13/cobra"
 )
 
@@ -25,6 +26,44 @@ type apiClient struct {
 	dryRun  bool
 	verbose bool
 	http    *http.Client
+	ogen    *vantaapi.Client
+}
+
+type staticBearerSecuritySource struct {
+	token string
+}
+
+func (s staticBearerSecuritySource) BearerAuth(context.Context, vantaapi.OperationName) (vantaapi.BearerAuth, error) {
+	return vantaapi.BearerAuth{Token: s.token}, nil
+}
+
+type generatedClientTransport struct {
+	base    http.RoundTripper
+	cmd     *cobra.Command
+	verbose bool
+}
+
+func (t *generatedClientTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	base := t.base
+	if base == nil {
+		base = http.DefaultTransport
+	}
+
+	req.Header.Set("User-Agent", userAgent)
+	if t.verbose {
+		fmt.Fprintf(t.cmd.ErrOrStderr(), "-> %s %s\n", req.Method, req.URL.String())
+	}
+
+	resp, err := base.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if t.verbose {
+		fmt.Fprintf(t.cmd.ErrOrStderr(), "<- %d\n", resp.StatusCode)
+	}
+
+	return resp, nil
 }
 
 func newAPIClient(cmd *cobra.Command) (*apiClient, error) {
@@ -42,13 +81,35 @@ func newAPIClient(cmd *cobra.Command) (*apiClient, error) {
 		}
 	}
 
-	return &apiClient{
+	client := &apiClient{
 		baseURL: strings.TrimRight(base, "/"),
 		token:   token,
 		dryRun:  dryRunFlag,
 		verbose: verboseFlag,
 		http:    &http.Client{},
-	}, nil
+	}
+
+	if !client.dryRun {
+		ogenHTTPClient := &http.Client{
+			Transport: &generatedClientTransport{
+				base:    http.DefaultTransport,
+				cmd:     cmd,
+				verbose: client.verbose,
+			},
+		}
+
+		ogenClient, err := vantaapi.NewClient(
+			client.baseURL,
+			staticBearerSecuritySource{token: client.token},
+			vantaapi.WithClient(ogenHTTPClient),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("init generated api client: %w", err)
+		}
+		client.ogen = ogenClient
+	}
+
+	return client, nil
 }
 
 func (c *apiClient) request(cmd *cobra.Command, method, path string, body []byte) ([]byte, error) {
@@ -151,6 +212,26 @@ func printJSON(cmd *cobra.Command, raw []byte) error {
 
 	fmt.Fprintln(cmd.OutOrStdout(), string(prettyRaw))
 	return nil
+}
+
+func printResponseJSON(cmd *cobra.Command, v any) error {
+	if v == nil {
+		return printJSON(cmd, nil)
+	}
+
+	raw, err := json.Marshal(v)
+	if err != nil {
+		return fmt.Errorf("encode response json: %w", err)
+	}
+	return printJSON(cmd, raw)
+}
+
+func decodeRequestPayload[T any](payload []byte) (*T, error) {
+	var req T
+	if err := json.Unmarshal(payload, &req); err != nil {
+		return nil, fmt.Errorf("decode payload: %w", err)
+	}
+	return &req, nil
 }
 
 func unwrapResultsData(raw []byte) []byte {
