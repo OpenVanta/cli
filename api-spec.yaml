@@ -1492,7 +1492,7 @@ components:
         - results
       type: object
       additionalProperties: false
-    SecurityReviewDecision:
+    SecurityReviewDecisionStatus:
       description: >-
         The current decision made for the security review:
 
@@ -1555,7 +1555,7 @@ components:
               format: date-time
               description: The timestamp of when the security review decision was last set.
             status:
-              $ref: "#/components/schemas/SecurityReviewDecision"
+              $ref: "#/components/schemas/SecurityReviewDecisionStatus"
               description: The status of the current decision.
           required:
             - lastUpdatedAt
@@ -4120,7 +4120,7 @@ components:
         - JA
         - KO
         - NL
-        - NO
+        - "NO"
         - NOT_SPECIFIED
         - PL
         - PT
