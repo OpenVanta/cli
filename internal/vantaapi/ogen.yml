@@ -1,0 +1,4 @@
+generator:
+  # Skip unsupported schema feature currently present in api-spec.yaml.
+  ignore_not_implemented:
+    - complex anyOf

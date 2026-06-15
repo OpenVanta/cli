@@ -16,6 +16,7 @@ Vanta CLI for querying and mutating resources in the Vanta API.
 1. Build the CLI:
 
 ```bash
+go generate ./internal/vantaapi
 go build -o vanta
 ```
 
@@ -32,6 +33,18 @@ go build -o vanta
 ./vanta policies get --id code-of-conduct-bsi
 ./vanta frameworks list-controls --id soc2
 ```
+
+## Generated API client
+
+The Go client under `internal/vantaapi` is generated with `ogen` and is not checked in.
+
+- Regenerate locally with:
+
+```bash
+go generate ./internal/vantaapi
+```
+
+- CI also runs generation before tests.
 
 ## Common examples
 

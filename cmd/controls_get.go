@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"net/http"
-	"net/url"
-
+	"github.com/VantaInc/cli/internal/vantaapi"
 	"github.com/spf13/cobra"
 )
 
@@ -18,13 +16,11 @@ var controlsGetCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/controls/" + url.PathEscape(controlID)
-		resp, err := client.request(cmd, http.MethodGet, path, nil)
+		resp, err := client.ogen.GetControl(cmd.Context(), vantaapi.GetControlParams{ControlId: controlID})
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 

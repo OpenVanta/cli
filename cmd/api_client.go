@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/VantaInc/cli/internal/vantaapi"
 	"github.com/spf13/cobra"
 )
 
@@ -25,6 +27,68 @@ type apiClient struct {
 	dryRun  bool
 	verbose bool
 	http    *http.Client
+	ogen    *vantaapi.Client
+}
+
+var errOgenDryRun = errors.New("ogen dry-run")
+
+type staticBearerSecuritySource struct {
+	token string
+}
+
+func (s staticBearerSecuritySource) BearerAuth(context.Context, vantaapi.OperationName) (vantaapi.BearerAuth, error) {
+	return vantaapi.BearerAuth{Token: s.token}, nil
+}
+
+type generatedClientTransport struct {
+	base    http.RoundTripper
+	cmd     *cobra.Command
+	verbose bool
+	dryRun  bool
+}
+
+func (t *generatedClientTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	base := t.base
+	if base == nil {
+		base = http.DefaultTransport
+	}
+
+	req.Header.Set("User-Agent", userAgent)
+	if t.dryRun {
+		fmt.Fprintf(t.cmd.OutOrStdout(), "DRY RUN %s %s\n", req.Method, req.URL.String())
+		if req.Body != nil {
+			body, err := io.ReadAll(req.Body)
+			if err != nil {
+				return nil, fmt.Errorf("read dry-run request body: %w", err)
+			}
+			if len(body) > 0 {
+				formattedBody := body
+				var val any
+				if err := json.Unmarshal(body, &val); err == nil {
+					if prettyBody, err := json.MarshalIndent(val, "", "  "); err == nil {
+						formattedBody = prettyBody
+					}
+				}
+				fmt.Fprintf(t.cmd.OutOrStdout(), "%s\n", formattedBody)
+			}
+		}
+		return nil, errOgenDryRun
+	}
+
+	if t.verbose {
+		fmt.Fprintf(t.cmd.ErrOrStderr(), "-> %s %s\n", req.Method, req.URL.String())
+	}
+
+	resp, err := base.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
+
+	if t.verbose {
+		fmt.Fprintf(t.cmd.ErrOrStderr(), "<- %d\n", resp.StatusCode)
+	}
+
+	return resp, nil
 }
 
 func newAPIClient(cmd *cobra.Command) (*apiClient, error) {
@@ -42,13 +106,34 @@ func newAPIClient(cmd *cobra.Command) (*apiClient, error) {
 		}
 	}
 
-	return &apiClient{
+	client := &apiClient{
 		baseURL: strings.TrimRight(base, "/"),
 		token:   token,
 		dryRun:  dryRunFlag,
 		verbose: verboseFlag,
 		http:    &http.Client{},
-	}, nil
+	}
+
+	ogenHTTPClient := &http.Client{
+		Transport: &generatedClientTransport{
+			base:    http.DefaultTransport,
+			cmd:     cmd,
+			verbose: client.verbose,
+			dryRun:  client.dryRun,
+		},
+	}
+
+	ogenClient, err := vantaapi.NewClient(
+		client.baseURL,
+		staticBearerSecuritySource{token: client.token},
+		vantaapi.WithClient(ogenHTTPClient),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("init generated api client: %w", err)
+	}
+	client.ogen = ogenClient
+
+	return client, nil
 }
 
 func (c *apiClient) request(cmd *cobra.Command, method, path string, body []byte) ([]byte, error) {
@@ -76,17 +161,7 @@ func (c *apiClient) requestWithQuery(cmd *cobra.Command, method, path string, qu
 	}
 
 	if c.dryRun {
-		fmt.Fprintf(cmd.OutOrStdout(), "DRY RUN %s %s\n", method, url)
-		if len(body) > 0 {
-			formattedBody := body
-			var val any
-			if err := json.Unmarshal(body, &val); err == nil {
-				if prettyBody, err := json.MarshalIndent(val, "", "  "); err == nil {
-					formattedBody = prettyBody
-				}
-			}
-			fmt.Fprintf(cmd.OutOrStdout(), "%s\n", formattedBody)
-		}
+		c.handleDryRun(cmd, method, path, query, body)
 		return nil, nil
 	}
 
@@ -125,6 +200,32 @@ func (c *apiClient) requestWithQuery(cmd *cobra.Command, method, path string, qu
 	return respBody, nil
 }
 
+func (c *apiClient) handleDryRun(cmd *cobra.Command, method, path string, query url.Values, body []byte) bool {
+	if !c.dryRun {
+		return false
+	}
+
+	fullURL := c.baseURL + path
+	if len(query) > 0 {
+		fullURL += "?" + query.Encode()
+	}
+
+	fmt.Fprintf(cmd.OutOrStdout(), "DRY RUN %s %s\n", method, fullURL)
+	if len(body) == 0 {
+		return true
+	}
+
+	formattedBody := body
+	var val any
+	if err := json.Unmarshal(body, &val); err == nil {
+		if prettyBody, err := json.MarshalIndent(val, "", "  "); err == nil {
+			formattedBody = prettyBody
+		}
+	}
+	fmt.Fprintf(cmd.OutOrStdout(), "%s\n", formattedBody)
+	return true
+}
+
 func printJSON(cmd *cobra.Command, raw []byte) error {
 	if len(raw) == 0 {
 		fmt.Fprintln(cmd.OutOrStdout(), "No response body.")
@@ -151,6 +252,36 @@ func printJSON(cmd *cobra.Command, raw []byte) error {
 
 	fmt.Fprintln(cmd.OutOrStdout(), string(prettyRaw))
 	return nil
+}
+
+func printResponseJSON(cmd *cobra.Command, v any) error {
+	if v == nil {
+		return printJSON(cmd, nil)
+	}
+
+	raw, err := json.Marshal(v)
+	if err != nil {
+		return fmt.Errorf("encode response json: %w", err)
+	}
+	return printJSON(cmd, raw)
+}
+
+func decodeRequestPayload[T any](payload []byte) (*T, error) {
+	var req T
+	if err := json.Unmarshal(payload, &req); err != nil {
+		return nil, fmt.Errorf("decode payload: %w", err)
+	}
+	return &req, nil
+}
+
+func (c *apiClient) handleOgenError(err error) error {
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, errOgenDryRun) {
+		return nil
+	}
+	return err
 }
 
 func unwrapResultsData(raw []byte) []byte {
