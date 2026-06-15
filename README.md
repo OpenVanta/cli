@@ -1,4 +1,4 @@
-# hackday-cli
+# Vanta CLI
 
 Vanta CLI for querying and mutating resources in the Vanta API.
 
