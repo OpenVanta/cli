@@ -10,6 +10,7 @@ Vanta CLI for querying and mutating resources in the Vanta API.
 - `tests`
 - `people`
 - `frameworks`
+- `users`
 
 ## Quick start
 

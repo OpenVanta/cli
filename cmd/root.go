@@ -28,7 +28,7 @@ var rootCmd = &cobra.Command{
 	Long: `Vanta CLI for querying and updating resources through the Vanta API.
 
 Start by running "vanta login" to save your OAuth client credentials and default API base.
-Then use resource commands like controls, policies, documents, tests, people, frameworks, integrations, and vendors.
+Then use resource commands like controls, policies, documents, tests, people, frameworks, users, integrations, and vendors.
 
 Examples:
   vanta controls list --page-size 50
