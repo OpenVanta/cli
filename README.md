@@ -11,6 +11,7 @@ Vanta CLI for querying and mutating resources in the Vanta API.
 - `people`
 - `frameworks`
 - `users`
+- `vulnerabilities`
 
 ## Quick start
 
