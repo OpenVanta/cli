@@ -1,4 +1,5 @@
 generator:
-  # Skip unsupported schema feature currently present in api-spec.yaml.
+  # Skip unsupported schema feature currently present in api-spec.json.
   ignore_not_implemented:
     - complex anyOf
+    - discriminator inference

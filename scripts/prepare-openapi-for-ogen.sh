@@ -4,8 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-INPUT_SPEC="${1:-$REPO_ROOT/api-spec.yaml}"
-OUTPUT_SPEC="${2:-$REPO_ROOT/api-spec.codegen.yaml}"
+INPUT_SPEC="${1:-$REPO_ROOT/api-spec.json}"
+OUTPUT_SPEC="${2:-$REPO_ROOT/api-spec.codegen.json}"
 
 fail() {
   echo "prepare-openapi-for-ogen: $1" >&2
@@ -15,148 +15,193 @@ fail() {
 [[ -f "$INPUT_SPEC" ]] || fail "input spec not found: $INPUT_SPEC"
 mkdir -p "$(dirname "$OUTPUT_SPEC")"
 
-tmp1="$(mktemp)"
-tmp2="$(mktemp)"
-meta="$(mktemp)"
-cleanup() {
-  rm -f "$tmp1" "$tmp2" "$meta"
-}
-trap cleanup EXIT
+python3 - "$INPUT_SPEC" "$OUTPUT_SPEC" <<'PY'
+import json
+import sys
+from pathlib import Path
 
-cp "$INPUT_SPEC" "$tmp1"
 
-# 1) YAML plain scalar "NO" is parsed as boolean by YAML 1.1 parsers.
-awk '
-BEGIN { replaced = 0 }
-{
-  if (!replaced && $0 == "        - NO") {
-    if (getline nextline) {
-      if (nextline == "        - NOT_SPECIFIED") {
-        print "        - \"NO\""
-        print nextline
-        replaced = 1
-        next
-      }
-      print $0
-      print nextline
-      next
+def fail(message: str) -> None:
+    print(f"prepare-openapi-for-ogen: {message}", file=sys.stderr)
+    raise SystemExit(1)
+
+
+def replace_security_review_refs(node, old_ref, new_ref, counts):
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "$ref":
+                if value == old_ref:
+                    node[key] = new_ref
+                    counts["old"] += 1
+                elif value == new_ref:
+                    counts["new"] += 1
+            replace_security_review_refs(value, old_ref, new_ref, counts)
+    elif isinstance(node, list):
+        for item in node:
+            replace_security_review_refs(item, old_ref, new_ref, counts)
+
+
+def rename_schema_refs(node, ref_map):
+    replacements = 0
+
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if isinstance(value, str):
+                new_value = ref_map.get(value)
+                if new_value is not None:
+                    node[key] = new_value
+                    replacements += 1
+            else:
+                replacements += rename_schema_refs(value, ref_map)
+
+    elif isinstance(node, list):
+        for item in node:
+            replacements += rename_schema_refs(item, ref_map)
+
+    return replacements
+
+
+def rename_task_type_variant_schemas(schemas, spec):
+    rename_pairs = []
+    for schema_name in list(schemas.keys()):
+        if schema_name.startswith("TaskType."):
+            suffix = schema_name[len("TaskType.") :]
+            new_name = f"TaskTypeVariant.{suffix}"
+            if new_name in schemas and schema_name != new_name:
+                fail(
+                    "unexpected duplicate TaskType variant schema keys: "
+                    f"{schema_name} and {new_name}"
+                )
+            rename_pairs.append((schema_name, new_name))
+
+    for old_name, new_name in rename_pairs:
+        schemas[new_name] = schemas.pop(old_name)
+
+    ref_map = {
+        f"#/components/schemas/{old_name}": f"#/components/schemas/{new_name}"
+        for old_name, new_name in rename_pairs
     }
-  }
-  print
-}
-' "$tmp1" > "$tmp2"
-mv "$tmp2" "$tmp1"
+    ref_replacements = rename_schema_refs(spec, ref_map)
+    return len(rename_pairs), ref_replacements
 
-awk '
-BEGIN { ok = 0 }
-$0 == "        - \"NO\"" {
-  if (getline nextline) {
-    if (nextline == "        - NOT_SPECIFIED") {
-      ok = 1
-    }
-  }
-}
-END { exit ok ? 0 : 1 }
-' "$tmp1" || fail "missing expected language enum values (NO / NOT_SPECIFIED)"
 
-# 2) Work around ogen type-name collision.
-if awk 'BEGIN{found=0} $0=="    SecurityReviewDecision:"{found=1} END{exit found?0:1}' "$tmp1"; then
-  awk '
-  BEGIN { replaced = 0 }
-  {
-    if (!replaced && $0 == "    SecurityReviewDecision:") {
-      print "    SecurityReviewDecisionStatus:"
-      replaced = 1
-      next
-    }
-    print
-  }
-  ' "$tmp1" > "$tmp2"
-  mv "$tmp2" "$tmp1"
-elif ! awk 'BEGIN{found=0} $0=="    SecurityReviewDecisionStatus:"{found=1} END{exit found?0:1}' "$tmp1"; then
-  fail "missing SecurityReviewDecision schema key"
-fi
+def replace_anyof_with_oneof(node):
+    replacements = 0
 
-if awk 'index($0, "#/components/schemas/SecurityReviewDecision\""){found=1} END{exit found?0:1}' "$tmp1"; then
-  awk '
-  {
-    gsub("#/components/schemas/SecurityReviewDecision\"", "#/components/schemas/SecurityReviewDecisionStatus\"")
-    print
-  }
-  ' "$tmp1" > "$tmp2"
-  mv "$tmp2" "$tmp1"
-elif ! awk 'index($0, "#/components/schemas/SecurityReviewDecisionStatus\""){found=1} END{exit found?0:1}' "$tmp1"; then
-  fail "missing SecurityReviewDecision schema reference"
-fi
+    if isinstance(node, dict):
+        if "anyOf" in node:
+            if "oneOf" in node:
+                fail("encountered schema object with both anyOf and oneOf")
+            node["oneOf"] = node.pop("anyOf")
+            replacements += 1
 
-# 3) Convert document download media endpoint schemas to binary.
-convert_media_endpoint_to_binary() {
-  local endpoint_line="$1"
-  local endpoint_label="$2"
+        for value in node.values():
+            replacements += replace_anyof_with_oneof(value)
 
-  awk -v endpoint="$endpoint_line" -v meta_path="$meta" '
-  BEGIN {
-    in_endpoint = 0
-    saw_endpoint = 0
+    elif isinstance(node, list):
+        for item in node:
+            replacements += replace_anyof_with_oneof(item)
+
+    return replacements
+
+
+def convert_stream_refs_to_binary(node):
     ref_count = 0
     binary_count = 0
-  }
-  {
-    if ($0 == endpoint) {
-      in_endpoint = 1
-      saw_endpoint = 1
-      print
-      next
-    }
 
-    if (in_endpoint && $0 ~ /^  \//) {
-      in_endpoint = 0
-    }
+    if isinstance(node, dict):
+        if node.get("$ref") == "#/components/schemas/NodeJS.ReadableStream":
+            node.clear()
+            node["type"] = "string"
+            node["format"] = "binary"
+            return 1, 0
 
-    if (in_endpoint) {
-      if ($0 == "                $ref: \"#/components/schemas/NodeJS.ReadableStream\"") {
-        print "                type: string"
-        print "                format: binary"
-        ref_count++
-        next
-      }
-      if ($0 == "                format: binary") {
-        binary_count++
-      }
-    }
+        if node.get("format") == "binary":
+            binary_count += 1
 
-    print
-  }
-  END {
-    printf("%d %d %d\n", saw_endpoint, ref_count, binary_count) > meta_path
-    if (!saw_endpoint) {
-      exit 10
-    }
-    if (ref_count == 0 && binary_count == 0) {
-      exit 11
-    }
-  }
-  ' "$tmp1" > "$tmp2" || {
-    read -r saw_endpoint ref_count binary_count < "$meta" || true
-    if [[ "${saw_endpoint:-0}" == "0" ]]; then
-      fail "missing ${endpoint_label} endpoint"
-    fi
-    fail "expected NodeJS.ReadableStream refs or binary schemas inside ${endpoint_label}"
-  }
+        for value in node.values():
+            child_ref_count, child_binary_count = convert_stream_refs_to_binary(value)
+            ref_count += child_ref_count
+            binary_count += child_binary_count
 
-  mv "$tmp2" "$tmp1"
-  read -r saw_endpoint ref_count binary_count < "$meta"
-  conversions=$((conversions + ref_count))
-}
+    elif isinstance(node, list):
+        for item in node:
+            child_ref_count, child_binary_count = convert_stream_refs_to_binary(item)
+            ref_count += child_ref_count
+            binary_count += child_binary_count
 
-conversions=0
-convert_media_endpoint_to_binary \
-  "  /documents/{documentId}/uploads/{uploadedFileId}/media:" \
-  "/documents/{documentId}/uploads/{uploadedFileId}/media"
-convert_media_endpoint_to_binary \
-  "  /trust-centers/{slugId}/resources/{resourceId}/media:" \
-  "/trust-centers/{slugId}/resources/{resourceId}/media"
+    return ref_count, binary_count
 
-cp "$tmp1" "$OUTPUT_SPEC"
-echo "Prepared spec for ogen: $OUTPUT_SPEC"
-echo "Applied binary media conversions: $conversions"
+
+input_path = Path(sys.argv[1])
+output_path = Path(sys.argv[2])
+
+try:
+    spec = json.loads(input_path.read_text(encoding="utf-8"))
+except FileNotFoundError:
+    fail(f"input spec not found: {input_path}")
+except json.JSONDecodeError as exc:
+    fail(f"input spec is not valid JSON: {exc}")
+
+if not isinstance(spec, dict):
+    fail("input spec root must be a JSON object")
+
+components = spec.get("components")
+if not isinstance(components, dict):
+    fail("missing components object")
+
+schemas = components.get("schemas")
+if not isinstance(schemas, dict):
+    fail("missing components.schemas object")
+
+# Work around ogen type-name collision.
+if "SecurityReviewDecision" in schemas and "SecurityReviewDecisionStatus" not in schemas:
+    schemas["SecurityReviewDecisionStatus"] = schemas.pop("SecurityReviewDecision")
+elif (
+    "SecurityReviewDecision" not in schemas
+    and "SecurityReviewDecisionStatus" not in schemas
+):
+    fail("missing SecurityReviewDecision schema key")
+
+old_ref = "#/components/schemas/SecurityReviewDecision"
+new_ref = "#/components/schemas/SecurityReviewDecisionStatus"
+ref_counts = {"old": 0, "new": 0}
+replace_security_review_refs(spec, old_ref, new_ref, ref_counts)
+if ref_counts["old"] == 0 and ref_counts["new"] == 0:
+    fail("missing SecurityReviewDecision schema reference")
+
+# Rename TaskType variant schemas to avoid ogen symbol collisions.
+task_type_schema_renames, task_type_ref_replacements = rename_task_type_variant_schemas(
+    schemas, spec
+)
+
+# Replace unsupported anyOf with oneOf for ogen codegen.
+anyof_replacements = replace_anyof_with_oneof(spec)
+
+# Convert document download media endpoint schemas to binary.
+paths = spec.get("paths")
+if not isinstance(paths, dict):
+    fail("missing paths object")
+
+media_endpoints = [
+    "/documents/{documentId}/uploads/{uploadedFileId}/media",
+    "/trust-centers/{slugId}/resources/{resourceId}/media",
+]
+conversions = 0
+for endpoint in media_endpoints:
+    endpoint_obj = paths.get(endpoint)
+    if endpoint_obj is None:
+        fail(f"missing {endpoint} endpoint")
+
+    ref_count, binary_count = convert_stream_refs_to_binary(endpoint_obj)
+    if ref_count == 0 and binary_count == 0:
+        fail(f"expected NodeJS.ReadableStream refs or binary schemas inside {endpoint}")
+    conversions += ref_count
+
+output_path.write_text(json.dumps(spec, indent=2) + "\n", encoding="utf-8")
+print(f"Prepared spec for ogen: {output_path}")
+print(f"Renamed TaskType variant schemas: {task_type_schema_renames}")
+print(f"Updated TaskType variant refs: {task_type_ref_replacements}")
+print(f"Replaced anyOf with oneOf: {anyof_replacements}")
+print(f"Applied binary media conversions: {conversions}")
+PY
