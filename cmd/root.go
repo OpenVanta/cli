@@ -10,10 +10,11 @@ import (
 )
 
 var (
-	apiBaseFlag string
-	dryRunFlag  bool
-	prettyFlag  bool
-	verboseFlag bool
+	apiBaseFlag   string
+	dryRunFlag    bool
+	prettyFlag    bool
+	verboseFlag   bool
+	agentModeFlag bool
 
 	oauthClientIDFlag     string
 	oauthClientSecretFlag string
@@ -49,6 +50,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&dryRunFlag, "dry-run", false, "Print request details without sending")
 	rootCmd.PersistentFlags().BoolVar(&prettyFlag, "pretty", true, "Pretty-print JSON responses (set --pretty=false for compact output)")
 	rootCmd.PersistentFlags().BoolVar(&verboseFlag, "verbose", false, "Log request metadata to stderr")
+	rootCmd.PersistentFlags().BoolVar(&agentModeFlag, "agent-mode", false, "Enable agent mode (defaults to auto-detection in known AI agent runtimes)")
 	rootCmd.PersistentFlags().StringVar(&oauthClientIDFlag, "client-id", "", "OAuth client ID (overrides saved login)")
 	rootCmd.PersistentFlags().StringVar(&oauthClientSecretFlag, "client-secret", "", "OAuth client secret (overrides saved login)")
 	rootCmd.PersistentFlags().StringVar(&oauthScopeFlag, "scope", "", "OAuth scope (default: vanta-api.all:read vanta-api.all:write)")

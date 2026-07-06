@@ -86,3 +86,6 @@ Use `nextCursor` with `--page-cursor` to fetch the next page:
 - `--dry-run`: print request details without sending
 - `--pretty`: pretty-print JSON (default `true`; set `--pretty=false` for compact output)
 - `--verbose`: log request metadata to stderr
+- `--agent-mode`: force agent mode on/off; when enabled, command output defaults to TOON
+
+`--agent-mode` also auto-enables when common agent runtime environment variables are present (Cursor, Claude Code, Codex, Aider, Cline, Windsurf, GitHub Copilot, Amazon Q, Gemini, Cody, and standard `AGENT`/`AI_AGENT` signals).

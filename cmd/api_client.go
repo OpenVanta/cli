@@ -13,12 +13,17 @@ import (
 
 	"github.com/VantaInc/cli/internal/vantaapi"
 	"github.com/spf13/cobra"
+	toon "github.com/toon-format/toon-go"
 )
 
 const (
 	defaultAPIBase = "https://api.vanta.com/v1"
 	cliVersion     = "0.1.0"
 	userAgent      = "vanta-cli/" + cliVersion
+
+	outputFormatPretty = "pretty"
+	outputFormatJSON   = "json"
+	outputFormatTOON   = "toon"
 )
 
 type apiClient struct {
@@ -234,7 +239,10 @@ func printJSON(cmd *cobra.Command, raw []byte) error {
 
 	normalized := unwrapResultsData(raw)
 
-	if !prettyFlag {
+	switch resolvedOutputFormat(cmd) {
+	case outputFormatTOON:
+		return printTOON(cmd, normalized)
+	case outputFormatJSON:
 		fmt.Fprintln(cmd.OutOrStdout(), string(normalized))
 		return nil
 	}
@@ -251,6 +259,40 @@ func printJSON(cmd *cobra.Command, raw []byte) error {
 	}
 
 	fmt.Fprintln(cmd.OutOrStdout(), string(prettyRaw))
+	return nil
+}
+
+func resolvedOutputFormat(cmd *cobra.Command) string {
+	if agentModeEnabled(cmd) {
+		return outputFormatTOON
+	}
+	if !prettyFlag {
+		return outputFormatJSON
+	}
+	return outputFormatPretty
+}
+
+func printTOON(cmd *cobra.Command, normalized []byte) error {
+	var val any
+	if err := json.Unmarshal(normalized, &val); err != nil {
+		fmt.Fprintln(cmd.OutOrStdout(), string(normalized))
+		return nil
+	}
+
+	toonRaw, err := toon.Marshal(val)
+	if err != nil {
+		return fmt.Errorf("format toon: %w", err)
+	}
+	if len(toonRaw) == 0 {
+		return nil
+	}
+	if !bytes.HasSuffix(toonRaw, []byte("\n")) {
+		toonRaw = append(toonRaw, '\n')
+	}
+
+	if _, err := cmd.OutOrStdout().Write(toonRaw); err != nil {
+		return fmt.Errorf("write toon output: %w", err)
+	}
 	return nil
 }
 
