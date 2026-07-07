@@ -91,3 +91,15 @@ Use `nextCursor` with `--page-cursor` to fetch the next page:
 - `--agent-mode`: force agent mode on/off; when enabled, command output defaults to TOON
 
 `--agent-mode` also auto-enables when common agent runtime environment variables are present (Cursor, Claude Code, Codex, Aider, Cline, Windsurf, GitHub Copilot, Amazon Q, Gemini, Cody, and standard `AGENT`/`AI_AGENT` signals).
+
+## Releasing binaries
+
+Pushing a tag like `v0.1.0` triggers the GitHub Actions release workflow at `.github/workflows/release.yml`, which runs GoReleaser to publish binaries.
+
+The workflow expects these repository secrets for macOS code signing and notarization:
+
+- `MACOS_SIGN_P12`: Base64-encoded Developer ID Application certificate (`.p12`)
+- `MACOS_SIGN_PASSWORD`: Password used when exporting the `.p12`
+- `MACOS_NOTARY_ISSUER_ID`: App Store Connect API issuer ID
+- `MACOS_NOTARY_KEY_ID`: App Store Connect API key ID
+- `MACOS_NOTARY_KEY`: Base64-encoded App Store Connect API key (`.p8`)
