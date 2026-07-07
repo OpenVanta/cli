@@ -22,7 +22,7 @@ go generate ./internal/vantaapi
 go build -o vanta
 ```
 
-2. Configure auth and API base (saved to `~/.vanta/config.json`):
+2. Configure auth and API base (OAuth credentials are stored in macOS Keychain/Windows Credential Manager when available; API base is saved to `~/.vanta/config.json`):
 
 ```bash
 ./vanta login

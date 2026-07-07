@@ -68,8 +68,9 @@ var loginCmd = &cobra.Command{
 			return fmt.Errorf("failed to resolve config path: %w", err)
 		}
 
-		fmt.Fprintf(cmd.OutOrStdout(), "OAuth credentials saved to %s\n", path)
+		fmt.Fprintf(cmd.OutOrStdout(), "OAuth credentials saved to %s\n", credentialStorageDescription())
 		fmt.Fprintf(cmd.OutOrStdout(), "API base saved as %s\n", apiBase)
+		fmt.Fprintf(cmd.OutOrStdout(), "CLI configuration saved to %s\n", path)
 		fmt.Fprintf(cmd.OutOrStdout(), "Access token cached (expires at %s)\n", expiresAt.UTC().Format("2006-01-02T15:04:05Z"))
 		return nil
 	},

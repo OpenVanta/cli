@@ -10,8 +10,11 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
+
+	"github.com/zalando/go-keyring"
 )
 
 const oauthClientIDEnvVar = "VANTA_CLIENT_ID"
@@ -19,6 +22,8 @@ const oauthClientSecretEnvVar = "VANTA_CLIENT_SECRET"
 const oauthScopeEnvVar = "VANTA_OAUTH_SCOPE"
 const apiBaseEnvVar = "VANTA_API_BASE"
 const defaultOAuthScope = "vanta-api.all:read vanta-api.all:write"
+const credentialStoreService = "com.vanta.cli"
+const credentialStoreAccount = "oauth"
 
 type cliConfig struct {
 	APIBase            string `json:"api_base,omitempty"`
@@ -28,6 +33,81 @@ type cliConfig struct {
 	CachedAccessToken  string `json:"cached_access_token,omitempty"`
 	CachedTokenType    string `json:"cached_token_type,omitempty"`
 	CachedTokenExpires string `json:"cached_token_expires,omitempty"`
+}
+
+type secureCredentialState struct {
+	OAuthClientID      string `json:"oauth_client_id,omitempty"`
+	OAuthClientSecret  string `json:"oauth_client_secret,omitempty"`
+	OAuthScope         string `json:"oauth_scope,omitempty"`
+	CachedAccessToken  string `json:"cached_access_token,omitempty"`
+	CachedTokenType    string `json:"cached_token_type,omitempty"`
+	CachedTokenExpires string `json:"cached_token_expires,omitempty"`
+}
+
+func useSystemCredentialStore() bool {
+	return runtime.GOOS == "darwin" || runtime.GOOS == "windows"
+}
+
+func credentialStorageDescription() string {
+	if runtime.GOOS == "darwin" {
+		return "macOS Keychain"
+	}
+	if runtime.GOOS == "windows" {
+		return "Windows Credential Manager"
+	}
+	return "config file"
+}
+
+func loadSecureCredentialState() (*secureCredentialState, bool, error) {
+	if !useSystemCredentialStore() {
+		return nil, false, nil
+	}
+
+	raw, err := keyring.Get(credentialStoreService, credentialStoreAccount)
+	if err != nil {
+		if errors.Is(err, keyring.ErrNotFound) {
+			return nil, false, nil
+		}
+		return nil, false, fmt.Errorf("read system credential store: %w", err)
+	}
+
+	var state secureCredentialState
+	if err := json.Unmarshal([]byte(raw), &state); err != nil {
+		return nil, false, fmt.Errorf("parse system credential store entry: %w", err)
+	}
+
+	return &state, true, nil
+}
+
+func loadSecureCredentialStateOrEmpty() (*secureCredentialState, error) {
+	state, found, err := loadSecureCredentialState()
+	if err != nil {
+		return nil, err
+	}
+	if found {
+		return state, nil
+	}
+	return &secureCredentialState{}, nil
+}
+
+func saveSecureCredentialState(state *secureCredentialState) error {
+	raw, err := json.Marshal(state)
+	if err != nil {
+		return fmt.Errorf("encode system credential store entry: %w", err)
+	}
+	if err := keyring.Set(credentialStoreService, credentialStoreAccount, string(raw)); err != nil {
+		return fmt.Errorf("write system credential store: %w", err)
+	}
+	return nil
+}
+
+func clearSensitiveFields(cfg *cliConfig) {
+	cfg.OAuthClientID = ""
+	cfg.OAuthClientSecret = ""
+	cfg.OAuthScope = ""
+	cfg.CachedAccessToken = ""
+	cfg.CachedTokenType = ""
+	cfg.CachedTokenExpires = ""
 }
 
 func configFilePath() (string, error) {
@@ -95,8 +175,34 @@ func saveOAuthCredentials(apiBase, clientID, clientSecret, scope string) error {
 	} else {
 		cfg.APIBase = strings.TrimSpace(apiBase)
 	}
-	cfg.OAuthClientID = strings.TrimSpace(clientID)
-	cfg.OAuthClientSecret = strings.TrimSpace(clientSecret)
+	clientID = strings.TrimSpace(clientID)
+	clientSecret = strings.TrimSpace(clientSecret)
+	scope = strings.TrimSpace(scope)
+	if scope == "" {
+		scope = defaultOAuthScope
+	}
+
+	if useSystemCredentialStore() {
+		secureState, err := loadSecureCredentialStateOrEmpty()
+		if err != nil {
+			return err
+		}
+		secureState.OAuthClientID = clientID
+		secureState.OAuthClientSecret = clientSecret
+		secureState.OAuthScope = scope
+		secureState.CachedAccessToken = ""
+		secureState.CachedTokenType = ""
+		secureState.CachedTokenExpires = ""
+		if err := saveSecureCredentialState(secureState); err != nil {
+			return err
+		}
+
+		clearSensitiveFields(cfg)
+		return saveConfig(cfg)
+	}
+
+	cfg.OAuthClientID = clientID
+	cfg.OAuthClientSecret = clientSecret
 	if strings.TrimSpace(scope) == "" {
 		cfg.OAuthScope = defaultOAuthScope
 	} else {
@@ -136,6 +242,24 @@ func cacheAccessToken(accessToken, tokenType string, expiresAt time.Time) error 
 		return err
 	}
 
+	if useSystemCredentialStore() {
+		secureState, err := loadSecureCredentialStateOrEmpty()
+		if err != nil {
+			return err
+		}
+		secureState.CachedAccessToken = strings.TrimSpace(accessToken)
+		secureState.CachedTokenType = strings.TrimSpace(tokenType)
+		secureState.CachedTokenExpires = expiresAt.UTC().Format(time.RFC3339)
+		if err := saveSecureCredentialState(secureState); err != nil {
+			return err
+		}
+
+		cfg.CachedAccessToken = ""
+		cfg.CachedTokenType = ""
+		cfg.CachedTokenExpires = ""
+		return saveConfig(cfg)
+	}
+
 	cfg.CachedAccessToken = strings.TrimSpace(accessToken)
 	cfg.CachedTokenType = strings.TrimSpace(tokenType)
 	cfg.CachedTokenExpires = expiresAt.UTC().Format(time.RFC3339)
@@ -163,6 +287,24 @@ func resolveOAuthCredentials() (clientID, clientSecret, scope string, err error)
 		scope = strings.TrimSpace(os.Getenv(oauthScopeEnvVar))
 	}
 
+	if useSystemCredentialStore() {
+		secureState, _, err := loadSecureCredentialState()
+		if err != nil {
+			return "", "", "", err
+		}
+		if secureState != nil {
+			if clientID == "" {
+				clientID = strings.TrimSpace(secureState.OAuthClientID)
+			}
+			if clientSecret == "" {
+				clientSecret = strings.TrimSpace(secureState.OAuthClientSecret)
+			}
+			if scope == "" {
+				scope = strings.TrimSpace(secureState.OAuthScope)
+			}
+		}
+	}
+
 	cfg, err := loadConfig()
 	if err != nil {
 		return "", "", "", err
@@ -185,6 +327,25 @@ func resolveOAuthCredentials() (clientID, clientSecret, scope string, err error)
 }
 
 func loadCachedAccessToken() (string, time.Time, error) {
+	if useSystemCredentialStore() {
+		secureState, _, err := loadSecureCredentialState()
+		if err != nil {
+			return "", time.Time{}, err
+		}
+		if secureState != nil {
+			token := strings.TrimSpace(secureState.CachedAccessToken)
+			if token != "" {
+				expiresRaw := strings.TrimSpace(secureState.CachedTokenExpires)
+				if expiresRaw != "" {
+					expiresAt, err := time.Parse(time.RFC3339, expiresRaw)
+					if err == nil {
+						return token, expiresAt, nil
+					}
+				}
+			}
+		}
+	}
+
 	cfg, err := loadConfig()
 	if err != nil {
 		return "", time.Time{}, err
