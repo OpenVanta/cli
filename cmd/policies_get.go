@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"net/http"
-	"net/url"
-
+	"github.com/VantaInc/cli/internal/vantaapi"
 	"github.com/spf13/cobra"
 )
 
@@ -18,13 +16,15 @@ var policiesGetCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/policies/" + url.PathEscape(policyID)
-		resp, err := client.request(cmd, http.MethodGet, path, nil)
+		resp, err := client.ogen.GetPolicy(
+			cmd.Context(),
+			vantaapi.GetPolicyParams{PolicyId: policyID},
+		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
 
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 

@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"net/http"
-	"net/url"
+	"strings"
 
+	"github.com/VantaInc/cli/internal/vantaapi"
 	"github.com/spf13/cobra"
 )
 
@@ -18,13 +18,19 @@ var frameworksListCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		frameworksListPage.apply(query)
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, "/frameworks", query, nil)
-		if err != nil {
-			return err
+		params := vantaapi.ListFrameworksParams{}
+		if frameworksListPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(frameworksListPage.pageSize))
 		}
-		return printJSON(cmd, resp)
+		if cursor := strings.TrimSpace(frameworksListPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
+		}
+
+		resp, err := client.ogen.ListFrameworks(cmd.Context(), params)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -39,12 +45,14 @@ var frameworksGetCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/frameworks/" + url.PathEscape(frameworkID)
-		resp, err := client.request(cmd, http.MethodGet, path, nil)
+		resp, err := client.ogen.GetFramework(
+			cmd.Context(),
+			vantaapi.GetFrameworkParams{FrameworkId: frameworkID},
+		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -59,14 +67,21 @@ var frameworksListControlsCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		frameworksControlsPage.apply(query)
-		path := "/frameworks/" + url.PathEscape(frameworkID) + "/controls"
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, path, query, nil)
-		if err != nil {
-			return err
+		params := vantaapi.ListControlsForFrameworkParams{
+			FrameworkId: frameworkID,
 		}
-		return printJSON(cmd, resp)
+		if frameworksControlsPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(frameworksControlsPage.pageSize))
+		}
+		if cursor := strings.TrimSpace(frameworksControlsPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
+		}
+
+		resp, err := client.ogen.ListControlsForFramework(cmd.Context(), params)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 

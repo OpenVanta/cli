@@ -1,10 +1,9 @@
 package cmd
 
 import (
-	"net/http"
-	"net/url"
 	"strings"
 
+	"github.com/VantaInc/cli/internal/vantaapi"
 	"github.com/spf13/cobra"
 )
 
@@ -24,29 +23,43 @@ var peopleListCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		peopleListPage.apply(query)
+		params := vantaapi.ListPeopleParams{}
+		if peopleListPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(peopleListPage.pageSize))
+		}
+		if cursor := strings.TrimSpace(peopleListPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
+		}
 		for _, v := range peopleTasksSummaryStatusFilter {
-			if strings.TrimSpace(v) != "" {
-				query.Add("tasksSummaryStatusMatchesAny", strings.TrimSpace(v))
+			if trimmed := strings.TrimSpace(v); trimmed != "" {
+				params.TasksSummaryStatusMatchesAny = append(
+					params.TasksSummaryStatusMatchesAny,
+					vantaapi.TasksSummaryStatus(trimmed),
+				)
 			}
 		}
 		for _, v := range peopleTaskTypeFilter {
-			if strings.TrimSpace(v) != "" {
-				query.Add("taskTypeMatchesAny", strings.TrimSpace(v))
+			if trimmed := strings.TrimSpace(v); trimmed != "" {
+				params.TaskTypeMatchesAny = append(
+					params.TaskTypeMatchesAny,
+					vantaapi.TaskType(trimmed),
+				)
 			}
 		}
 		for _, v := range peopleTaskStatusFilter {
-			if strings.TrimSpace(v) != "" {
-				query.Add("taskStatusMatchesAny", strings.TrimSpace(v))
+			if trimmed := strings.TrimSpace(v); trimmed != "" {
+				params.TaskStatusMatchesAny = append(
+					params.TaskStatusMatchesAny,
+					vantaapi.TaskStatus(trimmed),
+				)
 			}
 		}
 
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, "/people", query, nil)
+		resp, err := client.ogen.ListPeople(cmd.Context(), params)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -61,12 +74,14 @@ var peopleGetCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/people/" + url.PathEscape(personID)
-		resp, err := client.request(cmd, http.MethodGet, path, nil)
+		resp, err := client.ogen.GetPerson(
+			cmd.Context(),
+			vantaapi.GetPersonParams{PersonId: personID},
+		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -90,12 +105,20 @@ var peopleUpdateCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/people/" + url.PathEscape(peopleUpdateID)
-		resp, err := client.request(cmd, http.MethodPatch, path, payload)
+		req, err := decodeRequestPayload[vantaapi.UpdatePersonReq](payload)
 		if err != nil {
 			return err
 		}
-		return printJSON(cmd, resp)
+
+		resp, err := client.ogen.UpdatePerson(
+			cmd.Context(),
+			req,
+			vantaapi.UpdatePersonParams{PersonId: peopleUpdateID},
+		)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -118,11 +141,16 @@ var peopleOffboardCmd = &cobra.Command{
 			return err
 		}
 
-		resp, err := client.request(cmd, http.MethodPost, "/people/offboard", payload)
+		req, err := decodeRequestPayload[vantaapi.OffboardPeopleReq](payload)
 		if err != nil {
 			return err
 		}
-		return printJSON(cmd, resp)
+
+		resp, err := client.ogen.OffboardPeople(cmd.Context(), req)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -143,11 +171,16 @@ var peopleMarkNotPeopleCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		resp, err := client.request(cmd, http.MethodPost, "/people/mark-as-not-people", payload)
+		req, err := decodeRequestPayload[vantaapi.MarkAsNotPeopleReq](payload)
 		if err != nil {
 			return err
 		}
-		return printJSON(cmd, resp)
+
+		resp, err := client.ogen.MarkAsNotPeople(cmd.Context(), req)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -168,11 +201,16 @@ var peopleMarkPeopleCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		resp, err := client.request(cmd, http.MethodPost, "/people/mark-as-people", payload)
+		req, err := decodeRequestPayload[vantaapi.MarkAsPeopleReq](payload)
 		if err != nil {
 			return err
 		}
-		return printJSON(cmd, resp)
+
+		resp, err := client.ogen.MarkAsPeople(cmd.Context(), req)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -186,12 +224,14 @@ var peopleClearLeaveCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		path := "/people/" + url.PathEscape(peopleClearLeaveID) + "/clear-leave"
-		resp, err := client.request(cmd, http.MethodPost, path, nil)
+		resp, err := client.ogen.ClearLeaveForPerson(
+			cmd.Context(),
+			vantaapi.ClearLeaveForPersonParams{PersonId: peopleClearLeaveID},
+		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -213,12 +253,20 @@ var peopleSetLeaveCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		path := "/people/" + url.PathEscape(peopleSetLeaveID) + "/set-leave"
-		resp, err := client.request(cmd, http.MethodPost, path, payload)
+		req, err := decodeRequestPayload[vantaapi.SetLeaveForPersonReq](payload)
 		if err != nil {
 			return err
 		}
-		return printJSON(cmd, resp)
+
+		resp, err := client.ogen.SetLeaveForPerson(
+			cmd.Context(),
+			req,
+			vantaapi.SetLeaveForPersonParams{PersonId: peopleSetLeaveID},
+		)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 

@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"net/http"
-
+	"github.com/VantaInc/cli/internal/vantaapi"
 	"github.com/spf13/cobra"
 )
 
@@ -25,12 +24,17 @@ var controlsCreateCmd = &cobra.Command{
 			return err
 		}
 
-		resp, err := client.request(cmd, http.MethodPost, "/controls", payload)
+		req, err := decodeRequestPayload[vantaapi.CreateControlInput](payload)
 		if err != nil {
 			return err
 		}
 
-		return printJSON(cmd, resp)
+		resp, err := client.ogen.CreateCustomControl(cmd.Context(), *req)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+
+		return printResponseJSON(cmd, resp)
 	},
 }
 

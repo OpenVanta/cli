@@ -133,6 +133,33 @@ def convert_stream_refs_to_binary(node):
     return ref_count, binary_count
 
 
+def simplify_any_resource_schema(schemas):
+    any_resource = schemas.get("AnyResource")
+    if not isinstance(any_resource, dict):
+        fail("missing AnyResource schema key")
+
+    # Ogen currently skips operations returning this discriminated union.
+    # Collapse to a generic object so integration resource endpoints are generated.
+    schemas["AnyResource"] = {
+        "type": "object",
+        "additionalProperties": True,
+    }
+
+
+def simplify_create_control_input_schema(schemas):
+    create_control_input = schemas.get("CreateControlInput")
+    if not isinstance(create_control_input, dict):
+        fail("missing CreateControlInput schema key")
+
+    # Ogen currently skips CreateCustomControl because of discriminator inference
+    # in this request schema. Treat it as a free-form object so codegen includes
+    # the operation while preserving CLI passthrough JSON behavior.
+    schemas["CreateControlInput"] = {
+        "type": "object",
+        "additionalProperties": True,
+    }
+
+
 input_path = Path(sys.argv[1])
 output_path = Path(sys.argv[2])
 
@@ -177,6 +204,12 @@ task_type_schema_renames, task_type_ref_replacements = rename_task_type_variant_
 
 # Replace unsupported anyOf with oneOf for ogen codegen.
 anyof_replacements = replace_anyof_with_oneof(spec)
+
+# Simplify AnyResource so ogen can generate integration resource endpoints.
+simplify_any_resource_schema(schemas)
+
+# Simplify CreateControlInput so ogen can generate CreateCustomControl.
+simplify_create_control_input_schema(schemas)
 
 # Convert document download media endpoint schemas to binary.
 paths = spec.get("paths")

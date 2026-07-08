@@ -1,11 +1,10 @@
 package cmd
 
 import (
-	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
+	"github.com/VantaInc/cli/internal/vantaapi"
 	"github.com/spf13/cobra"
 )
 
@@ -29,38 +28,43 @@ var testsListCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		testsListPage.apply(query)
+		params := vantaapi.ListTestsParams{}
+		if testsListPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(testsListPage.pageSize))
+		}
+		if cursor := strings.TrimSpace(testsListPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
+		}
 		if strings.TrimSpace(testsListStatusFilter) != "" {
-			query.Set("statusFilter", strings.TrimSpace(testsListStatusFilter))
+			params.StatusFilter.SetTo(vantaapi.TestStatus(strings.TrimSpace(testsListStatusFilter)))
 		}
 		if strings.TrimSpace(testsListFrameworkFilter) != "" {
-			query.Set("frameworkFilter", strings.TrimSpace(testsListFrameworkFilter))
+			params.FrameworkFilter.SetTo(strings.TrimSpace(testsListFrameworkFilter))
 		}
 		if strings.TrimSpace(testsListIntegrationFilter) != "" {
-			query.Set("integrationFilter", strings.TrimSpace(testsListIntegrationFilter))
+			params.IntegrationFilter.SetTo(strings.TrimSpace(testsListIntegrationFilter))
 		}
 		if strings.TrimSpace(testsListControlFilter) != "" {
-			query.Set("controlFilter", strings.TrimSpace(testsListControlFilter))
+			params.ControlFilter.SetTo(strings.TrimSpace(testsListControlFilter))
 		}
 		if strings.TrimSpace(testsListOwnerFilter) != "" {
-			query.Set("ownerFilter", strings.TrimSpace(testsListOwnerFilter))
+			params.OwnerFilter.SetTo(strings.TrimSpace(testsListOwnerFilter))
 		}
 		if strings.TrimSpace(testsListCategoryFilter) != "" {
-			query.Set("categoryFilter", strings.TrimSpace(testsListCategoryFilter))
+			params.CategoryFilter.SetTo(vantaapi.TestCategory(strings.TrimSpace(testsListCategoryFilter)))
 		}
 		if strings.TrimSpace(testsListIsInRollout) != "" {
 			if parsed, err := strconv.ParseBool(strings.TrimSpace(testsListIsInRollout)); err == nil {
-				query.Set("isInRollout", strconv.FormatBool(parsed))
+				params.IsInRollout.SetTo(parsed)
 			}
 		}
 
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, "/tests", query, nil)
+		resp, err := client.ogen.ListTests(cmd.Context(), params)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
 
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -75,13 +79,15 @@ var testsGetCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/tests/" + url.PathEscape(testID)
-		resp, err := client.request(cmd, http.MethodGet, path, nil)
+		resp, err := client.ogen.GetTest(
+			cmd.Context(),
+			vantaapi.GetTestParams{TestId: testID},
+		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
 
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -100,19 +106,25 @@ var testsEntitiesCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		testsEntitiesPage.apply(query)
+		params := vantaapi.GetTestEntitiesParams{
+			TestId: testsEntitiesID,
+		}
+		if testsEntitiesPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(testsEntitiesPage.pageSize))
+		}
+		if cursor := strings.TrimSpace(testsEntitiesPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
+		}
 		if strings.TrimSpace(testsEntitiesStatusFilter) != "" {
-			query.Set("entityStatus", strings.TrimSpace(testsEntitiesStatusFilter))
+			params.EntityStatus.SetTo(vantaapi.EntityStatus(strings.TrimSpace(testsEntitiesStatusFilter)))
 		}
 
-		path := "/tests/" + url.PathEscape(testsEntitiesID) + "/entities"
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, path, query, nil)
+		resp, err := client.ogen.GetTestEntities(cmd.Context(), params)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
 
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -137,13 +149,23 @@ var testsDeactivateEntityCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/tests/" + url.PathEscape(testsDeactivateID) + "/entities/" + url.PathEscape(testsDeactivateEntityID) + "/deactivate"
-		resp, err := client.request(cmd, http.MethodPost, path, payload)
+		req, err := decodeRequestPayload[vantaapi.DeactivateTestEntityReq](payload)
 		if err != nil {
 			return err
 		}
 
-		return printJSON(cmd, resp)
+		if err := client.ogen.DeactivateTestEntity(
+			cmd.Context(),
+			req,
+			vantaapi.DeactivateTestEntityParams{
+				TestId:   testsDeactivateID,
+				EntityId: testsDeactivateEntityID,
+			},
+		); err != nil {
+			return client.handleOgenError(err)
+		}
+
+		return printResponseJSON(cmd, nil)
 	},
 }
 
@@ -161,13 +183,17 @@ var testsReactivateEntityCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/tests/" + url.PathEscape(testsReactivateID) + "/entities/" + url.PathEscape(testsReactivateEntityID) + "/reactivate"
-		resp, err := client.request(cmd, http.MethodPost, path, nil)
-		if err != nil {
-			return err
+		if err := client.ogen.ReactivateTestEntity(
+			cmd.Context(),
+			vantaapi.ReactivateTestEntityParams{
+				TestId:   testsReactivateID,
+				EntityId: testsReactivateEntityID,
+			},
+		); err != nil {
+			return client.handleOgenError(err)
 		}
 
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, nil)
 	},
 }
 

@@ -1,16 +1,14 @@
 package cmd
 
 import (
-	"bytes"
 	"fmt"
 	"io"
-	"mime/multipart"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/VantaInc/cli/internal/vantaapi"
+	ohttp "github.com/ogen-go/ogen/http"
 	"github.com/spf13/cobra"
 )
 
@@ -29,24 +27,29 @@ var documentsListCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		documentsListPage.apply(query)
+		params := vantaapi.ListDocumentsParams{}
+		if documentsListPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(documentsListPage.pageSize))
+		}
+		if cursor := strings.TrimSpace(documentsListPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
+		}
 		for _, framework := range documentsListFrameworkFilter {
-			if strings.TrimSpace(framework) != "" {
-				query.Add("frameworkMatchesAny", strings.TrimSpace(framework))
+			if trimmed := strings.TrimSpace(framework); trimmed != "" {
+				params.FrameworkMatchesAny = append(params.FrameworkMatchesAny, trimmed)
 			}
 		}
 		for _, status := range documentsListStatusFilter {
-			if strings.TrimSpace(status) != "" {
-				query.Add("statusMatchesAny", strings.TrimSpace(status))
+			if trimmed := strings.TrimSpace(status); trimmed != "" {
+				params.StatusMatchesAny = append(params.StatusMatchesAny, vantaapi.DocumentStatus(trimmed))
 			}
 		}
 
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, "/documents", query, nil)
+		resp, err := client.ogen.ListDocuments(cmd.Context(), params)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -61,12 +64,14 @@ var documentsGetCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/documents/" + url.PathEscape(documentID)
-		resp, err := client.request(cmd, http.MethodGet, path, nil)
+		resp, err := client.ogen.GetDocument(
+			cmd.Context(),
+			vantaapi.GetDocumentParams{DocumentId: documentID},
+		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -89,11 +94,16 @@ var documentsCreateCmd = &cobra.Command{
 			return err
 		}
 
-		resp, err := client.request(cmd, http.MethodPost, "/documents", payload)
+		req, err := decodeRequestPayload[vantaapi.CreateDocumentInput](payload)
 		if err != nil {
 			return err
 		}
-		return printJSON(cmd, resp)
+
+		resp, err := client.ogen.CreateDocument(cmd.Context(), req)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -108,12 +118,13 @@ var documentsDeleteCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/documents/" + url.PathEscape(documentsDeleteID)
-		resp, err := client.request(cmd, http.MethodDelete, path, nil)
-		if err != nil {
-			return err
+		if err := client.ogen.DeleteDocument(
+			cmd.Context(),
+			vantaapi.DeleteDocumentParams{DocumentId: documentsDeleteID},
+		); err != nil {
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, nil)
 	},
 }
 
@@ -137,12 +148,20 @@ var documentsSetOwnerCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/documents/" + url.PathEscape(documentsSetOwnerID) + "/set-owner"
-		resp, err := client.request(cmd, http.MethodPost, path, payload)
+		req, err := decodeRequestPayload[vantaapi.SetOwnerForDocumentInput](payload)
 		if err != nil {
 			return err
 		}
-		return printJSON(cmd, resp)
+
+		resp, err := client.ogen.SetOwnerForDocument(
+			cmd.Context(),
+			req,
+			vantaapi.SetOwnerForDocumentParams{DocumentId: documentsSetOwnerID},
+		)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -160,14 +179,21 @@ var documentsListControlsCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		documentsListControlsPage.apply(query)
-		path := "/documents/" + url.PathEscape(documentsListControlsID) + "/controls"
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, path, query, nil)
-		if err != nil {
-			return err
+		params := vantaapi.ListControlsForDocumentParams{
+			DocumentId: documentsListControlsID,
 		}
-		return printJSON(cmd, resp)
+		if documentsListControlsPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(documentsListControlsPage.pageSize))
+		}
+		if cursor := strings.TrimSpace(documentsListControlsPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
+		}
+
+		resp, err := client.ogen.ListControlsForDocument(cmd.Context(), params)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -185,14 +211,21 @@ var documentsListLinksCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		documentsListLinksPage.apply(query)
-		path := "/documents/" + url.PathEscape(documentsListLinksID) + "/links"
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, path, query, nil)
-		if err != nil {
-			return err
+		params := vantaapi.ListLinksForDocumentParams{
+			DocumentId: documentsListLinksID,
 		}
-		return printJSON(cmd, resp)
+		if documentsListLinksPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(documentsListLinksPage.pageSize))
+		}
+		if cursor := strings.TrimSpace(documentsListLinksPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
+		}
+
+		resp, err := client.ogen.ListLinksForDocument(cmd.Context(), params)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -216,12 +249,20 @@ var documentsCreateLinkCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/documents/" + url.PathEscape(documentsCreateLinkID) + "/links"
-		resp, err := client.request(cmd, http.MethodPost, path, payload)
+		req, err := decodeRequestPayload[vantaapi.CreateLinkForDocumentInput](payload)
 		if err != nil {
 			return err
 		}
-		return printJSON(cmd, resp)
+
+		resp, err := client.ogen.CreateLinkForDocument(
+			cmd.Context(),
+			req,
+			vantaapi.CreateLinkForDocumentParams{DocumentId: documentsCreateLinkID},
+		)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -239,12 +280,16 @@ var documentsDeleteLinkCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/documents/" + url.PathEscape(documentsDeleteLinkID) + "/links/" + url.PathEscape(documentsDeleteLinkLinkID)
-		resp, err := client.request(cmd, http.MethodDelete, path, nil)
-		if err != nil {
-			return err
+		if err := client.ogen.DeleteLinkForDocument(
+			cmd.Context(),
+			vantaapi.DeleteLinkForDocumentParams{
+				DocumentId: documentsDeleteLinkID,
+				LinkId:     documentsDeleteLinkLinkID,
+			},
+		); err != nil {
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, nil)
 	},
 }
 
@@ -262,14 +307,21 @@ var documentsListUploadsCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		documentsListUploadsPage.apply(query)
-		path := "/documents/" + url.PathEscape(documentsListUploadsID) + "/uploads"
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, path, query, nil)
-		if err != nil {
-			return err
+		params := vantaapi.ListFilesForDocumentParams{
+			DocumentId: documentsListUploadsID,
 		}
-		return printJSON(cmd, resp)
+		if documentsListUploadsPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(documentsListUploadsPage.pageSize))
+		}
+		if cursor := strings.TrimSpace(documentsListUploadsPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
+		}
+
+		resp, err := client.ogen.ListFilesForDocument(cmd.Context(), params)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -299,38 +351,34 @@ var documentsUploadCmd = &cobra.Command{
 		}
 		defer file.Close()
 
-		var body bytes.Buffer
-		writer := multipart.NewWriter(&body)
-
-		part, err := writer.CreateFormFile("file", filepath.Base(strings.TrimSpace(documentsUploadFilePath)))
+		fileInfo, err := file.Stat()
 		if err != nil {
-			return fmt.Errorf("create multipart file part: %w", err)
-		}
-		if _, err := io.Copy(part, file); err != nil {
-			return fmt.Errorf("copy upload file: %w", err)
+			return fmt.Errorf("stat upload file: %w", err)
 		}
 
-		if strings.TrimSpace(documentsUploadEffectiveAtDate) != "" {
-			if err := writer.WriteField("effectiveAtDate", strings.TrimSpace(documentsUploadEffectiveAtDate)); err != nil {
-				return fmt.Errorf("write effectiveAtDate field: %w", err)
-			}
+		req := &vantaapi.UploadFileForDocumentReq{
+			File: ohttp.MultipartFile{
+				Name: filepath.Base(strings.TrimSpace(documentsUploadFilePath)),
+				File: file,
+				Size: fileInfo.Size(),
+			},
 		}
-		if strings.TrimSpace(documentsUploadDescription) != "" {
-			if err := writer.WriteField("description", strings.TrimSpace(documentsUploadDescription)); err != nil {
-				return fmt.Errorf("write description field: %w", err)
-			}
+		if effectiveAtDate := strings.TrimSpace(documentsUploadEffectiveAtDate); effectiveAtDate != "" {
+			req.EffectiveAtDate.SetTo(effectiveAtDate)
+		}
+		if description := strings.TrimSpace(documentsUploadDescription); description != "" {
+			req.Description.SetTo(description)
 		}
 
-		if err := writer.Close(); err != nil {
-			return fmt.Errorf("finalize multipart body: %w", err)
-		}
-
-		path := "/documents/" + url.PathEscape(documentsUploadID) + "/uploads"
-		resp, err := documentsRequestMultipart(cmd, client, http.MethodPost, path, body.Bytes(), writer.FormDataContentType())
+		resp, err := client.ogen.UploadFileForDocument(
+			cmd.Context(),
+			req,
+			vantaapi.UploadFileForDocumentParams{DocumentId: documentsUploadID},
+		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -348,12 +396,16 @@ var documentsDeleteFileCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/documents/" + url.PathEscape(documentsDeleteFileID) + "/uploads/" + url.PathEscape(documentsDeleteUploadedID)
-		resp, err := client.request(cmd, http.MethodDelete, path, nil)
-		if err != nil {
-			return err
+		if err := client.ogen.DeleteFileForDocument(
+			cmd.Context(),
+			vantaapi.DeleteFileForDocumentParams{
+				DocumentId:     documentsDeleteFileID,
+				UploadedFileId: documentsDeleteUploadedID,
+			},
+		); err != nil {
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, nil)
 	},
 }
 
@@ -372,8 +424,18 @@ var documentsDownloadCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/documents/" + url.PathEscape(documentsDownloadFileID) + "/uploads/" + url.PathEscape(documentsDownloadUploadedID) + "/media"
-		raw, err := documentsRequestMedia(cmd, client, http.MethodGet, path)
+		resp, err := client.ogen.GetUploadedfileMedia(
+			cmd.Context(),
+			vantaapi.GetUploadedfileMediaParams{
+				DocumentId:     documentsDownloadFileID,
+				UploadedFileId: documentsDownloadUploadedID,
+			},
+		)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+
+		raw, err := documentsMediaToBytes(resp)
 		if err != nil {
 			return err
 		}
@@ -405,72 +467,30 @@ var documentsSubmitCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/documents/" + url.PathEscape(documentsSubmitID) + "/submit"
-		resp, err := client.request(cmd, http.MethodPost, path, nil)
-		if err != nil {
-			return err
+		if err := client.ogen.SubmitDocumentCollection(
+			cmd.Context(),
+			vantaapi.SubmitDocumentCollectionParams{DocumentId: documentsSubmitID},
+		); err != nil {
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, nil)
 	},
 }
 
-func documentsRequestMultipart(cmd *cobra.Command, client *apiClient, method, path string, body []byte, contentType string) ([]byte, error) {
-	endpoint := client.baseURL + path
-	if client.dryRun {
-		fmt.Fprintf(cmd.OutOrStdout(), "DRY RUN %s %s\n", method, endpoint)
-		fmt.Fprintln(cmd.OutOrStdout(), "<multipart/form-data omitted>")
-		return nil, nil
+func documentsMediaToBytes(resp vantaapi.GetUploadedfileMediaRes) ([]byte, error) {
+	if reader, ok := resp.(io.Reader); ok {
+		raw, err := io.ReadAll(reader)
+		if err != nil {
+			return nil, fmt.Errorf("read media response: %w", err)
+		}
+		return raw, nil
 	}
 
-	req, err := client.newRequest(cmd.Context(), method, endpoint, bytes.NewReader(body), contentType)
-	if err != nil {
-		return nil, err
+	if jsonResp, ok := resp.(*vantaapi.GetUploadedfileMediaOKApplicationJSON); ok {
+		return []byte(*jsonResp), nil
 	}
 
-	resp, err := client.http.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	raw, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("api error (%d): %s", resp.StatusCode, strings.TrimSpace(string(raw)))
-	}
-	return raw, nil
-}
-
-func documentsRequestMedia(cmd *cobra.Command, client *apiClient, method, path string) ([]byte, error) {
-	endpoint := client.baseURL + path
-	if client.dryRun {
-		fmt.Fprintf(cmd.OutOrStdout(), "DRY RUN %s %s\n", method, endpoint)
-		return nil, nil
-	}
-
-	req, err := http.NewRequestWithContext(cmd.Context(), method, endpoint, nil)
-	if err != nil {
-		return nil, fmt.Errorf("build request: %w", err)
-	}
-	req.Header.Set("Authorization", "Bearer "+client.token)
-	req.Header.Set("User-Agent", userAgent)
-
-	resp, err := client.http.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	raw, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("api error (%d): %s", resp.StatusCode, strings.TrimSpace(string(raw)))
-	}
-	return raw, nil
+	return nil, fmt.Errorf("unsupported media response type %T", resp)
 }
 
 func init() {

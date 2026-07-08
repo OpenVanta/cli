@@ -1,16 +1,13 @@
 package cmd
 
 import (
-	"bytes"
 	"fmt"
-	"io"
-	"mime/multipart"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/VantaInc/cli/internal/vantaapi"
+	ohttp "github.com/ogen-go/ogen/http"
 	"github.com/spf13/cobra"
 )
 
@@ -29,22 +26,27 @@ var vendorsListCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		vendorsListPage.apply(query)
+		params := vantaapi.ListVendorsParams{}
+		if vendorsListPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(vendorsListPage.pageSize))
+		}
+		if cursor := strings.TrimSpace(vendorsListPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
+		}
 		if strings.TrimSpace(vendorsListNameFilter) != "" {
-			query.Set("name", strings.TrimSpace(vendorsListNameFilter))
+			params.Name.SetTo(strings.TrimSpace(vendorsListNameFilter))
 		}
 		for _, status := range vendorsListStatusFilters {
-			if strings.TrimSpace(status) != "" {
-				query.Add("statusMatchesAny", strings.TrimSpace(status))
+			if trimmed := strings.TrimSpace(status); trimmed != "" {
+				params.StatusMatchesAny = append(params.StatusMatchesAny, vantaapi.VendorStatus(trimmed))
 			}
 		}
 
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, "/vendors", query, nil)
+		resp, err := client.ogen.ListVendors(cmd.Context(), params)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -59,12 +61,14 @@ var vendorsGetCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/vendors/" + url.PathEscape(vendorsGetID)
-		resp, err := client.request(cmd, http.MethodGet, path, nil)
+		resp, err := client.ogen.GetVendor(
+			cmd.Context(),
+			vantaapi.GetVendorParams{VendorId: vendorsGetID},
+		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -85,11 +89,16 @@ var vendorsCreateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		resp, err := client.request(cmd, http.MethodPost, "/vendors", payload)
+		req, err := decodeRequestPayload[vantaapi.CreateVendorInput](payload)
 		if err != nil {
 			return err
 		}
-		return printJSON(cmd, resp)
+
+		resp, err := client.ogen.CreateVendor(cmd.Context(), req)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -111,12 +120,20 @@ var vendorsUpdateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		path := "/vendors/" + url.PathEscape(vendorsUpdateID)
-		resp, err := client.request(cmd, http.MethodPatch, path, payload)
+		req, err := decodeRequestPayload[vantaapi.UpdateVendorInput](payload)
 		if err != nil {
 			return err
 		}
-		return printJSON(cmd, resp)
+
+		resp, err := client.ogen.UpdateVendor(
+			cmd.Context(),
+			req,
+			vantaapi.UpdateVendorParams{VendorId: vendorsUpdateID},
+		)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -130,12 +147,13 @@ var vendorsDeleteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		path := "/vendors/" + url.PathEscape(vendorsDeleteID)
-		resp, err := client.request(cmd, http.MethodDelete, path, nil)
-		if err != nil {
-			return err
+		if err := client.ogen.DeleteById(
+			cmd.Context(),
+			vantaapi.DeleteByIdParams{VendorId: vendorsDeleteID},
+		); err != nil {
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, nil)
 	},
 }
 
@@ -156,18 +174,18 @@ var vendorsSetStatusCmd = &cobra.Command{
 			return err
 		}
 
-		body, contentType, err := vendorsBuildMultipartBody("", map[string]string{
-			"status": strings.TrimSpace(vendorsSetStatusStatus),
-		})
-		if err != nil {
-			return err
+		req := &vantaapi.SetStatusForVendorReq{
+			Status: strings.TrimSpace(vendorsSetStatusStatus),
 		}
-		path := "/vendors/" + url.PathEscape(vendorsSetStatusID) + "/set-status"
-		resp, err := vendorsRequestMultipart(cmd, client, http.MethodPost, path, body, contentType)
+		resp, err := client.ogen.SetStatusForVendor(
+			cmd.Context(),
+			req,
+			vantaapi.SetStatusForVendorParams{VendorId: vendorsSetStatusID},
+		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -184,14 +202,21 @@ var vendorsListDocumentsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		query := url.Values{}
-		vendorsListDocumentsPage.apply(query)
-		path := "/vendors/" + url.PathEscape(vendorsListDocumentsID) + "/documents"
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, path, query, nil)
-		if err != nil {
-			return err
+		params := vantaapi.ListVendorDocumentsParams{
+			VendorId: vendorsListDocumentsID,
 		}
-		return printJSON(cmd, resp)
+		if vendorsListDocumentsPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(vendorsListDocumentsPage.pageSize))
+		}
+		if cursor := strings.TrimSpace(vendorsListDocumentsPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
+		}
+
+		resp, err := client.ogen.ListVendorDocuments(cmd.Context(), params)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -219,26 +244,42 @@ var vendorsUploadDocumentCmd = &cobra.Command{
 			return err
 		}
 
-		fields := map[string]string{
-			"type": strings.TrimSpace(vendorsUploadDocumentType),
-		}
-		if strings.TrimSpace(vendorsUploadDocumentTitle) != "" {
-			fields["title"] = strings.TrimSpace(vendorsUploadDocumentTitle)
-		}
-		if strings.TrimSpace(vendorsUploadDocumentDescription) != "" {
-			fields["description"] = strings.TrimSpace(vendorsUploadDocumentDescription)
-		}
-		body, contentType, err := vendorsBuildMultipartBody(strings.TrimSpace(vendorsUploadDocumentFilePath), fields)
+		filePath := strings.TrimSpace(vendorsUploadDocumentFilePath)
+		file, err := os.Open(filePath)
 		if err != nil {
-			return err
+			return fmt.Errorf("open upload file: %w", err)
+		}
+		defer file.Close()
+
+		fileInfo, err := file.Stat()
+		if err != nil {
+			return fmt.Errorf("stat upload file: %w", err)
 		}
 
-		path := "/vendors/" + url.PathEscape(vendorsUploadDocumentID) + "/documents"
-		resp, err := vendorsRequestMultipart(cmd, client, http.MethodPost, path, body, contentType)
-		if err != nil {
-			return err
+		req := &vantaapi.UploadDocumentToVendorReq{
+			File: ohttp.MultipartFile{
+				Name: filepath.Base(filePath),
+				File: file,
+				Size: fileInfo.Size(),
+			},
+			Type: strings.TrimSpace(vendorsUploadDocumentType),
 		}
-		return printJSON(cmd, resp)
+		if title := strings.TrimSpace(vendorsUploadDocumentTitle); title != "" {
+			req.Title.SetTo(title)
+		}
+		if description := strings.TrimSpace(vendorsUploadDocumentDescription); description != "" {
+			req.Description.SetTo(description)
+		}
+
+		resp, err := client.ogen.UploadDocumentToVendor(
+			cmd.Context(),
+			req,
+			vantaapi.UploadDocumentToVendorParams{VendorId: vendorsUploadDocumentID},
+		)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -255,14 +296,21 @@ var vendorsListSecurityReviewsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		query := url.Values{}
-		vendorsListSecurityReviewsPage.apply(query)
-		path := "/vendors/" + url.PathEscape(vendorsListSecurityReviewsID) + "/security-reviews"
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, path, query, nil)
-		if err != nil {
-			return err
+		params := vantaapi.GetSecurityReviewsByVendorIdParams{
+			VendorId: vendorsListSecurityReviewsID,
 		}
-		return printJSON(cmd, resp)
+		if vendorsListSecurityReviewsPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(vendorsListSecurityReviewsPage.pageSize))
+		}
+		if cursor := strings.TrimSpace(vendorsListSecurityReviewsPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
+		}
+
+		resp, err := client.ogen.GetSecurityReviewsByVendorId(cmd.Context(), params)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -279,12 +327,17 @@ var vendorsGetSecurityReviewCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		path := "/vendors/" + url.PathEscape(vendorsGetSecurityReviewVendorID) + "/security-reviews/" + url.PathEscape(vendorsGetSecurityReviewID)
-		resp, err := client.request(cmd, http.MethodGet, path, nil)
+		resp, err := client.ogen.GetSecurityReviewsById(
+			cmd.Context(),
+			vantaapi.GetSecurityReviewsByIdParams{
+				VendorId:         vendorsGetSecurityReviewVendorID,
+				SecurityReviewId: vendorsGetSecurityReviewID,
+			},
+		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -302,14 +355,22 @@ var vendorsListSecurityReviewDocsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		query := url.Values{}
-		vendorsListSecurityReviewDocsPage.apply(query)
-		path := "/vendors/" + url.PathEscape(vendorsListSecurityReviewDocsVendorID) + "/security-reviews/" + url.PathEscape(vendorsListSecurityReviewDocsReviewID) + "/documents"
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, path, query, nil)
-		if err != nil {
-			return err
+		params := vantaapi.GetSecurityReviewDocumentsParams{
+			VendorId:         vendorsListSecurityReviewDocsVendorID,
+			SecurityReviewId: vendorsListSecurityReviewDocsReviewID,
 		}
-		return printJSON(cmd, resp)
+		if vendorsListSecurityReviewDocsPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(vendorsListSecurityReviewDocsPage.pageSize))
+		}
+		if cursor := strings.TrimSpace(vendorsListSecurityReviewDocsPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
+		}
+
+		resp, err := client.ogen.GetSecurityReviewDocuments(cmd.Context(), params)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -338,26 +399,45 @@ var vendorsUploadSecurityReviewDocCmd = &cobra.Command{
 			return err
 		}
 
-		fields := map[string]string{
-			"type": strings.TrimSpace(vendorsUploadSecurityReviewDocType),
-		}
-		if strings.TrimSpace(vendorsUploadSecurityReviewDocTitle) != "" {
-			fields["title"] = strings.TrimSpace(vendorsUploadSecurityReviewDocTitle)
-		}
-		if strings.TrimSpace(vendorsUploadSecurityReviewDocDescription) != "" {
-			fields["description"] = strings.TrimSpace(vendorsUploadSecurityReviewDocDescription)
-		}
-		body, contentType, err := vendorsBuildMultipartBody(strings.TrimSpace(vendorsUploadSecurityReviewDocFilePath), fields)
+		filePath := strings.TrimSpace(vendorsUploadSecurityReviewDocFilePath)
+		file, err := os.Open(filePath)
 		if err != nil {
-			return err
+			return fmt.Errorf("open upload file: %w", err)
+		}
+		defer file.Close()
+
+		fileInfo, err := file.Stat()
+		if err != nil {
+			return fmt.Errorf("stat upload file: %w", err)
 		}
 
-		path := "/vendors/" + url.PathEscape(vendorsUploadSecurityReviewDocVendorID) + "/security-reviews/" + url.PathEscape(vendorsUploadSecurityReviewDocReviewID) + "/documents"
-		resp, err := vendorsRequestMultipart(cmd, client, http.MethodPost, path, body, contentType)
-		if err != nil {
-			return err
+		req := &vantaapi.UploadDocumentForSecurityReviewReq{
+			File: ohttp.MultipartFile{
+				Name: filepath.Base(filePath),
+				File: file,
+				Size: fileInfo.Size(),
+			},
+			Type: strings.TrimSpace(vendorsUploadSecurityReviewDocType),
 		}
-		return printJSON(cmd, resp)
+		if title := strings.TrimSpace(vendorsUploadSecurityReviewDocTitle); title != "" {
+			req.Title.SetTo(title)
+		}
+		if description := strings.TrimSpace(vendorsUploadSecurityReviewDocDescription); description != "" {
+			req.Description.SetTo(description)
+		}
+
+		resp, err := client.ogen.UploadDocumentForSecurityReview(
+			cmd.Context(),
+			req,
+			vantaapi.UploadDocumentForSecurityReviewParams{
+				VendorId:         vendorsUploadSecurityReviewDocVendorID,
+				SecurityReviewId: vendorsUploadSecurityReviewDocReviewID,
+			},
+		)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -375,12 +455,17 @@ var vendorsDeleteSecurityReviewDocCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		path := "/vendors/" + url.PathEscape(vendorsDeleteSecurityReviewDocVendorID) + "/security-reviews/" + url.PathEscape(vendorsDeleteSecurityReviewDocReviewID) + "/documents/" + url.PathEscape(vendorsDeleteSecurityReviewDocDocumentID)
-		resp, err := client.request(cmd, http.MethodDelete, path, nil)
-		if err != nil {
-			return err
+		if err := client.ogen.DeleteSecurityReviewDocumentById(
+			cmd.Context(),
+			vantaapi.DeleteSecurityReviewDocumentByIdParams{
+				VendorId:         vendorsDeleteSecurityReviewDocVendorID,
+				SecurityReviewId: vendorsDeleteSecurityReviewDocReviewID,
+				DocumentId:       vendorsDeleteSecurityReviewDocDocumentID,
+			},
+		); err != nil {
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, nil)
 	},
 }
 
@@ -399,20 +484,27 @@ var vendorsListFindingsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		query := url.Values{}
-		vendorsListFindingsPage.apply(query)
+		params := vantaapi.ListVendorFindingsParams{
+			VendorId: vendorsListFindingsVendorID,
+		}
+		if vendorsListFindingsPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(vendorsListFindingsPage.pageSize))
+		}
+		if cursor := strings.TrimSpace(vendorsListFindingsPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
+		}
 		if strings.TrimSpace(vendorsListFindingsSecurityReviewID) != "" {
-			query.Set("securityReviewId", strings.TrimSpace(vendorsListFindingsSecurityReviewID))
+			params.SecurityReviewId.SetTo(strings.TrimSpace(vendorsListFindingsSecurityReviewID))
 		}
 		if strings.TrimSpace(vendorsListFindingsDocumentID) != "" {
-			query.Set("documentId", strings.TrimSpace(vendorsListFindingsDocumentID))
+			params.DocumentId.SetTo(strings.TrimSpace(vendorsListFindingsDocumentID))
 		}
-		path := "/vendors/" + url.PathEscape(vendorsListFindingsVendorID) + "/findings"
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, path, query, nil)
+
+		resp, err := client.ogen.ListVendorFindings(cmd.Context(), params)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -434,12 +526,20 @@ var vendorsCreateFindingCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		path := "/vendors/" + url.PathEscape(vendorsCreateFindingVendorID) + "/findings"
-		resp, err := client.request(cmd, http.MethodPost, path, payload)
+		req, err := decodeRequestPayload[vantaapi.CreateFindingInput](payload)
 		if err != nil {
 			return err
 		}
-		return printJSON(cmd, resp)
+
+		resp, err := client.ogen.CreateVendorFinding(
+			cmd.Context(),
+			req,
+			vantaapi.CreateVendorFindingParams{VendorId: vendorsCreateFindingVendorID},
+		)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -462,12 +562,23 @@ var vendorsUpdateFindingCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		path := "/vendors/" + url.PathEscape(vendorsUpdateFindingVendorID) + "/findings/" + url.PathEscape(vendorsUpdateFindingFindingID)
-		resp, err := client.request(cmd, http.MethodPatch, path, payload)
+		req, err := decodeRequestPayload[vantaapi.UpdateFindingInput](payload)
 		if err != nil {
 			return err
 		}
-		return printJSON(cmd, resp)
+
+		resp, err := client.ogen.UpdateVendorFinding(
+			cmd.Context(),
+			req,
+			vantaapi.UpdateVendorFindingParams{
+				VendorId:  vendorsUpdateFindingVendorID,
+				FindingId: vendorsUpdateFindingFindingID,
+			},
+		)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -484,77 +595,17 @@ var vendorsDeleteFindingCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		path := "/vendors/" + url.PathEscape(vendorsDeleteFindingVendorID) + "/findings/" + url.PathEscape(vendorsDeleteFindingFindingID)
-		resp, err := client.request(cmd, http.MethodDelete, path, nil)
-		if err != nil {
-			return err
+		if err := client.ogen.DeleteFindingById(
+			cmd.Context(),
+			vantaapi.DeleteFindingByIdParams{
+				VendorId:  vendorsDeleteFindingVendorID,
+				FindingId: vendorsDeleteFindingFindingID,
+			},
+		); err != nil {
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, nil)
 	},
-}
-
-func vendorsBuildMultipartBody(filePath string, fields map[string]string) ([]byte, string, error) {
-	var body bytes.Buffer
-	writer := multipart.NewWriter(&body)
-
-	if strings.TrimSpace(filePath) != "" {
-		file, err := os.Open(strings.TrimSpace(filePath))
-		if err != nil {
-			return nil, "", fmt.Errorf("open upload file: %w", err)
-		}
-		defer file.Close()
-
-		part, err := writer.CreateFormFile("file", filepath.Base(strings.TrimSpace(filePath)))
-		if err != nil {
-			return nil, "", fmt.Errorf("create multipart file part: %w", err)
-		}
-		if _, err := io.Copy(part, file); err != nil {
-			return nil, "", fmt.Errorf("copy upload file: %w", err)
-		}
-	}
-
-	for k, v := range fields {
-		if strings.TrimSpace(v) == "" {
-			continue
-		}
-		if err := writer.WriteField(k, strings.TrimSpace(v)); err != nil {
-			return nil, "", fmt.Errorf("write multipart field %s: %w", k, err)
-		}
-	}
-
-	if err := writer.Close(); err != nil {
-		return nil, "", fmt.Errorf("finalize multipart body: %w", err)
-	}
-	return body.Bytes(), writer.FormDataContentType(), nil
-}
-
-func vendorsRequestMultipart(cmd *cobra.Command, client *apiClient, method, path string, body []byte, contentType string) ([]byte, error) {
-	endpoint := client.baseURL + path
-	if client.dryRun {
-		fmt.Fprintf(cmd.OutOrStdout(), "DRY RUN %s %s\n", method, endpoint)
-		fmt.Fprintln(cmd.OutOrStdout(), "<multipart/form-data omitted>")
-		return nil, nil
-	}
-
-	req, err := client.newRequest(cmd.Context(), method, endpoint, bytes.NewReader(body), contentType)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := client.http.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	raw, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read response: %w", err)
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("api error (%d): %s", resp.StatusCode, strings.TrimSpace(string(raw)))
-	}
-	return raw, nil
 }
 
 func init() {

@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"net/http"
-	"net/url"
+	"strings"
 
+	"github.com/VantaInc/cli/internal/vantaapi"
 	"github.com/spf13/cobra"
 )
 
@@ -18,14 +18,20 @@ var policiesListCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		policiesListPage.apply(query)
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, "/policies", query, nil)
-		if err != nil {
-			return err
+		params := vantaapi.ListPoliciesParams{}
+		if policiesListPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(policiesListPage.pageSize))
+		}
+		if cursor := strings.TrimSpace(policiesListPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
 		}
 
-		return printJSON(cmd, resp)
+		resp, err := client.ogen.ListPolicies(cmd.Context(), params)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+
+		return printResponseJSON(cmd, resp)
 	},
 }
 

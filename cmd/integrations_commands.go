@@ -2,11 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
+	"github.com/VantaInc/cli/internal/vantaapi"
 	"github.com/spf13/cobra"
 )
 
@@ -21,13 +20,19 @@ var integrationsListCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		integrationsListPage.apply(query)
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, "/integrations", query, nil)
-		if err != nil {
-			return err
+		params := vantaapi.ListConnectedIntegrationsParams{}
+		if integrationsListPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(integrationsListPage.pageSize))
 		}
-		return printJSON(cmd, resp)
+		if cursor := strings.TrimSpace(integrationsListPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
+		}
+
+		resp, err := client.ogen.ListConnectedIntegrations(cmd.Context(), params)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -42,12 +47,14 @@ var integrationsGetCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/integrations/" + url.PathEscape(integrationsGetID)
-		resp, err := client.request(cmd, http.MethodGet, path, nil)
+		resp, err := client.ogen.GetConnectedIntegration(
+			cmd.Context(),
+			vantaapi.GetConnectedIntegrationParams{IntegrationId: integrationsGetID},
+		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -62,12 +69,14 @@ var integrationsListResourceKindsCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/integrations/" + url.PathEscape(integrationsListResourceKindsID) + "/resource-kinds"
-		resp, err := client.request(cmd, http.MethodGet, path, nil)
+		resp, err := client.ogen.ListResourceKindSummaries(
+			cmd.Context(),
+			vantaapi.ListResourceKindSummariesParams{IntegrationId: integrationsListResourceKindsID},
+		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -86,17 +95,19 @@ var integrationsGetResourceKindCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
+		params := vantaapi.GetResourceKindDetailsParams{
+			IntegrationId: integrationsGetResourceKindID,
+			ResourceKind:  integrationsGetResourceKindResourceKind,
+		}
 		if strings.TrimSpace(integrationsGetResourceKindConnectionID) != "" {
-			query.Set("connectionId", strings.TrimSpace(integrationsGetResourceKindConnectionID))
+			params.ConnectionId.SetTo(strings.TrimSpace(integrationsGetResourceKindConnectionID))
 		}
 
-		path := "/integrations/" + url.PathEscape(integrationsGetResourceKindID) + "/resource-kinds/" + url.PathEscape(integrationsGetResourceKindResourceKind)
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, path, query, nil)
+		resp, err := client.ogen.GetResourceKindDetails(cmd.Context(), params)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -119,27 +130,34 @@ var integrationsListResourcesCmd = &cobra.Command{
 			return err
 		}
 
-		query := url.Values{}
-		integrationsListResourcesPage.apply(query)
+		params := vantaapi.ListResourcesParams{
+			IntegrationId: integrationsListResourcesID,
+			ResourceKind:  integrationsListResourcesResourceKind,
+		}
+		if integrationsListResourcesPage.pageSize > 0 {
+			params.PageSize.SetTo(vantaapi.PageSize(integrationsListResourcesPage.pageSize))
+		}
+		if cursor := strings.TrimSpace(integrationsListResourcesPage.pageCursor); cursor != "" {
+			params.PageCursor.SetTo(vantaapi.PageCursor(cursor))
+		}
 		if strings.TrimSpace(integrationsListResourcesConnectionID) != "" {
-			query.Set("connectionId", strings.TrimSpace(integrationsListResourcesConnectionID))
+			params.ConnectionId.SetTo(strings.TrimSpace(integrationsListResourcesConnectionID))
 		}
-		if err := setOptionalBoolQuery(query, "hasDescription", integrationsListResourcesHasDesc); err != nil {
+		if err := setOptionalBoolQuery(&params.HasDescription, "has-description", integrationsListResourcesHasDesc); err != nil {
 			return err
 		}
-		if err := setOptionalBoolQuery(query, "hasOwner", integrationsListResourcesHasOwner); err != nil {
+		if err := setOptionalBoolQuery(&params.HasOwner, "has-owner", integrationsListResourcesHasOwner); err != nil {
 			return err
 		}
-		if err := setOptionalBoolQuery(query, "isInScope", integrationsListResourcesInScope); err != nil {
+		if err := setOptionalBoolQuery(&params.IsInScope, "is-in-scope", integrationsListResourcesInScope); err != nil {
 			return err
 		}
 
-		path := "/integrations/" + url.PathEscape(integrationsListResourcesID) + "/resource-kinds/" + url.PathEscape(integrationsListResourcesResourceKind) + "/resources"
-		resp, err := client.requestWithQuery(cmd, http.MethodGet, path, query, nil)
+		resp, err := client.ogen.ListResources(cmd.Context(), params)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -158,14 +176,18 @@ var integrationsGetResourceCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/integrations/" + url.PathEscape(integrationsGetResourceID) +
-			"/resource-kinds/" + url.PathEscape(integrationsGetResourceResourceKind) +
-			"/resources/" + url.PathEscape(integrationsGetResourceResourceID)
-		resp, err := client.request(cmd, http.MethodGet, path, nil)
+		resp, err := client.ogen.GetResource(
+			cmd.Context(),
+			vantaapi.GetResourceParams{
+				IntegrationId: integrationsGetResourceID,
+				ResourceKind:  integrationsGetResourceResourceKind,
+				ResourceId:    integrationsGetResourceResourceID,
+			},
+		)
 		if err != nil {
-			return err
+			return client.handleOgenError(err)
 		}
-		return printJSON(cmd, resp)
+		return printResponseJSON(cmd, resp)
 	},
 }
 
@@ -191,14 +213,23 @@ var integrationsUpdateResourceCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/integrations/" + url.PathEscape(integrationsUpdateResourceID) +
-			"/resource-kinds/" + url.PathEscape(integrationsUpdateResourceResourceKind) +
-			"/resources/" + url.PathEscape(integrationsUpdateResourceResourceID)
-		resp, err := client.request(cmd, http.MethodPatch, path, payload)
+		req, err := decodeRequestPayload[vantaapi.UpdateResourceReq](payload)
 		if err != nil {
 			return err
 		}
-		return printJSON(cmd, resp)
+
+		if err := client.ogen.UpdateResource(
+			cmd.Context(),
+			req,
+			vantaapi.UpdateResourceParams{
+				IntegrationId: integrationsUpdateResourceID,
+				ResourceKind:  integrationsUpdateResourceResourceKind,
+				ResourceId:    integrationsUpdateResourceResourceID,
+			},
+		); err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, nil)
 	},
 }
 
@@ -223,41 +254,37 @@ var integrationsUpdateResourcesCmd = &cobra.Command{
 			return err
 		}
 
-		path := "/integrations/" + url.PathEscape(integrationsUpdateResourcesID) +
-			"/resource-kinds/" + url.PathEscape(integrationsUpdateResourcesResourceKind) +
-			"/resources"
-		resp, err := client.request(cmd, http.MethodPatch, path, payload)
+		req, err := decodeRequestPayload[vantaapi.UpdateResourcesReq](payload)
 		if err != nil {
 			return err
 		}
-		return printJSON(cmd, resp)
+
+		resp, err := client.ogen.UpdateResources(
+			cmd.Context(),
+			req,
+			vantaapi.UpdateResourcesParams{
+				IntegrationId: integrationsUpdateResourcesID,
+				ResourceKind:  integrationsUpdateResourcesResourceKind,
+			},
+		)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
 	},
 }
 
-func setOptionalBoolQuery(query url.Values, key string, rawValue string) error {
+func setOptionalBoolQuery(target *vantaapi.OptBool, flagName string, rawValue string) error {
 	if strings.TrimSpace(rawValue) == "" {
 		return nil
 	}
 
 	parsed, err := strconv.ParseBool(strings.TrimSpace(rawValue))
 	if err != nil {
-		return fmt.Errorf("invalid value for --%s: %q (expected true or false)", flagNameFromQueryKey(key), rawValue)
+		return fmt.Errorf("invalid value for --%s: %q (expected true or false)", flagName, rawValue)
 	}
-	query.Set(key, strconv.FormatBool(parsed))
+	target.SetTo(parsed)
 	return nil
-}
-
-func flagNameFromQueryKey(queryKey string) string {
-	switch queryKey {
-	case "hasDescription":
-		return "has-description"
-	case "hasOwner":
-		return "has-owner"
-	case "isInScope":
-		return "is-in-scope"
-	default:
-		return queryKey
-	}
 }
 
 func init() {
