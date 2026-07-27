@@ -28,12 +28,13 @@ var rootCmd = &cobra.Command{
 	Long: `Vanta CLI for querying and updating resources through the Vanta API.
 
 Start by running "vanta login" to save your OAuth client credentials (macOS Keychain/Windows Credential Manager when available) and default API base.
-Then use resource commands like controls, policies, documents, tests, people, frameworks, users, vulnerabilities, integrations, vendors, risk-scenarios, and monitored-computers.
+Then use resource commands like controls, policies, documents, tests, people, frameworks, users, vulnerabilities, integrations, vendors, risk-scenarios, trust-centers, and monitored-computers.
 
 Examples:
   vanta controls list --page-size 50
   vanta policies get --id code-of-conduct-bsi
-  vanta documents upload-file --id doc_123 --file ./policy.pdf`,
+  vanta documents upload-file --id doc_123 --file ./policy.pdf
+  vanta trust-centers list-resources --id acme-trust`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
