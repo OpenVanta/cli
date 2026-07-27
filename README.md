@@ -13,6 +13,7 @@ Vanta CLI for querying and mutating resources in the Vanta API.
 - `users`
 - `vulnerabilities`
 - `risk-scenarios`
+- `customer-trust`
 - `monitored-computers`
 
 ## Quick start
@@ -65,6 +66,11 @@ go generate ./internal/vantaapi
 # Tests
 ./vanta tests list --status-filter NEEDS_ATTENTION
 ./vanta tests list-entities --id aws-account-access-removed-on-termination --entity-status FAILING
+
+# Customer Trust
+./vanta customer-trust list-accounts --search-string acme.com
+./vanta customer-trust create-file-questionnaire --file ./questionnaire.xlsx --display-name "SOC 2 Questionnaire"
+./vanta customer-trust approve-questionnaire --id 65e1efde08e8478f143a8ff9 --json '{"statusChangeMessage":"Looks good"}'
 ```
 
 ## Pagination
