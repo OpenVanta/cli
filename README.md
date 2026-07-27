@@ -23,7 +23,20 @@ Vanta CLI for querying and mutating resources in the Vanta API.
 
 ## Quick start
 
-1. Build the CLI:
+1. Install the CLI (macOS/Linux):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/VantaInc/cli/main/scripts/install.sh | bash
+```
+
+Pin a version or choose an install directory:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/VantaInc/cli/main/scripts/install.sh | bash -s -- --version v0.1.0
+curl -fsSL https://raw.githubusercontent.com/VantaInc/cli/main/scripts/install.sh | bash -s -- --install-dir ~/.local/bin
+```
+
+Or build from source:
 
 ```bash
 go generate ./internal/vantaapi
@@ -33,17 +46,16 @@ go build -o vanta
 2. Configure auth and API base (OAuth credentials are stored in macOS Keychain/Windows Credential Manager when available; API base is saved to `~/.vanta/config.json`):
 
 ```bash
-./vanta login
+vanta login
 ```
 
 3. Run commands:
 
 ```bash
-./vanta controls list --page-size 50
-./vanta policies get --id code-of-conduct-bsi
-./vanta frameworks list-controls --id soc2
+vanta controls list --page-size 50
+vanta policies get --id code-of-conduct-bsi
+vanta frameworks list-controls --id soc2
 ```
-
 ## Generated API client
 
 The Go client under `internal/vantaapi` is generated with `ogen` and is not checked in.
@@ -99,6 +111,8 @@ Use `nextCursor` with `--page-cursor` to fetch the next page:
 - `--agent-mode`: force agent mode on/off; when enabled, command output defaults to TOON
 
 `--agent-mode` also auto-enables when common agent runtime environment variables are present (Cursor, Claude Code, Codex, Aider, Cline, Windsurf, GitHub Copilot, Amazon Q, Gemini, Cody, and standard `AGENT`/`AI_AGENT` signals).
+
+Release builds periodically check GitHub for a newer version and print a notice to stderr. Disable with `VANTA_NO_UPDATE=1`. Notices are skipped in agent mode, CI, and non-interactive terminals.
 
 ## Releasing binaries
 

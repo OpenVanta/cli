@@ -408,7 +408,7 @@ func requestOAuthToken(apiBase, clientID, clientSecret, scope string) (string, t
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", userAgent())
 
 	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
