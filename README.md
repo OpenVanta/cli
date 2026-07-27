@@ -77,6 +77,7 @@ second ID flag such as `--resource-id`, `--faq-id`, or `--viewer-id`.
 ```bash
 # The Trust Center itself
 ./vanta trust-centers get --id acme-trust
+./vanta trust-centers update --id acme-trust --json '{"title":"Acme Trust Center","isPublic":true}'
 
 # Access requests
 ./vanta trust-centers list-access-requests --id acme-trust --page-size 25
@@ -154,9 +155,6 @@ second ID flag such as `--resource-id`, `--faq-id`, or `--viewer-id`.
 ./vanta trust-centers update-viewer --id acme-trust --viewer-id vwr_123 --file ./viewer.json
 ./vanta trust-centers remove-viewer --id acme-trust --viewer-id vwr_123
 ```
-
-Updating the Trust Center record itself is not available: the `PATCH /trust-centers/{slugId}` operation is skipped
-by `ogen` code generation (discriminator inference is unsupported), so no client method exists to wrap.
 
 ## Pagination
 

@@ -160,6 +160,23 @@ def simplify_create_control_input_schema(schemas):
     }
 
 
+def simplify_api_selectable_banner_setting_schema(schemas):
+    banner_setting = schemas.get("ApiSelectableBannerSetting")
+    if not isinstance(banner_setting, dict):
+        fail("missing ApiSelectableBannerSetting schema key")
+
+    # Ogen skips UpdateTrustCenter because ApiSelectableBannerSetting is a
+    # oneOf of single-value string enums and discriminator inference fails.
+    # Collapse to a plain string enum so codegen includes the operation.
+    schemas["ApiSelectableBannerSetting"] = {
+        "type": "string",
+        "enum": ["GRADIENT", "MINIMAL"],
+        "description": (
+            'The banner style to use. Must be one of "GRADIENT" or "MINIMAL".'
+        ),
+    }
+
+
 input_path = Path(sys.argv[1])
 output_path = Path(sys.argv[2])
 
@@ -210,6 +227,9 @@ simplify_any_resource_schema(schemas)
 
 # Simplify CreateControlInput so ogen can generate CreateCustomControl.
 simplify_create_control_input_schema(schemas)
+
+# Simplify ApiSelectableBannerSetting so ogen can generate UpdateTrustCenter.
+simplify_api_selectable_banner_setting_schema(schemas)
 
 # Convert document download media endpoint schemas to binary.
 paths = spec.get("paths")

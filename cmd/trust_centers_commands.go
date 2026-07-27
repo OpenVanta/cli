@@ -30,6 +30,43 @@ var trustCentersGetCmd = &cobra.Command{
 }
 
 var (
+	trustCentersUpdateID   string
+	trustCentersUpdateJSON string
+	trustCentersUpdateFile string
+)
+
+var trustCentersUpdateCmd = &cobra.Command{
+	Use:   "update",
+	Short: "Update a Trust Center by slug ID",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		payload, err := readJSONPayload(trustCentersUpdateJSON, trustCentersUpdateFile)
+		if err != nil {
+			return err
+		}
+
+		client, err := newAPIClient(cmd)
+		if err != nil {
+			return err
+		}
+
+		req, err := decodeRequestPayload[vantaapi.UpdateTrustCenterInput](payload)
+		if err != nil {
+			return err
+		}
+
+		resp, err := client.ogen.UpdateTrustCenter(
+			cmd.Context(),
+			req,
+			vantaapi.UpdateTrustCenterParams{SlugId: trustCentersUpdateID},
+		)
+		if err != nil {
+			return client.handleOgenError(err)
+		}
+		return printResponseJSON(cmd, resp)
+	},
+}
+
+var (
 	trustCentersListAccessRequestsID   string
 	trustCentersListAccessRequestsPage paginationFlags
 )
@@ -266,6 +303,12 @@ func init() {
 	trustCentersCmd.AddCommand(trustCentersGetCmd)
 	trustCentersGetCmd.Flags().StringVar(&trustCentersGetID, "id", "", trustCenterIDFlagUsage)
 	_ = trustCentersGetCmd.MarkFlagRequired("id")
+
+	trustCentersCmd.AddCommand(trustCentersUpdateCmd)
+	trustCentersUpdateCmd.Flags().StringVar(&trustCentersUpdateID, "id", "", trustCenterIDFlagUsage)
+	trustCentersUpdateCmd.Flags().StringVar(&trustCentersUpdateJSON, "json", "", "Raw JSON payload")
+	trustCentersUpdateCmd.Flags().StringVar(&trustCentersUpdateFile, "file", "", "Path to JSON payload file")
+	_ = trustCentersUpdateCmd.MarkFlagRequired("id")
 
 	trustCentersCmd.AddCommand(trustCentersListAccessRequestsCmd)
 	trustCentersListAccessRequestsCmd.Flags().StringVar(&trustCentersListAccessRequestsID, "id", "", trustCenterIDFlagUsage)
