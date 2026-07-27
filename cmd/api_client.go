@@ -17,13 +17,15 @@ import (
 
 const (
 	defaultAPIBase = "https://api.vanta.com/v1"
-	cliVersion     = "0.1.0"
-	userAgent      = "vanta-cli/" + cliVersion
 
 	outputFormatPretty = "pretty"
 	outputFormatJSON   = "json"
 	outputFormatTOON   = "toon"
 )
+
+func userAgent() string {
+	return "vanta-cli/" + Version
+}
 
 type apiClient struct {
 	dryRun  bool
@@ -54,7 +56,7 @@ func (t *generatedClientTransport) RoundTrip(req *http.Request) (*http.Response,
 		base = http.DefaultTransport
 	}
 
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", userAgent())
 	if t.dryRun {
 		fmt.Fprintf(t.cmd.OutOrStdout(), "DRY RUN %s %s\n", req.Method, req.URL.String())
 		if req.Body != nil {

@@ -34,6 +34,12 @@ Examples:
   vanta controls list --page-size 50
   vanta policies get --id code-of-conduct-bsi
   vanta documents upload-file --id doc_123 --file ./policy.pdf`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		startBackgroundUpdateCheck(cmd)
+	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		finishBackgroundUpdateCheck(cmd)
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

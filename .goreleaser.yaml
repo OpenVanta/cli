@@ -12,6 +12,8 @@ builds:
     binary: vanta
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/VantaInc/cli/cmd.Version={{.Version}}
     goos:
       - linux
       - windows
@@ -24,6 +26,8 @@ builds:
     binary: vanta
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/VantaInc/cli/cmd.Version={{.Version}}
     goos:
       - darwin
     goarch:
@@ -34,6 +38,8 @@ builds:
     binary: vanta
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/VantaInc/cli/cmd.Version={{.Version}}
     goos:
       - darwin
     goarch:
