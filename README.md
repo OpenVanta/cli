@@ -1,127 +1,163 @@
-# Vanta CLI
+<p align="center">
+  <img src="https://cdn.prod.website-files.com/64009032676f24f376f002fc/6400ac82429afb0f7b31fa6c_vanta-logo.svg" alt="Vanta" width="180" />
+</p>
 
-Vanta CLI for querying and mutating resources in the Vanta API.
+<h1 align="center">Vanta CLI</h1>
 
-## Supported resources
+<p align="center">
+  Manage your compliance program from the terminal—list controls, review tests,<br />
+  upload evidence, and more—using the same Vanta API that powers your account.
+</p>
 
-- `controls`
-- `policies`
-- `documents`
-- `tests`
-- `people`
-- `groups`
-- `frameworks`
-- `users`
-- `vulnerabilities`
-- `vulnerable-assets`
-- `contracts`
-- `vulnerability-remediations`
-- `risk-scenarios`
-- `monitored-computers`
-- `discovered-vendors`
-- `event-logs`
+<p align="center">
+  <a href="#install">Install</a> ·
+  <a href="#authenticate">Authenticate</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#what-you-can-manage">Resources</a> ·
+  <a href="#examples">Examples</a>
+</p>
 
-## Quick start
+---
 
-1. Install the CLI (macOS/Linux):
+## Install
+
+**macOS and Linux:**
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/VantaInc/cli/main/scripts/install.sh | bash
 ```
 
-Pin a version or choose an install directory:
+Optional flags:
 
 ```bash
+# Install a specific version
 curl -fsSL https://raw.githubusercontent.com/VantaInc/cli/main/scripts/install.sh | bash -s -- --version v0.1.0
+
+# Install to a custom directory
 curl -fsSL https://raw.githubusercontent.com/VantaInc/cli/main/scripts/install.sh | bash -s -- --install-dir ~/.local/bin
 ```
 
-Or build from source:
+Confirm the install:
 
 ```bash
-go generate ./internal/vantaapi
-go build -o vanta
+vanta version
 ```
 
-2. Configure auth and API base (OAuth credentials are stored in macOS Keychain/Windows Credential Manager when available; API base is saved to `~/.vanta/config.json`):
+## Authenticate
+
+Create an OAuth client in the [Vanta developer portal](https://app.vanta.com), then run:
 
 ```bash
 vanta login
 ```
 
-3. Run commands:
+You’ll be prompted for your API base URL, client ID, and client secret. Credentials are stored securely in your system keychain when available (macOS Keychain or Windows Credential Manager). Your API base is saved to `~/.vanta/config.json`.
+
+You can also pass credentials via environment variables or flags:
+
+| Option | Flag | Environment variable |
+| --- | --- | --- |
+| Client ID | `--client-id` | `VANTA_CLIENT_ID` |
+| Client secret | `--client-secret` | `VANTA_CLIENT_SECRET` |
+| OAuth scope | `--scope` | `VANTA_OAUTH_SCOPE` |
+| API base URL | `--api-base` | `VANTA_API_BASE` |
+
+Default API base: `https://api.vanta.com/v1`  
+Default scope: `vanta-api.all:read vanta-api.all:write`
+
+## Quick start
+
+```bash
+# List controls
+vanta controls list --page-size 50
+
+# Get a policy
+vanta policies get --id code-of-conduct-bsi
+
+# List controls for a framework
+vanta frameworks list-controls --id soc2
+
+# Find tests that need attention
+vanta tests list --status-filter NEEDS_ATTENTION
+```
+
+## What you can manage
+
+| Resource | Command |
+| --- | --- |
+| Controls | `vanta controls` |
+| Policies | `vanta policies` |
+| Documents | `vanta documents` |
+| Tests | `vanta tests` |
+| People | `vanta people` |
+| Groups | `vanta groups` |
+| Frameworks | `vanta frameworks` |
+| Users | `vanta users` |
+| Vulnerabilities | `vanta vulnerabilities` |
+| Vulnerable assets | `vanta vulnerable-assets` |
+| Vulnerability remediations | `vanta vulnerability-remediations` |
+| Contracts | `vanta contracts` |
+| Risk scenarios | `vanta risk-scenarios` |
+| Monitored computers | `vanta monitored-computers` |
+| Vendors | `vanta vendors` |
+| Discovered vendors | `vanta discovered-vendors` |
+| Integrations | `vanta integrations` |
+| Event logs | `vanta event-logs` |
+
+Run `vanta <resource> --help` for the full list of actions on each resource.
+
+## Examples
+
+**Controls and policies**
 
 ```bash
 vanta controls list --page-size 50
+vanta controls create --json '{"name":"Example Control"}'
 vanta policies get --id code-of-conduct-bsi
-vanta frameworks list-controls --id soc2
 ```
-## Generated API client
 
-The Go client under `internal/vantaapi` is generated with `ogen` and is not checked in.
-
-- Regenerate locally with:
+**Documents and evidence**
 
 ```bash
-go generate ./internal/vantaapi
+vanta documents list --page-size 25
+vanta documents upload-file --id access-requests --file ./policy.pdf
+vanta documents download-file --id access-requests --uploaded-file-id 123 --output ./downloaded.pdf
 ```
 
-- CI also runs generation before tests.
-
-## Common examples
+**Tests**
 
 ```bash
-# Create/update style commands accept --json or --file
-./vanta controls create --json '{"name":"Example Control"}'
-./vanta people update --id 65e1efde08e8478f143a8ff9 --file ./person-update.json
-
-# Documents
-./vanta documents list --page-size 25
-./vanta documents upload-file --id access-requests --file ./policy.pdf
-./vanta documents download-file --id access-requests --uploaded-file-id 123 --output ./downloaded.pdf
-
-# Tests
-./vanta tests list --status-filter NEEDS_ATTENTION
-./vanta tests list-entities --id aws-account-access-removed-on-termination --entity-status FAILING
+vanta tests list --status-filter NEEDS_ATTENTION
+vanta tests list-entities --id aws-account-access-removed-on-termination --entity-status FAILING
 ```
+
+**People**
+
+```bash
+vanta people update --id 65e1efde08e8478f143a8ff9 --file ./person-update.json
+```
+
+Create and update commands accept either `--json` (inline) or `--file` (path to a JSON file).
 
 ## Pagination
 
-List responses include pagination metadata:
-
-- `pageInfo`
-- `totalCount` (when provided by the API)
-- `nextCursor`
-
-Use `nextCursor` with `--page-cursor` to fetch the next page:
+List commands return results in pages. Responses include a `nextCursor` when more results are available. Pass it with `--page-cursor` to fetch the next page:
 
 ```bash
-./vanta controls list --page-size 50 --page-cursor "<nextCursor>"
+vanta controls list --page-size 50 --page-cursor "<nextCursor>"
 ```
 
-## Global flags
+## Useful flags
 
-- `--client-id`: OAuth client ID (or env `VANTA_CLIENT_ID`)
-- `--client-secret`: OAuth client secret (or env `VANTA_CLIENT_SECRET`)
-- `--scope`: OAuth scope (or env `VANTA_OAUTH_SCOPE`, default `vanta-api.all:read vanta-api.all:write`)
-- `--api-base`: API base URL (or env `VANTA_API_BASE`, saved by `login`, default `https://api.vanta.com/v1`)
-- `--dry-run`: print request details without sending
-- `--pretty`: pretty-print JSON (default `true`; set `--pretty=false` for compact output)
-- `--verbose`: log request metadata to stderr
-- `--agent-mode`: force agent mode on/off; when enabled, command output defaults to TOON
+| Flag | Description |
+| --- | --- |
+| `--dry-run` | Print the request without sending it |
+| `--pretty` | Pretty-print JSON output (on by default; use `--pretty=false` for compact output) |
+| `--verbose` | Log request details to stderr |
+| `--agent-mode` | Optimize output for AI coding agents |
 
-`--agent-mode` also auto-enables when common agent runtime environment variables are present (Cursor, Claude Code, Codex, Aider, Cline, Windsurf, GitHub Copilot, Amazon Q, Gemini, Cody, and standard `AGENT`/`AI_AGENT` signals).
+## Updates
 
-Release builds periodically check GitHub for a newer version and print a notice to stderr. Disable with `VANTA_NO_UPDATE=1`. Notices are skipped in agent mode, CI, and non-interactive terminals.
+The CLI periodically checks for newer releases and prints a notice when one is available. To disable update checks, set `VANTA_NO_UPDATE=1`.
 
-## Releasing binaries
-
-Pushing a tag like `v0.1.0` triggers the GitHub Actions release workflow at `.github/workflows/release.yml`, which runs GoReleaser to publish binaries.
-
-The workflow expects these repository secrets for macOS code signing and notarization:
-
-- `MACOS_SIGN_P12`: Base64-encoded Developer ID Application certificate (`.p12`)
-- `MACOS_SIGN_PASSWORD`: Password used when exporting the `.p12`
-- `MACOS_NOTARY_ISSUER_ID`: App Store Connect API issuer ID
-- `MACOS_NOTARY_KEY_ID`: App Store Connect API key ID
-- `MACOS_NOTARY_KEY`: Base64-encoded App Store Connect API key (`.p8`)
+To upgrade to the latest version, re-run the install script.
