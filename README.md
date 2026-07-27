@@ -17,6 +17,7 @@ Vanta CLI for querying and mutating resources in the Vanta API.
 - `vulnerability-remediations`
 - `risk-scenarios`
 - `monitored-computers`
+- `event-logs`
 
 ## Quick start
 
