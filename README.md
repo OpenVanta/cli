@@ -14,6 +14,7 @@ Vanta CLI for querying and mutating resources in the Vanta API.
 - `vulnerabilities`
 - `risk-scenarios`
 - `monitored-computers`
+- `knowledge-base`
 
 ## Quick start
 
@@ -65,7 +66,17 @@ go generate ./internal/vantaapi
 # Tests
 ./vanta tests list --status-filter NEEDS_ATTENTION
 ./vanta tests list-entities --id aws-account-access-removed-on-termination --entity-status FAILING
+
+# Knowledge base
+./vanta knowledge-base list-answers --q "data retention"
+./vanta knowledge-base create-answer --json '{"question":"How long is data retained?","answer":"90 days."}'
+./vanta knowledge-base verify-answer --id answer_123
+./vanta knowledge-base list-resources --type-matches-any FILE --type-matches-any URL
+./vanta knowledge-base create-document-resource --file ./soc2-report.pdf --title "SOC 2 Report" --customer-visibility PUBLIC
+./vanta knowledge-base create-webpage-resource --json '{"title":"Security Page","url":"https://example.com/security"}'
 ```
+
+Note: `verify-answer` and `verify-resource` accept an optional `--json`/`--file` body (an ISO 8601 `expirationDate`); when omitted, the entry falls back to the configured review cadence.
 
 ## Pagination
 
