@@ -22,7 +22,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
+          cache: yarn
+
+      - name: Install Yarn
+        run: npm install -g yarn@1.22.22
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -55,10 +58,10 @@ jobs:
           fi
 
       - name: Install
-        run: npm ci
+        run: yarn install --frozen-lockfile
 
       - name: Generate API client
-        run: npm run generate
+        run: yarn generate
 
       - name: Resolve version
         id: version
@@ -72,7 +75,7 @@ jobs:
       - name: Build binaries
         env:
           VANTA_VERSION: ${{ steps.version.outputs.version }}
-        run: npm run build:binaries
+        run: yarn build:binaries
 
       - name: Sign and notarize macOS binaries
         env:

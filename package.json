@@ -12,11 +12,12 @@
   "scripts": {
     "generate": "openapi-ts",
     "dev": "tsx src/cli.ts",
-    "build": "npm run generate && tsup",
+    "build": "yarn generate && tsup",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test src/**/*.test.ts",
     "build:binaries": "tsx scripts/build-binaries.ts"
   },
+  "packageManager": "yarn@1.22.22",
   "engines": {
     "node": ">=22"
   },

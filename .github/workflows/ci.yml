@@ -18,16 +18,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
+          cache: yarn
+
+      - name: Install Yarn
+        run: npm install -g yarn@1.22.22
 
       - name: Install
-        run: npm ci
+        run: yarn install --frozen-lockfile
 
       - name: Generate API client
-        run: npm run generate
+        run: yarn generate
 
       - name: Typecheck
-        run: npm run typecheck
+        run: yarn typecheck
 
       - name: Test
-        run: npm test
+        run: yarn test

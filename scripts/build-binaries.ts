@@ -40,7 +40,7 @@ async function main(): Promise<void> {
   const bunCheck = spawnSync(bunBin, ["--version"], { encoding: "utf8" });
   if (bunCheck.status !== 0) {
     throw new Error(
-      "Bun is required to build standalone binaries. Install with `npm i -D bun` or https://bun.sh",
+      "Bun is required to build standalone binaries. Install with `yarn add -D bun` or https://bun.sh",
     );
   }
 

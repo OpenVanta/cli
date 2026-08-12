@@ -90,13 +90,13 @@ vanta controls get --id <control-id>
 Requires Node 22+. Bun is required to build standalone binaries.
 
 ```bash
-npm install
-npm run generate   # OpenAPI → src/generated
-npm run dev -- version
-npm run typecheck
-npm test
-npm run build              # generate + bundle for Node
-VANTA_VERSION=0.1.0 npm run build:binaries
+yarn install
+yarn generate   # OpenAPI → src/generated
+yarn dev version
+yarn typecheck
+yarn test
+yarn build              # generate + bundle for Node
+VANTA_VERSION=0.1.0 yarn build:binaries
 ```
 
 The typed API client is generated from [`api-spec.json`](api-spec.json) with [`@hey-api/openapi-ts`](https://heyapi.dev/).
