@@ -43,7 +43,52 @@ P12_PATH="${TMPDIR}/cert.p12"
 API_KEY_PATH="${TMPDIR}/AuthKey_${MACOS_NOTARY_KEY_ID}.p8"
 
 echo "${MACOS_SIGN_P12}" | base64 --decode > "${P12_PATH}"
-printf '%s' "${MACOS_NOTARY_KEY}" > "${API_KEY_PATH}"
+
+# Materialize the App Store Connect API key as a strict PEM file.
+# GitHub secrets often store literal "\n", single-line base64 bodies, or a
+# base64-encoded .p8. Newer notarytool (Xcode 26+) rejects non-64-col PEMs
+# with invalidPEMDocument.
+python3 - "${API_KEY_PATH}" <<'PY'
+import base64
+import sys
+import textwrap
+from pathlib import Path
+
+out_path = Path(sys.argv[1])
+raw = __import__("os").environ.get("MACOS_NOTARY_KEY", "")
+if not raw.strip():
+    raise SystemExit("MACOS_NOTARY_KEY is empty")
+
+# Expand escaped newlines commonly used in Actions secrets.
+key = raw.replace("\\n", "\n").replace("\r\n", "\n").strip()
+
+# If the whole secret is base64 (no PEM headers), decode once.
+if "BEGIN" not in key:
+    try:
+        decoded = base64.b64decode(key, validate=False).decode("utf-8")
+        if "BEGIN" in decoded:
+            key = decoded.strip()
+    except Exception:
+        pass
+
+lines = [line.strip() for line in key.splitlines() if line.strip()]
+body_lines = [line for line in lines if not line.startswith("-----")]
+raw_b64 = "".join(body_lines).replace(" ", "")
+if not raw_b64:
+    raise SystemExit("MACOS_NOTARY_KEY did not contain PEM body")
+
+wrapped = "\n".join(textwrap.wrap(raw_b64, 64))
+pem = f"-----BEGIN PRIVATE KEY-----\n{wrapped}\n-----END PRIVATE KEY-----\n"
+out_path.write_text(pem, encoding="utf-8")
+out_path.chmod(0o600)
+print(f"Wrote API key PEM ({out_path.stat().st_size} bytes, {pem.count(chr(10))} lines)")
+PY
+
+# Fail fast with a clearer error than notarytool's invalidPEMDocument.
+if ! openssl pkey -in "${API_KEY_PATH}" -noout >/dev/null 2>&1; then
+  echo "error: MACOS_NOTARY_KEY is not a valid PKCS#8 private key PEM after normalization" >&2
+  exit 1
+fi
 
 security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN}"
 security set-keychain-settings -lut 21600 "${KEYCHAIN}"
