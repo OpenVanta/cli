@@ -85,6 +85,16 @@ vanta controls get --id <control-id>
 | `--verbose` | Log request details to stderr |
 | `--agent-mode` | Optimize output for AI coding agents (TOON) |
 
+## Updates
+
+The CLI periodically checks GitHub Releases for a newer version (cached for 24h in `~/.vanta/update-check.json`) and prints a notice on stderr when one is available. Checks are skipped for `dev` builds, non-TTY stderr, CI, agent mode, or when `VANTA_NO_UPDATE=1`.
+
+To upgrade:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/VantaInc/cli/main/scripts/install.sh | bash
+```
+
 ## Development
 
 Requires Node 22+. Bun is required to build standalone binaries.

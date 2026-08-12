@@ -3,7 +3,11 @@ import type { GlobalFlags } from "./api-client.js";
 import { registerControlsCommand } from "./commands/controls.js";
 import { registerLoginCommand } from "./commands/login.js";
 import { registerVersionCommand } from "./commands/version.js";
-import { Version } from "./version.js";
+import {
+  finishBackgroundUpdateCheck,
+  startBackgroundUpdateCheck,
+} from "./update-check.js";
+import { Version, displayVersion } from "./version.js";
 
 function buildProgram(): Command {
   const program = new Command();
@@ -13,7 +17,7 @@ function buildProgram(): Command {
     .description(
       "Vanta CLI for querying and updating resources through the Vanta API.\n\nStart by running \"vanta login\" to save your OAuth client credentials and default API base.",
     )
-    .version(Version, "-V, --version", "Print the CLI version")
+    .version(displayVersion(Version), "-V, --version", "Print the CLI version")
     .option(
       "--api-base <url>",
       "Base API URL (overrides saved config; default https://api.vanta.com/v1)",
@@ -61,6 +65,13 @@ function buildProgram(): Command {
     };
   };
 
+  program.hook("preAction", () => {
+    startBackgroundUpdateCheck({ agentMode: getFlags().agentMode });
+  });
+  program.hook("postAction", async () => {
+    await finishBackgroundUpdateCheck({ agentMode: getFlags().agentMode });
+  });
+
   registerLoginCommand(program, getFlags);
   registerVersionCommand(program);
   registerControlsCommand(program, getFlags);
@@ -85,3 +96,4 @@ async function main(): Promise<void> {
 }
 
 void main();
+
