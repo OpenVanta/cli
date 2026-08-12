@@ -1,8 +1,25 @@
 import { Command } from "commander";
 import type { GlobalFlags } from "./api-client.js";
+import { registerContractsCommand } from "./commands/contracts.js";
 import { registerControlsCommand } from "./commands/controls.js";
+import { registerDiscoveredVendorsCommand } from "./commands/discovered-vendors.js";
+import { registerDocumentsCommand } from "./commands/documents.js";
+import { registerEventLogsCommand } from "./commands/event-logs.js";
+import { registerFrameworksCommand } from "./commands/frameworks.js";
+import { registerGroupsCommand } from "./commands/groups.js";
+import { registerIntegrationsCommand } from "./commands/integrations.js";
 import { registerLoginCommand } from "./commands/login.js";
+import { registerMonitoredComputersCommand } from "./commands/monitored-computers.js";
+import { registerPeopleCommand } from "./commands/people.js";
+import { registerPoliciesCommand } from "./commands/policies.js";
+import { registerRiskScenariosCommand } from "./commands/risk-scenarios.js";
+import { registerTestsCommand } from "./commands/tests.js";
+import { registerUsersCommand } from "./commands/users.js";
+import { registerVendorsCommand } from "./commands/vendors.js";
 import { registerVersionCommand } from "./commands/version.js";
+import { registerVulnerabilitiesCommand } from "./commands/vulnerabilities.js";
+import { registerVulnerabilityRemediationsCommand } from "./commands/vulnerability-remediations.js";
+import { registerVulnerableAssetsCommand } from "./commands/vulnerable-assets.js";
 import {
   finishBackgroundUpdateCheck,
   startBackgroundUpdateCheck,
@@ -57,7 +74,6 @@ function buildProgram(): Command {
       dryRun: Boolean(opts.dryRun),
       pretty: opts.pretty !== false,
       verbose: Boolean(opts.verbose),
-      // undefined => auto-detect; true/false when --agent-mode / --no-agent-mode
       agentMode: opts.agentMode,
       clientId: opts.clientId,
       clientSecret: opts.clientSecret,
@@ -75,6 +91,23 @@ function buildProgram(): Command {
   registerLoginCommand(program, getFlags);
   registerVersionCommand(program);
   registerControlsCommand(program, getFlags);
+  registerPoliciesCommand(program, getFlags);
+  registerDocumentsCommand(program, getFlags);
+  registerTestsCommand(program, getFlags);
+  registerPeopleCommand(program, getFlags);
+  registerGroupsCommand(program, getFlags);
+  registerFrameworksCommand(program, getFlags);
+  registerUsersCommand(program, getFlags);
+  registerVulnerabilitiesCommand(program, getFlags);
+  registerVulnerableAssetsCommand(program, getFlags);
+  registerVulnerabilityRemediationsCommand(program, getFlags);
+  registerContractsCommand(program, getFlags);
+  registerRiskScenariosCommand(program, getFlags);
+  registerMonitoredComputersCommand(program, getFlags);
+  registerVendorsCommand(program, getFlags);
+  registerDiscoveredVendorsCommand(program, getFlags);
+  registerIntegrationsCommand(program, getFlags);
+  registerEventLogsCommand(program, getFlags);
 
   return program;
 }
@@ -96,4 +129,3 @@ async function main(): Promise<void> {
 }
 
 void main();
-

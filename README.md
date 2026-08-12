@@ -72,9 +72,40 @@ Default scope: `vanta-api.all:read vanta-api.all:write`
 # List controls
 vanta controls list --page-size 50
 
-# Get a control
-vanta controls get --id <control-id>
+# Get a policy
+vanta policies get --id code-of-conduct-bsi
+
+# List controls for a framework
+vanta frameworks list-controls --id soc2
+
+# Find tests that need attention
+vanta tests list --status-filter NEEDS_ATTENTION
 ```
+
+## What you can manage
+
+| Resource | Command |
+| --- | --- |
+| Controls | `vanta controls` |
+| Policies | `vanta policies` |
+| Documents | `vanta documents` |
+| Tests | `vanta tests` |
+| People | `vanta people` |
+| Groups | `vanta groups` |
+| Frameworks | `vanta frameworks` |
+| Users | `vanta users` |
+| Vulnerabilities | `vanta vulnerabilities` |
+| Vulnerable assets | `vanta vulnerable-assets` |
+| Vulnerability remediations | `vanta vulnerability-remediations` |
+| Contracts | `vanta contracts` |
+| Risk scenarios | `vanta risk-scenarios` |
+| Monitored computers | `vanta monitored-computers` |
+| Vendors | `vanta vendors` |
+| Discovered vendors | `vanta discovered-vendors` |
+| Integrations | `vanta integrations` |
+| Event logs | `vanta event-logs` |
+
+Run `vanta <resource> --help` for the full list of actions on each resource.
 
 ## Useful flags
 
