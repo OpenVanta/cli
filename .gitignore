@@ -1,7 +1,7 @@
-/target
-Cargo.lock
-vanta
-api-spec.codegen.json
-internal/vantaapi/*_gen.go
-.cache/
+node_modules/
 dist/
+.cache/
+.DS_Store
+vanta
+*.tar.gz
+*.zip

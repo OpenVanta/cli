@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - ts-port
 
 jobs:
   test:
@@ -13,13 +14,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          go-version-file: go.mod
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
 
       - name: Generate API client
-        run: go generate ./internal/vantaapi
+        run: npm run generate
+
+      - name: Typecheck
+        run: npm run typecheck
 
       - name: Test
-        run: go test ./...
+        run: npm test
