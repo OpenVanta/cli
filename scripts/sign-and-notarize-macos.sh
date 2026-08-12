@@ -142,8 +142,6 @@ sign_and_notarize() {
     --wait \
     --timeout 20m
 
-  xcrun stapler staple "${work}/vanta"
-
   tar -czf "${archive}" -C "${work}" vanta
   cp "${work}/vanta" "${binary}"
   echo "Notarized and archived ${archive}"
