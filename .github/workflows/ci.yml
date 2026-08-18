@@ -5,21 +5,32 @@ on:
   push:
     branches:
       - main
+      - ts-port
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - name: Setup Node
+        uses: actions/setup-node@v5
         with:
-          go-version-file: go.mod
+          node-version: "22"
+          cache: yarn
+
+      - name: Install Yarn
+        run: npm install -g yarn@1.22.22
+
+      - name: Install
+        run: yarn install --frozen-lockfile
 
       - name: Generate API client
-        run: go generate ./internal/vantaapi
+        run: yarn generate
+
+      - name: Typecheck
+        run: yarn typecheck
 
       - name: Test
-        run: go test ./...
+        run: yarn test

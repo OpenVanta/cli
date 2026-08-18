@@ -10,18 +10,27 @@ permissions:
   contents: write
 
 jobs:
-  goreleaser:
+  release:
     runs-on: macos-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - name: Setup Node
+        uses: actions/setup-node@v5
         with:
-          go-version-file: go.mod
+          node-version: "22"
+          cache: yarn
+
+      - name: Install Yarn
+        run: npm install -g yarn@1.22.22
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       - name: Validate signing and notarization secrets
         env:
@@ -32,7 +41,6 @@ jobs:
           MACOS_NOTARY_KEY: ${{ secrets.MACOS_NOTARY_KEY }}
         run: |
           set -euo pipefail
-
           missing=0
           for name in \
             MACOS_SIGN_P12 \
@@ -45,21 +53,60 @@ jobs:
               missing=1
             fi
           done
-
           if [[ "$missing" -ne 0 ]]; then
             exit 1
           fi
 
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          distribution: goreleaser
-          version: "~> v2"
-          args: release --clean
+      - name: Install
+        run: yarn install --frozen-lockfile
+
+      - name: Generate API client
+        run: yarn generate
+
+      - name: Resolve version
+        id: version
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=0.0.0-dev.${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build binaries
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VANTA_VERSION: ${{ steps.version.outputs.version }}
+        run: yarn build:binaries
+
+      - name: Sign and notarize macOS binaries
+        env:
+          VANTA_VERSION: ${{ steps.version.outputs.version }}
           MACOS_SIGN_P12: ${{ secrets.MACOS_SIGN_P12 }}
           MACOS_SIGN_PASSWORD: ${{ secrets.MACOS_SIGN_PASSWORD }}
           MACOS_NOTARY_ISSUER_ID: ${{ secrets.MACOS_NOTARY_ISSUER_ID }}
           MACOS_NOTARY_KEY_ID: ${{ secrets.MACOS_NOTARY_KEY_ID }}
           MACOS_NOTARY_KEY: ${{ secrets.MACOS_NOTARY_KEY }}
+        run: bash scripts/sign-and-notarize-macos.sh
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: vanta-binaries-${{ steps.version.outputs.version }}
+          path: |
+            dist/binaries/*.tar.gz
+            dist/binaries/*.zip
+            dist/binaries/checksums.txt
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload release assets
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes \
+            dist/binaries/*.tar.gz \
+            dist/binaries/*.zip \
+            dist/binaries/checksums.txt

@@ -13,8 +13,7 @@
   <a href="#install">Install</a> ·
   <a href="#authenticate">Authenticate</a> ·
   <a href="#quick-start">Quick start</a> ·
-  <a href="#what-you-can-manage">Resources</a> ·
-  <a href="#examples">Examples</a>
+  <a href="#development">Development</a>
 </p>
 
 ---
@@ -43,6 +42,8 @@ Confirm the install:
 vanta version
 ```
 
+Standalone binaries are published for Linux, macOS, and Windows. macOS builds are signed and notarized.
+
 ## Authenticate
 
 Create an OAuth client in the [Vanta developer portal](https://app.vanta.com), then run:
@@ -51,7 +52,7 @@ Create an OAuth client in the [Vanta developer portal](https://app.vanta.com), t
 vanta login
 ```
 
-You’ll be prompted for your API base URL, client ID, and client secret. Credentials are stored securely in your system keychain when available (macOS Keychain or Windows Credential Manager). Your API base is saved to `~/.vanta/config.json`.
+You’ll be prompted for your API base URL, client ID, and client secret. Credentials are stored in the OS keychain when available (macOS Keychain or Windows Credential Manager), matching the previous Go CLI (`com.vanta.cli` / `oauth`). Your API base is saved to `~/.vanta/config.json`.
 
 You can also pass credentials via environment variables or flags:
 
@@ -106,58 +107,37 @@ vanta tests list --status-filter NEEDS_ATTENTION
 
 Run `vanta <resource> --help` for the full list of actions on each resource.
 
-## Examples
-
-**Controls and policies**
-
-```bash
-vanta controls list --page-size 50
-vanta controls create --json '{"name":"Example Control"}'
-vanta policies get --id code-of-conduct-bsi
-```
-
-**Documents and evidence**
-
-```bash
-vanta documents list --page-size 25
-vanta documents upload-file --id access-requests --file ./policy.pdf
-vanta documents download-file --id access-requests --uploaded-file-id 123 --output ./downloaded.pdf
-```
-
-**Tests**
-
-```bash
-vanta tests list --status-filter NEEDS_ATTENTION
-vanta tests list-entities --id aws-account-access-removed-on-termination --entity-status FAILING
-```
-
-**People**
-
-```bash
-vanta people update --id 65e1efde08e8478f143a8ff9 --file ./person-update.json
-```
-
-Create and update commands accept either `--json` (inline) or `--file` (path to a JSON file).
-
-## Pagination
-
-List commands return results in pages. Responses include a `nextCursor` when more results are available. Pass it with `--page-cursor` to fetch the next page:
-
-```bash
-vanta controls list --page-size 50 --page-cursor "<nextCursor>"
-```
-
 ## Useful flags
 
 | Flag | Description |
 | --- | --- |
-| `--dry-run` | Print the request without sending it |
-| `--pretty` | Pretty-print JSON output (on by default; use `--pretty=false` for compact output) |
+| `--dry-run` | Print the request without sending |
+| `--pretty` | Pretty-print JSON output (on by default; use `--no-pretty` for compact output) |
 | `--verbose` | Log request details to stderr |
-| `--agent-mode` | Optimize output for AI coding agents |
+| `--agent-mode` | Optimize output for AI coding agents (TOON) |
 
 ## Updates
 
-The CLI periodically checks for newer releases and prints a notice when one is available. To disable update checks, set `VANTA_NO_UPDATE=1`.
+The CLI periodically checks GitHub Releases for a newer version (cached for 24h in `~/.vanta/update-check.json`) and prints a notice on stderr when one is available. Checks are skipped for `dev` builds, non-TTY stderr, CI, agent mode, or when `VANTA_NO_UPDATE=1`.
 
-To upgrade to the latest version, re-run the install script.
+To upgrade:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/VantaInc/cli/main/scripts/install.sh | bash
+```
+
+## Development
+
+Requires Node 22+. Bun is required to build standalone binaries.
+
+```bash
+yarn install
+yarn generate   # OpenAPI → src/generated
+yarn dev version
+yarn typecheck
+yarn test
+yarn build              # generate + bundle for Node
+VANTA_VERSION=0.1.0 yarn build:binaries
+```
+
+The typed API client is generated from [`api-spec.json`](api-spec.json) with [`@hey-api/openapi-ts`](https://heyapi.dev/).
