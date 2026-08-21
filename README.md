@@ -23,17 +23,17 @@
 **macOS and Linux:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/VantaInc/cli/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/OpenVanta/cli/main/scripts/install.sh | bash
 ```
 
 Optional flags:
 
 ```bash
 # Install a specific version
-curl -fsSL https://raw.githubusercontent.com/VantaInc/cli/main/scripts/install.sh | bash -s -- --version v0.1.0
+curl -fsSL https://raw.githubusercontent.com/OpenVanta/cli/main/scripts/install.sh | bash -s -- --version v0.1.0
 
 # Install to a custom directory
-curl -fsSL https://raw.githubusercontent.com/VantaInc/cli/main/scripts/install.sh | bash -s -- --install-dir ~/.local/bin
+curl -fsSL https://raw.githubusercontent.com/OpenVanta/cli/main/scripts/install.sh | bash -s -- --install-dir ~/.local/bin
 ```
 
 Confirm the install:
@@ -123,7 +123,7 @@ The CLI periodically checks GitHub Releases for a newer version (cached for 24h 
 To upgrade:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/VantaInc/cli/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/OpenVanta/cli/main/scripts/install.sh | bash
 ```
 
 ## Development

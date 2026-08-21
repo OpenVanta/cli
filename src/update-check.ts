@@ -4,12 +4,12 @@ import { dirname, join } from "node:path";
 import { agentModeEnabled } from "./agent-mode.js";
 import { Version, displayVersion, normalizeVersion, userAgent } from "./version.js";
 
-const updateCheckRepo = "VantaInc/cli";
+const updateCheckRepo = "OpenVanta/cli";
 const updateCheckIntervalMs = 24 * 60 * 60 * 1000;
 const updateCheckHTTPTimeoutMs = 1500;
 const updateCheckEnvDisable = "VANTA_NO_UPDATE";
 const installScriptURL =
-  "https://raw.githubusercontent.com/VantaInc/cli/main/scripts/install.sh";
+  "https://raw.githubusercontent.com/OpenVanta/cli/main/scripts/install.sh";
 
 type UpdateCheckCache = {
   checked_at: string;

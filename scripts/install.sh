@@ -4,11 +4,11 @@ set -euo pipefail
 # Install the Vanta CLI from GitHub Releases.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/VantaInc/cli/main/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/OpenVanta/cli/main/scripts/install.sh | bash
 #   curl -fsSL .../install.sh | bash -s -- --version v0.1.0
 #   ./scripts/install.sh --install-dir ~/.local/bin
 
-REPO="${VANTA_REPO:-VantaInc/cli}"
+REPO="${VANTA_REPO:-OpenVanta/cli}"
 BINARY_NAME="vanta"
 INSTALL_DIR=""
 VERSION=""
@@ -26,7 +26,7 @@ Options:
   -h, --help            Show this help
 
 Environment:
-  VANTA_REPO            GitHub repo (default: VantaInc/cli)
+  VANTA_REPO            GitHub repo (default: OpenVanta/cli)
   VANTA_INSTALL_DIR     Override install directory
 EOF
 }
