@@ -30,7 +30,7 @@ Optional flags:
 
 ```bash
 # Install a specific version
-curl -fsSL https://raw.githubusercontent.com/OpenVanta/cli/main/scripts/install.sh | bash -s -- --version v0.1.0
+curl -fsSL https://raw.githubusercontent.com/OpenVanta/cli/main/scripts/install.sh | bash -s -- --version v0.2.0
 
 # Install to a custom directory
 curl -fsSL https://raw.githubusercontent.com/OpenVanta/cli/main/scripts/install.sh | bash -s -- --install-dir ~/.local/bin
@@ -137,7 +137,7 @@ yarn dev version
 yarn typecheck
 yarn test
 yarn build              # generate + bundle for Node
-VANTA_VERSION=0.1.0 yarn build:binaries
+VANTA_VERSION=0.2.0 yarn build:binaries
 ```
 
 The typed API client is generated from [`api-spec.json`](api-spec.json) with [`@hey-api/openapi-ts`](https://heyapi.dev/).
