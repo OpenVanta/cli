@@ -17,6 +17,7 @@ export type GlobalFlags = AuthOverrides & {
   dryRun: boolean;
   verbose: boolean;
   pretty: boolean;
+  prettyExplicit?: boolean;
   agentMode?: boolean;
 };
 
