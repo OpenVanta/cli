@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { printResponse } from "./output.js";
+import { printResponse, shouldUseAgentOutput } from "./output.js";
 
 describe("printResponse", () => {
   it("unwraps results.data into data/nextCursor", () => {
@@ -24,5 +24,37 @@ describe("printResponse", () => {
       nextCursor: "cursor-1",
       totalCount: 1,
     });
+  });
+});
+
+describe("shouldUseAgentOutput", () => {
+  it("honors explicit --pretty in an auto-detected agent environment", () => {
+    assert.equal(
+      shouldUseAgentOutput(
+        { pretty: true, prettyExplicit: true },
+        true,
+      ),
+      false,
+    );
+  });
+
+  it("honors explicit --no-pretty in an auto-detected agent environment", () => {
+    assert.equal(
+      shouldUseAgentOutput(
+        { pretty: false, prettyExplicit: true },
+        true,
+      ),
+      false,
+    );
+  });
+
+  it("keeps explicit agent mode precedence over explicit pretty output", () => {
+    assert.equal(
+      shouldUseAgentOutput(
+        { pretty: true, prettyExplicit: true, agentMode: true },
+        false,
+      ),
+      true,
+    );
   });
 });

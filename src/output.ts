@@ -3,8 +3,22 @@ import { agentModeEnabled } from "./agent-mode.js";
 
 export type OutputOptions = {
   pretty: boolean;
+  prettyExplicit?: boolean;
   agentMode?: boolean;
 };
+
+export function shouldUseAgentOutput(
+  options: OutputOptions,
+  agentEnvironmentDetected?: boolean,
+): boolean {
+  if (options.agentMode !== undefined) {
+    return options.agentMode;
+  }
+  return (
+    !options.prettyExplicit &&
+    (agentEnvironmentDetected ?? agentModeEnabled())
+  );
+}
 
 function unwrapResultsData(value: unknown): unknown {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -51,7 +65,7 @@ export function printResponse(
 
   const normalized = unwrapResultsData(value);
 
-  if (agentModeEnabled(options.agentMode)) {
+  if (shouldUseAgentOutput(options)) {
     write(`${encode(normalized)}\n`);
     return;
   }
