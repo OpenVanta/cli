@@ -198,24 +198,34 @@ export async function finishBackgroundUpdateCheck(
     return;
   }
 
-  const latest = await Promise.race([
-    checkPromise,
-    new Promise<null>((resolve) =>
-      setTimeout(() => resolve(null), updateCheckHTTPTimeoutMs),
-    ),
-  ]);
-  checkPromise = null;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const latest = await Promise.race([
+      checkPromise,
+      new Promise<null>((resolve) => {
+        timeout = setTimeout(() => resolve(null), updateCheckHTTPTimeoutMs);
+        timeout.unref?.();
+      }),
+    ]);
 
-  if (!latest || !isNewerVersion(latest, Version)) {
-    return;
+    if (!latest || !isNewerVersion(latest, Version)) {
+      return;
+    }
+
+    write(
+      `\nA new version of vanta is available: ${displayVersion(latest)} (you have ${displayVersion(Version)})\nUpdate with:\n  curl -fsSL ${installScriptURL} | bash\n\n`,
+    );
+  } finally {
+    if (timeout !== undefined) {
+      clearTimeout(timeout);
+    }
+    checkPromise = null;
   }
-
-  write(
-    `\nA new version of vanta is available: ${displayVersion(latest)} (you have ${displayVersion(Version)})\nUpdate with:\n  curl -fsSL ${installScriptURL} | bash\n\n`,
-  );
 }
 
-/** Test helper to clear in-flight check state. */
-export function resetUpdateCheckStateForTests(): void {
-  checkPromise = null;
+/** Test helper to seed or clear in-flight check state. */
+export function resetUpdateCheckStateForTests(
+  promise: Promise<string | null> | null = null,
+): void {
+  checkPromise = promise;
 }
