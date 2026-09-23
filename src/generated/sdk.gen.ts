@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape } from './client/index.js';
-import type { AcknowledgeSlaMissVulnerabilityRemediationsData, AcknowledgeSlaMissVulnerabilityRemediationsResponses, AddControlFromLibraryData, AddControlFromLibraryResponses, AddControlToTrustCenterData, AddControlToTrustCenterResponses, AddDiscoveredVendorToManagedData, AddDiscoveredVendorToManagedResponses, AddDocumentToControlData, AddDocumentToControlResponses, AddPeopleToGroupData, AddPeopleToGroupResponses, AddPersonToGroupData, AddPersonToGroupResponses, AddTestToControlData, AddTestToControlResponses, AddTrustCenterControlCategoryData, AddTrustCenterControlCategoryResponses, AddTrustCenterResourceCategoryData, AddTrustCenterResourceCategoryResponses, AddTrustCenterViewerData, AddTrustCenterViewerResponses, ApproveQuestionnaireData, ApproveQuestionnaireResponses, ApproveTrustCenterAccessRequestData, ApproveTrustCenterAccessRequestResponses, CancelRiskScenarioApprovalRequestData, CancelRiskScenarioApprovalRequestResponses, ClearLeaveForPersonData, ClearLeaveForPersonResponses, CompleteQuestionnaireData, CompleteQuestionnaireResponses, CreateAnswerLibraryEntryData, CreateAnswerLibraryEntryResponses, CreateCustomControlData, CreateCustomControlResponses, CreateCustomerTrustAccountData, CreateCustomerTrustAccountResponses, CreateDocumentData, CreateDocumentResourceData, CreateDocumentResourceResponses, CreateDocumentResponses, CreateFileQuestionnaireData, CreateFileQuestionnaireResponses, CreateLinkForDocumentData, CreateLinkForDocumentResponses, CreateQuestionnaireExportData, CreateQuestionnaireExportResponses, CreateRiskScenarioControlData, CreateRiskScenarioControlResponses, CreateRiskScenarioData, CreateRiskScenarioResponses, CreateTrustCenterFaqData, CreateTrustCenterFaqResponses, CreateTrustCenterResourceData, CreateTrustCenterResourceResponses, CreateTrustCenterSubprocessorData, CreateTrustCenterSubprocessorResponses, CreateTrustCenterSubscriberData, CreateTrustCenterSubscriberGroupData, CreateTrustCenterSubscriberGroupResponses, CreateTrustCenterSubscriberResponses, CreateTrustCenterUpdateData, CreateTrustCenterUpdateResponses, CreateVendorData, CreateVendorFindingData, CreateVendorFindingResponses, CreateVendorResponses, CreateWebpageResourceData, CreateWebpageResourceResponses, CreateWebsiteQuestionnaireData, CreateWebsiteQuestionnaireResponses, DeactivateTestEntityData, DeactivateTestEntityResponses, DeactivateVulnerabilitiesData, DeactivateVulnerabilitiesResponses, DeleteAnswerLibraryEntryRouteData, DeleteAnswerLibraryEntryRouteResponses, DeleteByIdData, DeleteByIdResponses, DeleteContractData, DeleteContractResponses, DeleteControlData, DeleteControlResponses, DeleteCustomerTrustAccountData, DeleteCustomerTrustAccountResponses, DeleteDocumentData, DeleteDocumentForcontrolData, DeleteDocumentForcontrolResponses, DeleteDocumentResponses, DeleteFileForDocumentData, DeleteFileForDocumentResponses, DeleteFindingByIdData, DeleteFindingByIdResponses, DeleteKnowledgeBaseResourceData, DeleteKnowledgeBaseResourceResponses, DeleteLinkForDocumentData, DeleteLinkForDocumentResponses, DeleteQuestionnaireData, DeleteQuestionnaireResponses, DeleteRiskScenarioControlData, DeleteRiskScenarioControlResponses, DeleteSecurityReviewDocumentByIdData, DeleteSecurityReviewDocumentByIdResponses, DeleteTestForControlData, DeleteTestForControlResponses, DeleteTrustCenterControlCategoryData, DeleteTrustCenterControlCategoryResponses, DeleteTrustCenterControlData, DeleteTrustCenterControlResponses, DeleteTrustCenterFaqData, DeleteTrustCenterFaqResponses, DeleteTrustCenterResourceCategoryData, DeleteTrustCenterResourceCategoryResponses, DeleteTrustCenterResourceData, DeleteTrustCenterResourceResponses, DeleteTrustCenterSubprocessorData, DeleteTrustCenterSubprocessorResponses, DeleteTrustCenterSubscriberData, DeleteTrustCenterSubscriberGroupData, DeleteTrustCenterSubscriberGroupResponses, DeleteTrustCenterSubscriberResponses, DeleteTrustCenterUpdateData, DeleteTrustCenterUpdateResponses, DenyTrustCenterAccessRequestData, DenyTrustCenterAccessRequestResponses, GetAnswerLibraryEntryData, GetAnswerLibraryEntryResponses, GetConnectedIntegrationData, GetConnectedIntegrationResponses, GetContractData, GetContractResponses, GetControlData, GetControlResponses, GetCustomerTrustAccountData, GetCustomerTrustAccountResponses, GetDocumentData, GetDocumentResponses, GetFrameworkData, GetFrameworkResponses, GetGroupData, GetGroupMembersData, GetGroupMembersResponses, GetGroupResponses, GetKnowledgeBaseResourceData, GetKnowledgeBaseResourceResponses, GetMonitoredComputerData, GetMonitoredComputerResponses, GetPersonData, GetPersonResponses, GetPolicyData, GetPolicyResponses, GetQuestionnaireData, GetQuestionnaireExportData, GetQuestionnaireExportResponses, GetQuestionnaireResponses, GetResourceData, GetResourceKindDetailsData, GetResourceKindDetailsResponses, GetResourceResponses, GetRiskScenarioData, GetRiskScenarioResponses, GetSecurityReviewDocumentsData, GetSecurityReviewDocumentsResponses, GetSecurityReviewsByIdData, GetSecurityReviewsByIdResponses, GetSecurityReviewsByVendorIdData, GetSecurityReviewsByVendorIdResponses, GetTagsForCategoryData, GetTagsForCategoryResponses, GetTestData, GetTestEntitiesData, GetTestEntitiesResponses, GetTestResponses, GetTrustCenterAccessRequestData, GetTrustCenterAccessRequestResponses, GetTrustCenterControlCategoriesData, GetTrustCenterControlCategoriesResponses, GetTrustCenterControlCategoryData, GetTrustCenterControlCategoryResponses, GetTrustCenterControlData, GetTrustCenterControlResponses, GetTrustCenterData, GetTrustCenterFaqData, GetTrustCenterFaqResponses, GetTrustCenterResourceData, GetTrustCenterResourceMediaData, GetTrustCenterResourceMediaResponses, GetTrustCenterResourceResponses, GetTrustCenterResponses, GetTrustCenterSubprocessorData, GetTrustCenterSubprocessorResponses, GetTrustCenterSubscriberData, GetTrustCenterSubscriberGroupData, GetTrustCenterSubscriberGroupResponses, GetTrustCenterSubscriberResponses, GetTrustCenterUpdateData, GetTrustCenterUpdateResponses, GetTrustCenterViewerData, GetTrustCenterViewerResponses, GetUploadedfileMediaData, GetUploadedfileMediaResponses, GetUserData, GetUserResponses, GetVendorData, GetVendorResponses, GetVulnerabilityData, GetVulnerabilityResponses, GetVulnerableAssetData, GetVulnerableAssetResponses, ListAnswerLibraryEntriesData, ListAnswerLibraryEntriesResponses, ListAssignableUsersData, ListAssignableUsersResponses, ListConnectedIntegrationsData, ListConnectedIntegrationsResponses, ListContractsData, ListContractsResponses, ListControlsData, ListControlsForDocumentData, ListControlsForDocumentResponses, ListControlsForFrameworkData, ListControlsForFrameworkResponses, ListControlsResponses, ListCustomerTrustAccountsData, ListCustomerTrustAccountsResponses, ListDiscoveredVendorAccountsData, ListDiscoveredVendorAccountsResponses, ListDiscoveredVendorsData, ListDiscoveredVendorsResponses, ListDocumentsData, ListDocumentsForControlData, ListDocumentsForControlResponses, ListDocumentsResponses, ListEventLogsData, ListEventLogsResponses, ListFilesForDocumentData, ListFilesForDocumentResponses, ListFrameworksData, ListFrameworksResponses, ListKnowledgeBaseResourcesData, ListKnowledgeBaseResourcesResponses, ListLibraryControlsData, ListLibraryControlsResponses, ListLinksForDocumentData, ListLinksForDocumentResponses, ListMonitoredComputersData, ListMonitoredComputersResponses, ListPeopleData, ListPeopleResponses, ListPersonGroupsData, ListPersonGroupsResponses, ListPoliciesData, ListPoliciesResponses, ListQuestionnairesData, ListQuestionnairesResponses, ListResourceKindSummariesData, ListResourceKindSummariesResponses, ListResourcesData, ListResourcesResponses, ListRiskScenarioControlsData, ListRiskScenarioControlsResponses, ListRiskScenarioData, ListRiskScenarioResponses, ListTagCategoriesData, ListTagCategoriesResponses, ListTestsData, ListTestsForControlData, ListTestsForControlResponses, ListTestsResponses, ListTrustCenterAccessRequestsData, ListTrustCenterAccessRequestsResponses, ListTrustCenterActivityEventsData, ListTrustCenterActivityEventsResponses, ListTrustCenterControlsData, ListTrustCenterControlsResponses, ListTrustCenterFaqsData, ListTrustCenterFaqsResponses, ListTrustCenterHistoricalAccessRequestsData, ListTrustCenterHistoricalAccessRequestsResponses, ListTrustCenterResourceCategoriesData, ListTrustCenterResourceCategoriesResponses, ListTrustCenterResourcesData, ListTrustCenterResourcesResponses, ListTrustCenterSubprocessorsData, ListTrustCenterSubprocessorsResponses, ListTrustCenterSubscriberGroupsData, ListTrustCenterSubscriberGroupsResponses, ListTrustCenterSubscribersData, ListTrustCenterSubscribersResponses, ListTrustCenterUpdatesData, ListTrustCenterUpdatesResponses, ListTrustCenterViewersData, ListTrustCenterViewersResponses, ListUsersData, ListUsersResponses, ListVendorDocumentsData, ListVendorDocumentsResponses, ListVendorFindingsData, ListVendorFindingsResponses, ListVendorRiskAttributesData, ListVendorRiskAttributesResponses, ListVendorsData, ListVendorsResponses, ListVulnerabilitiesData, ListVulnerabilitiesResponses, ListVulnerabilityRemediationsData, ListVulnerabilityRemediationsResponses, ListVulnerableAssetsData, ListVulnerableAssetsResponses, MarkAsNotPeopleData, MarkAsNotPeopleResponses, MarkAsPeopleData, MarkAsPeopleResponses, OffboardPeopleData, OffboardPeopleResponses, ReactivateTestEntityData, ReactivateTestEntityResponses, ReactivateVulnerabilitiesData, ReactivateVulnerabilitiesResponses, RemovePeopleFromGroupData, RemovePeopleFromGroupResponses, RemovePersonFromGroupData, RemovePersonFromGroupResponses, RemoveTrustCenterViewerData, RemoveTrustCenterViewerResponses, ReplaceDocumentResourceFileData, ReplaceDocumentResourceFileResponses, SendNotificationsToAllSubscribersData, SendNotificationsToAllSubscribersResponses, SendTrustCenterUpdateNotificationsData, SendTrustCenterUpdateNotificationsResponses, SetLeaveForPersonData, SetLeaveForPersonResponses, SetOwnerForControlData, SetOwnerForControlResponses, SetOwnerForDocumentData, SetOwnerForDocumentResponses, SetStatusForVendorData, SetStatusForVendorResponses, SubmitDocumentCollectionData, SubmitDocumentCollectionResponses, SubmitRiskForApprovalData, SubmitRiskForApprovalResponses, UpdateAnswerLibraryEntryRouteData, UpdateAnswerLibraryEntryRouteResponses, UpdateControlMetadataData, UpdateControlMetadataResponses, UpdateCustomerTrustAccountData, UpdateCustomerTrustAccountResponses, UpdateDocumentResourceData, UpdateDocumentResourceResponses, UpdatePersonData, UpdatePersonResponses, UpdateQuestionnaireData, UpdateQuestionnaireResponses, UpdateResourceData, UpdateResourceResponses, UpdateResourcesData, UpdateResourcesResponses, UpdateRiskScenarioControlData, UpdateRiskScenarioControlResponses, UpdateRiskScenarioData, UpdateRiskScenarioResponses, UpdateTrustCenterControlCategoryData, UpdateTrustCenterControlCategoryResponses, UpdateTrustCenterData, UpdateTrustCenterFaqData, UpdateTrustCenterFaqResponses, UpdateTrustCenterResourceCategoryData, UpdateTrustCenterResourceCategoryResponses, UpdateTrustCenterResourceData, UpdateTrustCenterResourceResponses, UpdateTrustCenterResponses, UpdateTrustCenterSubprocessorData, UpdateTrustCenterSubprocessorResponses, UpdateTrustCenterSubscriberGroupData, UpdateTrustCenterSubscriberGroupResponses, UpdateTrustCenterUpdateData, UpdateTrustCenterUpdateResponses, UpdateTrustCenterViewerData, UpdateTrustCenterViewerResponses, UpdateVendorData, UpdateVendorFindingData, UpdateVendorFindingResponses, UpdateVendorResponses, UpdateWebpageResourceData, UpdateWebpageResourceResponses, UploadContractData, UploadContractResponses, UploadDocumentForSecurityReviewData, UploadDocumentForSecurityReviewResponses, UploadDocumentToVendorData, UploadDocumentToVendorResponses, UploadFileForDocumentData, UploadFileForDocumentResponses, UpsertGroupsForTrustCenterSubscriberData, UpsertGroupsForTrustCenterSubscriberResponses, UpsertTrustCenterResourceCategoriesOrderData, UpsertTrustCenterResourceCategoriesOrderResponses, VerifyAnswerLibraryEntryRouteData, VerifyAnswerLibraryEntryRouteResponses, VerifyKnowledgeBaseResourceData, VerifyKnowledgeBaseResourceResponses } from './types.gen.js';
+import type { AcknowledgeSlaMissVulnerabilityRemediationsData, AcknowledgeSlaMissVulnerabilityRemediationsResponses, AddControlFromLibraryData, AddControlFromLibraryResponses, AddControlToTrustCenterData, AddControlToTrustCenterResponses, AddDiscoveredVendorToManagedData, AddDiscoveredVendorToManagedResponses, AddDocumentToControlData, AddDocumentToControlResponses, AddPeopleToGroupData, AddPeopleToGroupResponses, AddPersonToGroupData, AddPersonToGroupResponses, AddTagCategoryProductContextData, AddTagCategoryProductContextResponses, AddTestToControlData, AddTestToControlResponses, AddTrustCenterControlCategoryData, AddTrustCenterControlCategoryResponses, AddTrustCenterFaqCategoryData, AddTrustCenterFaqCategoryResponses, AddTrustCenterResourceCategoryData, AddTrustCenterResourceCategoryResponses, AddTrustCenterViewerData, AddTrustCenterViewerResponses, ApproveQuestionnaireData, ApproveQuestionnaireResponses, ApproveTrustCenterAccessRequestData, ApproveTrustCenterAccessRequestResponses, BulkAddTagsToControlsData, BulkAddTagsToControlsResponses, BulkRemoveTagsFromControlsData, BulkRemoveTagsFromControlsResponses, CancelRiskScenarioApprovalRequestData, CancelRiskScenarioApprovalRequestResponses, ClearLeaveForPersonData, ClearLeaveForPersonResponses, CompleteQuestionnaireData, CompleteQuestionnaireResponses, CreateAnswerLibraryEntryData, CreateAnswerLibraryEntryResponses, CreateComplianceFrameworkData, CreateComplianceFrameworkResponses, CreateCustomControlData, CreateCustomControlResponses, CreateCustomerTrustAccountData, CreateCustomerTrustAccountResponses, CreateDeletionRequestData, CreateDeletionRequestResponses, CreateDocumentData, CreateDocumentResourceData, CreateDocumentResourceResponses, CreateDocumentResponses, CreateFileQuestionnaireData, CreateFileQuestionnaireResponses, CreateGroupData, CreateGroupResponses, CreateLinkForDocumentData, CreateLinkForDocumentResponses, CreateQuestionnaireExportData, CreateQuestionnaireExportResponses, CreateRiskScenarioControlData, CreateRiskScenarioControlResponses, CreateRiskScenarioData, CreateRiskScenarioResponses, CreateTrustCenterFaqData, CreateTrustCenterFaqResponses, CreateTrustCenterResourceData, CreateTrustCenterResourceResponses, CreateTrustCenterSubprocessorData, CreateTrustCenterSubprocessorResponses, CreateTrustCenterSubscriberData, CreateTrustCenterSubscriberGroupData, CreateTrustCenterSubscriberGroupResponses, CreateTrustCenterSubscriberResponses, CreateTrustCenterUpdateData, CreateTrustCenterUpdateResponses, CreateVendorData, CreateVendorFindingData, CreateVendorFindingResponses, CreateVendorResponses, CreateWebpageResourceData, CreateWebpageResourceResponses, CreateWebsiteQuestionnaireData, CreateWebsiteQuestionnaireResponses, DeactivateTestEntityData, DeactivateTestEntityResponses, DeactivateVulnerabilitiesData, DeactivateVulnerabilitiesResponses, DeleteAnswerLibraryEntryRouteData, DeleteAnswerLibraryEntryRouteResponses, DeleteByIdData, DeleteByIdResponses, DeleteComplianceFrameworkData, DeleteComplianceFrameworkResponses, DeleteContractData, DeleteContractResponses, DeleteControlData, DeleteControlResponses, DeleteCustomerTrustAccountData, DeleteCustomerTrustAccountResponses, DeleteDocumentData, DeleteDocumentForcontrolData, DeleteDocumentForcontrolResponses, DeleteDocumentResponses, DeleteFileForDocumentData, DeleteFileForDocumentResponses, DeleteFindingByIdData, DeleteFindingByIdResponses, DeleteKnowledgeBaseResourceData, DeleteKnowledgeBaseResourceResponses, DeleteLinkForDocumentData, DeleteLinkForDocumentResponses, DeleteQuestionnaireData, DeleteQuestionnaireResponses, DeleteRiskScenarioControlData, DeleteRiskScenarioControlResponses, DeleteSecurityReviewDocumentByIdData, DeleteSecurityReviewDocumentByIdResponses, DeleteTestForControlData, DeleteTestForControlResponses, DeleteTrustCenterControlCategoryData, DeleteTrustCenterControlCategoryResponses, DeleteTrustCenterControlData, DeleteTrustCenterControlResponses, DeleteTrustCenterFaqCategoryData, DeleteTrustCenterFaqCategoryResponses, DeleteTrustCenterFaqData, DeleteTrustCenterFaqResponses, DeleteTrustCenterResourceCategoryData, DeleteTrustCenterResourceCategoryResponses, DeleteTrustCenterResourceData, DeleteTrustCenterResourceResponses, DeleteTrustCenterSubprocessorData, DeleteTrustCenterSubprocessorResponses, DeleteTrustCenterSubscriberData, DeleteTrustCenterSubscriberGroupData, DeleteTrustCenterSubscriberGroupResponses, DeleteTrustCenterSubscriberResponses, DeleteTrustCenterUpdateData, DeleteTrustCenterUpdateResponses, DenyTrustCenterAccessRequestData, DenyTrustCenterAccessRequestResponses, GetAnswerLibraryEntryData, GetAnswerLibraryEntryResponses, GetAssessmentByIdData, GetAssessmentByIdResponses, GetAssessmentsByVendorIdData, GetAssessmentsByVendorIdResponses, GetBusinessUnitData, GetBusinessUnitResponses, GetChatbotConversationMessagesData, GetChatbotConversationMessagesResponses, GetConnectedIntegrationData, GetConnectedIntegrationResponses, GetContractData, GetContractResponses, GetControlData, GetControlResponses, GetCustomerTrustAccountData, GetCustomerTrustAccountResponses, GetDocumentData, GetDocumentResponses, GetFrameworkData, GetFrameworkResponses, GetGroupData, GetGroupMembersData, GetGroupMembersResponses, GetGroupResponses, GetIssueData, GetIssueResponses, GetKnowledgeBaseResourceData, GetKnowledgeBaseResourceResponses, GetMonitoredComputerData, GetMonitoredComputerResponses, GetPersonData, GetPersonResponses, GetPolicyData, GetPolicyResponses, GetProgramScopeData, GetProgramScopeResponses, GetQuestionnaireData, GetQuestionnaireExportData, GetQuestionnaireExportResponses, GetQuestionnaireResponseData, GetQuestionnaireResponseResponses, GetQuestionnaireResponses, GetResourceData, GetResourceKindDetailsData, GetResourceKindDetailsResponses, GetResourceResponses, GetRiskScenarioData, GetRiskScenarioResponses, GetSecurityReviewDocumentsData, GetSecurityReviewDocumentsResponses, GetSecurityReviewsByIdData, GetSecurityReviewsByIdResponses, GetSecurityReviewsByVendorIdData, GetSecurityReviewsByVendorIdResponses, GetSettingsData, GetSettingsResponses, GetTagsForCategoryData, GetTagsForCategoryResponses, GetTestData, GetTestEntitiesData, GetTestEntitiesResponses, GetTestResponses, GetTrustCenterAccessRequestData, GetTrustCenterAccessRequestResponses, GetTrustCenterControlCategoriesData, GetTrustCenterControlCategoriesResponses, GetTrustCenterControlCategoryData, GetTrustCenterControlCategoryResponses, GetTrustCenterControlData, GetTrustCenterControlResponses, GetTrustCenterData, GetTrustCenterFaqData, GetTrustCenterFaqResponses, GetTrustCenterResourceData, GetTrustCenterResourceMediaData, GetTrustCenterResourceMediaResponses, GetTrustCenterResourceResponses, GetTrustCenterResponses, GetTrustCenterSubprocessorData, GetTrustCenterSubprocessorResponses, GetTrustCenterSubscriberData, GetTrustCenterSubscriberGroupData, GetTrustCenterSubscriberGroupResponses, GetTrustCenterSubscriberResponses, GetTrustCenterUpdateData, GetTrustCenterUpdateResponses, GetTrustCenterViewerData, GetTrustCenterViewerResponses, GetUploadedfileMediaData, GetUploadedfileMediaResponses, GetUserData, GetUserResponses, GetVendorAssessmentTypeByIdData, GetVendorAssessmentTypeByIdResponses, GetVendorData, GetVendorResponses, GetVulnerabilityData, GetVulnerabilityResponses, GetVulnerableAssetData, GetVulnerableAssetResponses, ImportIdpGroupsData, ImportIdpGroupsResponses, ListAnswerLibraryEntriesData, ListAnswerLibraryEntriesResponses, ListAssignableUsersData, ListAssignableUsersResponses, ListBusinessUnitsData, ListBusinessUnitsResponses, ListChatbotConversationsData, ListChatbotConversationsResponses, ListComplianceFrameworksData, ListComplianceFrameworksResponses, ListConnectedIntegrationsData, ListConnectedIntegrationsResponses, ListContractsData, ListContractsResponses, ListControlsData, ListControlsForDocumentData, ListControlsForDocumentResponses, ListControlsForFrameworkData, ListControlsForFrameworkResponses, ListControlsResponses, ListCustomerTrustAccountsData, ListCustomerTrustAccountsResponses, ListData, ListDeactivatedControlsData, ListDeactivatedControlsResponses, ListDiscoveredVendorAccountsData, ListDiscoveredVendorAccountsResponses, ListDiscoveredVendorsData, ListDiscoveredVendorsResponses, ListDocumentsData, ListDocumentsForControlData, ListDocumentsForControlResponses, ListDocumentsResponses, ListEventLogsData, ListEventLogsResponses, ListFilesForDocumentData, ListFilesForDocumentResponses, ListFrameworksData, ListFrameworksResponses, ListImportableIdpGroupsData, ListImportableIdpGroupsResponses, ListKnowledgeBaseResourcesData, ListKnowledgeBaseResourcesResponses, ListLibraryControlsData, ListLibraryControlsResponses, ListLinksForDocumentData, ListLinksForDocumentResponses, ListMonitoredComputersData, ListMonitoredComputersResponses, ListPeopleData, ListPeopleResponses, ListPersonGroupsData, ListPersonGroupsResponses, ListPoliciesData, ListPoliciesResponses, ListProgramScopesData, ListProgramScopesResponses, ListQuestionnaireResponsesData, ListQuestionnaireResponsesResponses, ListQuestionnairesData, ListQuestionnairesResponses, ListResourceKindSummariesData, ListResourceKindSummariesResponses, ListResourcesData, ListResourcesResponses, ListResponses, ListRiskScenarioControlsData, ListRiskScenarioControlsResponses, ListRiskScenarioData, ListRiskScenarioResponses, ListTagCategoriesData, ListTagCategoriesResponses, ListTestsData, ListTestsForControlData, ListTestsForControlResponses, ListTestsResponses, ListTrustCenterAccessRequestsData, ListTrustCenterAccessRequestsResponses, ListTrustCenterActivityEventsData, ListTrustCenterActivityEventsResponses, ListTrustCenterControlsData, ListTrustCenterControlsResponses, ListTrustCenterDataCollectedData, ListTrustCenterDataCollectedResponses, ListTrustCenterFaqCategoriesData, ListTrustCenterFaqCategoriesResponses, ListTrustCenterFaqsData, ListTrustCenterFaqsResponses, ListTrustCenterHistoricalAccessRequestsData, ListTrustCenterHistoricalAccessRequestsResponses, ListTrustCenterResourceCategoriesData, ListTrustCenterResourceCategoriesResponses, ListTrustCenterResourcesData, ListTrustCenterResourcesResponses, ListTrustCenterSubprocessorsData, ListTrustCenterSubprocessorsResponses, ListTrustCenterSubscriberGroupsData, ListTrustCenterSubscriberGroupsResponses, ListTrustCenterSubscribersData, ListTrustCenterSubscribersResponses, ListTrustCenterUpdatesData, ListTrustCenterUpdatesResponses, ListTrustCenterViewersData, ListTrustCenterViewersResponses, ListUsersData, ListUsersResponses, ListVendorAssessmentTypesData, ListVendorAssessmentTypesResponses, ListVendorDocumentsData, ListVendorDocumentsResponses, ListVendorFindingsData, ListVendorFindingsResponses, ListVendorRiskAttributesData, ListVendorRiskAttributesResponses, ListVendorsData, ListVendorsResponses, ListVulnerabilitiesData, ListVulnerabilitiesResponses, ListVulnerabilityRemediationsData, ListVulnerabilityRemediationsResponses, ListVulnerableAssetsData, ListVulnerableAssetsResponses, MarkAsNotPeopleData, MarkAsNotPeopleResponses, MarkAsPeopleData, MarkAsPeopleResponses, OffboardPeopleData, OffboardPeopleResponses, ReactivateTestEntityData, ReactivateTestEntityResponses, ReactivateVulnerabilitiesData, ReactivateVulnerabilitiesResponses, RemovePeopleFromGroupData, RemovePeopleFromGroupResponses, RemovePersonFromGroupData, RemovePersonFromGroupResponses, RemoveTagCategoryProductContextData, RemoveTagCategoryProductContextResponses, RemoveTrustCenterViewerData, RemoveTrustCenterViewerResponses, ReplaceDocumentResourceFileData, ReplaceDocumentResourceFileResponses, SendNotificationsToAllSubscribersData, SendNotificationsToAllSubscribersResponses, SendTrustCenterUpdateNotificationsData, SendTrustCenterUpdateNotificationsResponses, SendTrustCenterViewerInviteReminderData, SendTrustCenterViewerInviteReminderResponses, SetLeaveForPersonData, SetLeaveForPersonResponses, SetOwnerForControlData, SetOwnerForControlResponses, SetOwnerForDocumentData, SetOwnerForDocumentResponses, SetStatusForVendorData, SetStatusForVendorResponses, SubmitDocumentCollectionData, SubmitDocumentCollectionResponses, SubmitRiskForApprovalData, SubmitRiskForApprovalResponses, UpdateAnswerLibraryEntryRouteData, UpdateAnswerLibraryEntryRouteResponses, UpdateComplianceFrameworkData, UpdateComplianceFrameworkResponses, UpdateControlMetadataData, UpdateControlMetadataResponses, UpdateCustomerTrustAccountData, UpdateCustomerTrustAccountResponses, UpdateDocumentResourceData, UpdateDocumentResourceResponses, UpdateGroupData, UpdateGroupResponses, UpdatePersonData, UpdatePersonResponses, UpdateQuestionnaireData, UpdateQuestionnaireResponseContentData, UpdateQuestionnaireResponseContentResponses, UpdateQuestionnaireResponseOwnerData, UpdateQuestionnaireResponseOwnerResponses, UpdateQuestionnaireResponses, UpdateResourceData, UpdateResourceResponses, UpdateResourcesData, UpdateResourcesResponses, UpdateRiskScenarioControlData, UpdateRiskScenarioControlResponses, UpdateRiskScenarioData, UpdateRiskScenarioResponses, UpdateSettingsData, UpdateSettingsResponses, UpdateTrustCenterControlCategoryData, UpdateTrustCenterControlCategoryResponses, UpdateTrustCenterControlsInCategoryData, UpdateTrustCenterControlsInCategoryResponses, UpdateTrustCenterData, UpdateTrustCenterFaqCategoryData, UpdateTrustCenterFaqCategoryResponses, UpdateTrustCenterFaqData, UpdateTrustCenterFaqResponses, UpdateTrustCenterResourceCategoryData, UpdateTrustCenterResourceCategoryResponses, UpdateTrustCenterResourceData, UpdateTrustCenterResourceResponses, UpdateTrustCenterResponses, UpdateTrustCenterSubprocessorData, UpdateTrustCenterSubprocessorResponses, UpdateTrustCenterSubscriberGroupData, UpdateTrustCenterSubscriberGroupResponses, UpdateTrustCenterUpdateData, UpdateTrustCenterUpdateResponses, UpdateTrustCenterViewerData, UpdateTrustCenterViewerResponses, UpdateVendorData, UpdateVendorFindingData, UpdateVendorFindingResponses, UpdateVendorResponses, UpdateWebpageResourceData, UpdateWebpageResourceResponses, UploadComplianceFrameworkBadgeData, UploadComplianceFrameworkBadgeResponses, UploadContractData, UploadContractResponses, UploadDocumentForSecurityReviewData, UploadDocumentForSecurityReviewResponses, UploadDocumentToVendorData, UploadDocumentToVendorResponses, UploadFileForDocumentData, UploadFileForDocumentResponses, UploadTrustCenterFaviconData, UploadTrustCenterFaviconResponses, UpsertGroupsForTrustCenterSubscriberData, UpsertGroupsForTrustCenterSubscriberResponses, UpsertTrustCenterControlCategoriesOrderData, UpsertTrustCenterControlCategoriesOrderResponses, UpsertTrustCenterControlsInCategoryOrderData, UpsertTrustCenterControlsInCategoryOrderResponses, UpsertTrustCenterDataCollectedData, UpsertTrustCenterDataCollectedResponses, UpsertTrustCenterResourceCategoriesOrderData, UpsertTrustCenterResourceCategoriesOrderResponses, UpsertTrustCenterVideosData, UpsertTrustCenterVideosResponses, VerifyAnswerLibraryEntryRouteData, VerifyAnswerLibraryEntryRouteResponses, VerifyKnowledgeBaseResourceData, VerifyKnowledgeBaseResourceResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -16,6 +16,44 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      * used to access values that aren't defined as part of the SDK function.
      */
     meta?: Record<string, unknown>;
+};
+
+/**
+ * List business units
+ *
+ * Lists the business units for your organization.
+ * Returns 403 when business unit scoping is disabled for the domain.
+ */
+export const listBusinessUnits = <ThrowOnError extends boolean = false>(options?: Options<ListBusinessUnitsData, ThrowOnError>) => {
+    return (options?.client ?? client).get<ListBusinessUnitsResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/business-units',
+        ...options
+    });
+};
+
+/**
+ * Get business unit by ID
+ *
+ * Get a business unit by ID.
+ * Returns 403 when business unit scoping is disabled for the domain.
+ */
+export const getBusinessUnit = <ThrowOnError extends boolean = false>(options: Options<GetBusinessUnitData, ThrowOnError>) => {
+    return (options.client ?? client).get<GetBusinessUnitResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/business-units/{businessUnitId}',
+        ...options
+    });
 };
 
 /**
@@ -40,6 +78,8 @@ export const listContracts = <ThrowOnError extends boolean = false>(options?: Op
  * Upload contract
  *
  * Upload a contract.
+ *
+ * Rate limit: 10 requests / minute.
  */
 export const uploadContract = <ThrowOnError extends boolean = false>(options: Options<UploadContractData, ThrowOnError>) => {
     return (options.client ?? client).post<UploadContractResponses, unknown, ThrowOnError>({
@@ -161,6 +201,8 @@ export const addControlFromLibrary = <ThrowOnError extends boolean = false>(opti
  * List Vanta controls from the library
  *
  * List Vanta controls from the library.
+ *
+ * @deprecated
  */
 export const listLibraryControls = <ThrowOnError extends boolean = false>(options?: Options<ListLibraryControlsData, ThrowOnError>) => {
     return (options?.client ?? client).get<ListLibraryControlsResponses, unknown, ThrowOnError>({
@@ -171,6 +213,24 @@ export const listLibraryControls = <ThrowOnError extends boolean = false>(option
             }
         ],
         url: '/controls/controls-library',
+        ...options
+    });
+};
+
+/**
+ * List deactivated controls
+ *
+ * List deactivated Vanta controls (previously known as the controls library).
+ */
+export const listDeactivatedControls = <ThrowOnError extends boolean = false>(options?: Options<ListDeactivatedControlsData, ThrowOnError>) => {
+    return (options?.client ?? client).get<ListDeactivatedControlsResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/controls/deactivated-controls',
         ...options
     });
 };
@@ -470,6 +530,28 @@ export const updateCustomerTrustAccount = <ThrowOnError extends boolean = false>
 };
 
 /**
+ * Create data deletion request
+ *
+ * Submit a Right to Be Forgotten (RTBF) data deletion request for the specified email address.
+ */
+export const createDeletionRequest = <ThrowOnError extends boolean = false>(options: Options<CreateDeletionRequestData, ThrowOnError>) => {
+    return (options.client ?? client).post<CreateDeletionRequestResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/customer-trust/deletion-requests',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
  * List questionnaires
  *
  * List questionnaires with filtering and pagination.
@@ -718,6 +800,92 @@ export const completeQuestionnaire = <ThrowOnError extends boolean = false>(opti
 };
 
 /**
+ * List questionnaire responses
+ *
+ * List the responses on a questionnaire. Each response carries its
+ * `answerPartsSchema` and `answerPartsValues`, which describe the parts an
+ * answer is composed of and their current values.
+ */
+export const listQuestionnaireResponses = <ThrowOnError extends boolean = false>(options: Options<ListQuestionnaireResponsesData, ThrowOnError>) => {
+    return (options.client ?? client).get<ListQuestionnaireResponsesResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/customer-trust/questionnaires/{questionnaireId}/responses',
+        ...options
+    });
+};
+
+/**
+ * Get questionnaire response
+ *
+ * Retrieve a single questionnaire response.
+ */
+export const getQuestionnaireResponse = <ThrowOnError extends boolean = false>(options: Options<GetQuestionnaireResponseData, ThrowOnError>) => {
+    return (options.client ?? client).get<GetQuestionnaireResponseResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/customer-trust/questionnaires/{questionnaireId}/responses/{responseId}',
+        ...options
+    });
+};
+
+/**
+ * Update questionnaire response content
+ *
+ * Update the answer content of a questionnaire response. The edit is
+ * recorded as performed by the calling application, since vanta-api
+ * authenticates an OAuth client rather than a specific user.
+ */
+export const updateQuestionnaireResponseContent = <ThrowOnError extends boolean = false>(options: Options<UpdateQuestionnaireResponseContentData, ThrowOnError>) => {
+    return (options.client ?? client).patch<UpdateQuestionnaireResponseContentResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/customer-trust/questionnaires/{questionnaireId}/responses/{responseId}',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * Update questionnaire response owner
+ *
+ * Reassign or clear the owner of a questionnaire response. The assignment is
+ * recorded as performed by the calling API client, so the notification to the
+ * new owner names the Vanta API rather than a user.
+ */
+export const updateQuestionnaireResponseOwner = <ThrowOnError extends boolean = false>(options: Options<UpdateQuestionnaireResponseOwnerData, ThrowOnError>) => {
+    return (options.client ?? client).patch<UpdateQuestionnaireResponseOwnerResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/customer-trust/questionnaires/{questionnaireId}/responses/{responseId}/owner',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
  * List tag categories
  *
  * List user-defined tag categories. Optionally filter by product context.
@@ -749,6 +917,50 @@ export const getTagsForCategory = <ThrowOnError extends boolean = false>(options
             }
         ],
         url: '/customer-trust/tag-categories/{tagCategoryId}',
+        ...options
+    });
+};
+
+/**
+ * Enable tag category for product context
+ *
+ * Enables a tag category for a product context (e.g. document sharing,
+ * control sharing), making it available for scoping that context's
+ * shareable content. Idempotent: enabling an already-enabled category is
+ * a no-op.
+ */
+export const addTagCategoryProductContext = <ThrowOnError extends boolean = false>(options: Options<AddTagCategoryProductContextData, ThrowOnError>) => {
+    return (options.client ?? client).post<AddTagCategoryProductContextResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/customer-trust/tag-categories/{tagCategoryId}/product-contexts',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * Disable tag category for product context
+ *
+ * Disables a tag category for a product context. Idempotent: removing a
+ * category that isn't enabled for the context is a no-op.
+ */
+export const removeTagCategoryProductContext = <ThrowOnError extends boolean = false>(options: Options<RemoveTagCategoryProductContextData, ThrowOnError>) => {
+    return (options.client ?? client).delete<RemoveTagCategoryProductContextResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/customer-trust/tag-categories/{tagCategoryId}/product-contexts/{productContextId}',
         ...options
     });
 };
@@ -1169,6 +1381,68 @@ export const listPersonGroups = <ThrowOnError extends boolean = false>(options?:
 };
 
 /**
+ * Create group
+ *
+ * Creates a group.
+ */
+export const createGroup = <ThrowOnError extends boolean = false>(options: Options<CreateGroupData, ThrowOnError>) => {
+    return (options.client ?? client).post<CreateGroupResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/groups',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * Import IdP groups
+ *
+ * Imports groups from an identity provider.
+ */
+export const importIdpGroups = <ThrowOnError extends boolean = false>(options: Options<ImportIdpGroupsData, ThrowOnError>) => {
+    return (options.client ?? client).post<ImportIdpGroupsResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/groups/import-from-idp',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * List importable IdP groups
+ *
+ * Lists IdP groups that are available to import.
+ */
+export const listImportableIdpGroups = <ThrowOnError extends boolean = false>(options?: Options<ListImportableIdpGroupsData, ThrowOnError>) => {
+    return (options?.client ?? client).get<ListImportableIdpGroupsResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/groups/importable-idp-groups',
+        ...options
+    });
+};
+
+/**
  * Get group by ID
  *
  * Get a group by ID.
@@ -1183,6 +1457,28 @@ export const getGroup = <ThrowOnError extends boolean = false>(options: Options<
         ],
         url: '/groups/{groupId}',
         ...options
+    });
+};
+
+/**
+ * Update group
+ *
+ * Partially updates a group. At least one field must be provided.
+ */
+export const updateGroup = <ThrowOnError extends boolean = false>(options: Options<UpdateGroupData, ThrowOnError>) => {
+    return (options.client ?? client).patch<UpdateGroupResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/groups/{groupId}',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
     });
 };
 
@@ -1441,11 +1737,51 @@ export const updateResource = <ThrowOnError extends boolean = false>(options: Op
 };
 
 /**
+ * List issues
+ *
+ * List issues on a domain (paginated).
+ * Returns a paginated list of issues that the authenticated app has
+ * permission to view, optionally filtered and sorted.
+ */
+export const list = <ThrowOnError extends boolean = false>(options?: Options<ListData, ThrowOnError>) => {
+    return (options?.client ?? client).get<ListResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/issues',
+        ...options
+    });
+};
+
+/**
+ * Get issue by ID
+ *
+ * Get the details of an issue by its ID.
+ */
+export const getIssue = <ThrowOnError extends boolean = false>(options: Options<GetIssueData, ThrowOnError>) => {
+    return (options.client ?? client).get<GetIssueResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/issues/{issueId}',
+        ...options
+    });
+};
+
+/**
  * List Answer Library entries
  *
  * List Answer Library entries. Supports full-text search, tag filtering
  * (OR across the given tags), and date-range filters on last-updated and
  * expiration.
+ *
+ * Entries are returned most-recently-updated first.
  */
 export const listAnswerLibraryEntries = <ThrowOnError extends boolean = false>(options?: Options<ListAnswerLibraryEntriesData, ThrowOnError>) => {
     return (options?.client ?? client).get<ListAnswerLibraryEntriesResponses, unknown, ThrowOnError>({
@@ -1575,6 +1911,8 @@ export const verifyAnswerLibraryEntryRoute = <ThrowOnError extends boolean = fal
  * Supports full-text search, type filtering, tag filtering (OR within
  * a category, AND across categories), and date-range filters on
  * last-updated and expiration.
+ *
+ * Resources are returned most-recently-updated first.
  */
 export const listKnowledgeBaseResources = <ThrowOnError extends boolean = false>(options?: Options<ListKnowledgeBaseResourcesData, ThrowOnError>) => {
     return (options?.client ?? client).get<ListKnowledgeBaseResourcesResponses, unknown, ThrowOnError>({
@@ -2010,6 +2348,47 @@ export const setLeaveForPerson = <ThrowOnError extends boolean = false>(options:
 };
 
 /**
+ * Get personnel notification settings
+ *
+ * Returns the organization's personnel reminder and employee-digest settings.
+ */
+export const getSettings = <ThrowOnError extends boolean = false>(options?: Options<GetSettingsData, ThrowOnError>) => {
+    return (options?.client ?? client).get<GetSettingsResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/personnel-notification-settings',
+        ...options
+    });
+};
+
+/**
+ * Update personnel notification settings
+ *
+ * Partially updates the organization's personnel reminder and employee-digest settings.
+ * Omitted fields remain unchanged.
+ */
+export const updateSettings = <ThrowOnError extends boolean = false>(options: Options<UpdateSettingsData, ThrowOnError>) => {
+    return (options.client ?? client).patch<UpdateSettingsResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/personnel-notification-settings',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
  * List policies
  *
  * Lists all policies.
@@ -2041,6 +2420,45 @@ export const getPolicy = <ThrowOnError extends boolean = false>(options: Options
             }
         ],
         url: '/policies/{policyId}',
+        ...options
+    });
+};
+
+/**
+ * List program scopes
+ *
+ * Lists the program scopes for your organization. A program scope pairs a
+ * business unit with a framework that business unit is in scope for.
+ * When business unit scoping is disabled, businessUnitId is null.
+ */
+export const listProgramScopes = <ThrowOnError extends boolean = false>(options?: Options<ListProgramScopesData, ThrowOnError>) => {
+    return (options?.client ?? client).get<ListProgramScopesResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/program-scopes',
+        ...options
+    });
+};
+
+/**
+ * Get program scope by ID
+ *
+ * Get a program scope by ID.
+ * When business unit scoping is disabled, businessUnitId is null.
+ */
+export const getProgramScope = <ThrowOnError extends boolean = false>(options: Options<GetProgramScopeData, ThrowOnError>) => {
+    return (options.client ?? client).get<GetProgramScopeResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/program-scopes/{programScopeId}',
         ...options
     });
 };
@@ -2480,7 +2898,8 @@ export const approveTrustCenterAccessRequest = <ThrowOnError extends boolean = f
 /**
  * Deny Trust Center access request
  *
- * Denies an access request on a Trust Center.
+ * Denies an access request on a Trust Center. The requester is only notified
+ * by email when `sendEmail` is true.
  */
 export const denyTrustCenterAccessRequest = <ThrowOnError extends boolean = false>(options: Options<DenyTrustCenterAccessRequestData, ThrowOnError>) => {
     return (options.client ?? client).post<DenyTrustCenterAccessRequestResponses, unknown, ThrowOnError>({
@@ -2518,6 +2937,145 @@ export const listTrustCenterActivityEvents = <ThrowOnError extends boolean = fal
 };
 
 /**
+ * List Trust Center chatbot conversations
+ *
+ * Gets a paginated list of chatbot conversations on a Trust Center.
+ */
+export const listChatbotConversations = <ThrowOnError extends boolean = false>(options: Options<ListChatbotConversationsData, ThrowOnError>) => {
+    return (options.client ?? client).get<ListChatbotConversationsResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/chatbot/conversations',
+        ...options
+    });
+};
+
+/**
+ * Get Trust Center chatbot conversation messages
+ *
+ * Gets the messages for a specific chatbot conversation on a Trust Center.
+ */
+export const getChatbotConversationMessages = <ThrowOnError extends boolean = false>(options: Options<GetChatbotConversationMessagesData, ThrowOnError>) => {
+    return (options.client ?? client).get<GetChatbotConversationMessagesResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/chatbot/conversations/{conversationId}',
+        ...options
+    });
+};
+
+/**
+ * List Trust Center compliance frameworks
+ *
+ * Gets the list of compliance frameworks on a Trust Center.
+ */
+export const listComplianceFrameworks = <ThrowOnError extends boolean = false>(options: Options<ListComplianceFrameworksData, ThrowOnError>) => {
+    return (options.client ?? client).get<ListComplianceFrameworksResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/compliance-frameworks',
+        ...options
+    });
+};
+
+/**
+ * Create Trust Center compliance framework
+ *
+ * Adds a compliance framework to a Trust Center.
+ */
+export const createComplianceFramework = <ThrowOnError extends boolean = false>(options: Options<CreateComplianceFrameworkData, ThrowOnError>) => {
+    return (options.client ?? client).post<CreateComplianceFrameworkResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/compliance-frameworks',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * Delete Trust Center compliance framework
+ *
+ * Removes a compliance framework from a Trust Center.
+ */
+export const deleteComplianceFramework = <ThrowOnError extends boolean = false>(options: Options<DeleteComplianceFrameworkData, ThrowOnError>) => {
+    return (options.client ?? client).delete<DeleteComplianceFrameworkResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/compliance-frameworks/{frameworkId}',
+        ...options
+    });
+};
+
+/**
+ * Update Trust Center compliance framework
+ *
+ * Updates a compliance framework on a Trust Center.
+ */
+export const updateComplianceFramework = <ThrowOnError extends boolean = false>(options: Options<UpdateComplianceFrameworkData, ThrowOnError>) => {
+    return (options.client ?? client).patch<UpdateComplianceFrameworkResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/compliance-frameworks/{frameworkId}',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * Upload Trust Center compliance framework badge
+ *
+ * Uploads a badge image for a compliance framework on a Trust Center.
+ */
+export const uploadComplianceFrameworkBadge = <ThrowOnError extends boolean = false>(options: Options<UploadComplianceFrameworkBadgeData, ThrowOnError>) => {
+    return (options.client ?? client).post<UploadComplianceFrameworkBadgeResponses, unknown, ThrowOnError>({
+        ...formDataBodySerializer,
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/compliance-frameworks/{frameworkId}/badge',
+        ...options,
+        headers: {
+            'Content-Type': null,
+            ...options.headers
+        }
+    });
+};
+
+/**
  * List Trust Center control categories
  *
  * Gets a list of control categories on a Trust Center.
@@ -2549,6 +3107,29 @@ export const addTrustCenterControlCategory = <ThrowOnError extends boolean = fal
             }
         ],
         url: '/trust-centers/{slugId}/control-categories',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * Reorder Trust Center control categories
+ *
+ * Reorders control categories on a Trust Center. The request body must
+ * contain the complete set of category IDs in the desired order.
+ */
+export const upsertTrustCenterControlCategoriesOrder = <ThrowOnError extends boolean = false>(options: Options<UpsertTrustCenterControlCategoriesOrderData, ThrowOnError>) => {
+    return (options.client ?? client).put<UpsertTrustCenterControlCategoriesOrderResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/control-categories/order',
         ...options,
         headers: {
             'Content-Type': 'application/json',
@@ -2617,6 +3198,52 @@ export const updateTrustCenterControlCategory = <ThrowOnError extends boolean = 
 };
 
 /**
+ * Bulk edit controls in a category
+ *
+ * Bulk add or remove controls from a control category on a Trust Center.
+ */
+export const updateTrustCenterControlsInCategory = <ThrowOnError extends boolean = false>(options: Options<UpdateTrustCenterControlsInCategoryData, ThrowOnError>) => {
+    return (options.client ?? client).patch<UpdateTrustCenterControlsInCategoryResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/control-categories/{categoryId}/controls',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * Reorder controls in a Trust Center control category
+ *
+ * Reorders controls within a control category on a Trust Center. The
+ * request body must contain the complete set of control IDs in the
+ * category in the desired order.
+ */
+export const upsertTrustCenterControlsInCategoryOrder = <ThrowOnError extends boolean = false>(options: Options<UpsertTrustCenterControlsInCategoryOrderData, ThrowOnError>) => {
+    return (options.client ?? client).put<UpsertTrustCenterControlsInCategoryOrderResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/control-categories/{categoryId}/controls/order',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
  * List Trust Center controls
  *
  * Gets a list of controls on a Trust Center.
@@ -2648,6 +3275,50 @@ export const addControlToTrustCenter = <ThrowOnError extends boolean = false>(op
             }
         ],
         url: '/trust-centers/{slugId}/controls',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * Bulk remove tags from Trust Center controls
+ *
+ * Removes tags from multiple controls on a Trust Center. Limited to 100 controls per request.
+ */
+export const bulkRemoveTagsFromControls = <ThrowOnError extends boolean = false>(options: Options<BulkRemoveTagsFromControlsData, ThrowOnError>) => {
+    return (options.client ?? client).delete<BulkRemoveTagsFromControlsResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/controls/tags',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * Bulk add tags to Trust Center controls
+ *
+ * Adds tags to multiple controls on a Trust Center. Limited to 100 controls per request.
+ */
+export const bulkAddTagsToControls = <ThrowOnError extends boolean = false>(options: Options<BulkAddTagsToControlsData, ThrowOnError>) => {
+    return (options.client ?? client).post<BulkAddTagsToControlsResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/controls/tags',
         ...options,
         headers: {
             'Content-Type': 'application/json',
@@ -2690,6 +3361,131 @@ export const getTrustCenterControl = <ThrowOnError extends boolean = false>(opti
         ],
         url: '/trust-centers/{slugId}/controls/{controlId}',
         ...options
+    });
+};
+
+/**
+ * List Trust Center data collected
+ *
+ * Gets the list of data-collected disclosures on a Trust Center.
+ */
+export const listTrustCenterDataCollected = <ThrowOnError extends boolean = false>(options: Options<ListTrustCenterDataCollectedData, ThrowOnError>) => {
+    return (options.client ?? client).get<ListTrustCenterDataCollectedResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/data-collected',
+        ...options
+    });
+};
+
+/**
+ * Set Trust Center data collected
+ *
+ * Replaces all data-collected disclosures on a Trust Center with the
+ * provided list. This is a full replacement — any existing disclosures
+ * not included in the request body will be removed. To add or remove a
+ * single entry, first GET the current list, modify it, then PUT the
+ * updated list back.
+ */
+export const upsertTrustCenterDataCollected = <ThrowOnError extends boolean = false>(options: Options<UpsertTrustCenterDataCollectedData, ThrowOnError>) => {
+    return (options.client ?? client).put<UpsertTrustCenterDataCollectedResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/data-collected',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * List Trust Center FAQ categories
+ *
+ * Gets a list of FAQ categories on a Trust Center.
+ */
+export const listTrustCenterFaqCategories = <ThrowOnError extends boolean = false>(options: Options<ListTrustCenterFaqCategoriesData, ThrowOnError>) => {
+    return (options.client ?? client).get<ListTrustCenterFaqCategoriesResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/faq-categories',
+        ...options
+    });
+};
+
+/**
+ * Add Trust Center FAQ category
+ *
+ * Adds an FAQ category to a Trust Center.
+ */
+export const addTrustCenterFaqCategory = <ThrowOnError extends boolean = false>(options: Options<AddTrustCenterFaqCategoryData, ThrowOnError>) => {
+    return (options.client ?? client).post<AddTrustCenterFaqCategoryResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/faq-categories',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * Delete Trust Center FAQ category
+ *
+ * Removes an FAQ category from a Trust Center. FAQs in the
+ * deleted category are moved to uncategorized.
+ */
+export const deleteTrustCenterFaqCategory = <ThrowOnError extends boolean = false>(options: Options<DeleteTrustCenterFaqCategoryData, ThrowOnError>) => {
+    return (options.client ?? client).delete<DeleteTrustCenterFaqCategoryResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/faq-categories/{categoryId}',
+        ...options
+    });
+};
+
+/**
+ * Update Trust Center FAQ category
+ *
+ * Updates an FAQ category on a Trust Center.
+ */
+export const updateTrustCenterFaqCategory = <ThrowOnError extends boolean = false>(options: Options<UpdateTrustCenterFaqCategoryData, ThrowOnError>) => {
+    return (options.client ?? client).patch<UpdateTrustCenterFaqCategoryResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/faq-categories/{categoryId}',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
     });
 };
 
@@ -2786,6 +3582,30 @@ export const updateTrustCenterFaq = <ThrowOnError extends boolean = false>(optio
         ...options,
         headers: {
             'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * Upload Trust Center favicon
+ *
+ * Uploads a favicon for a Trust Center. The Trust Center must have a custom
+ * domain configured.
+ */
+export const uploadTrustCenterFavicon = <ThrowOnError extends boolean = false>(options: Options<UploadTrustCenterFaviconData, ThrowOnError>) => {
+    return (options.client ?? client).post<UploadTrustCenterFaviconResponses, unknown, ThrowOnError>({
+        ...formDataBodySerializer,
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/favicon',
+        ...options,
+        headers: {
+            'Content-Type': null,
             ...options.headers
         }
     });
@@ -3467,6 +4287,29 @@ export const sendTrustCenterUpdateNotifications = <ThrowOnError extends boolean 
 };
 
 /**
+ * Set Trust Center videos
+ *
+ * Configures the videos displayed on a Trust Center. Replaces all
+ * existing videos with the provided list.
+ */
+export const upsertTrustCenterVideos = <ThrowOnError extends boolean = false>(options: Options<UpsertTrustCenterVideosData, ThrowOnError>) => {
+    return (options.client ?? client).put<UpsertTrustCenterVideosResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/videos',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
  * List Trust Center viewers
  *
  * Gets a list of viewers that have been granted access to a Trust Center.
@@ -3565,6 +4408,24 @@ export const updateTrustCenterViewer = <ThrowOnError extends boolean = false>(op
 };
 
 /**
+ * Send Trust Center viewer invite reminder
+ *
+ * Resends the invite email for a Trust Center viewer.
+ */
+export const sendTrustCenterViewerInviteReminder = <ThrowOnError extends boolean = false>(options: Options<SendTrustCenterViewerInviteReminderData, ThrowOnError>) => {
+    return (options.client ?? client).post<SendTrustCenterViewerInviteReminderResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/trust-centers/{slugId}/viewers/{viewerId}/send-invite-reminder',
+        ...options
+    });
+};
+
+/**
  * List active users
  *
  * Returns a list of all active users.
@@ -3596,6 +4457,43 @@ export const getUser = <ThrowOnError extends boolean = false>(options: Options<G
             }
         ],
         url: '/users/{userId}',
+        ...options
+    });
+};
+
+/**
+ * List assessment types
+ *
+ * Lists the domain's assessment types. Returns both active and archived
+ * types by default; pass the `status` query parameter to filter server-side.
+ */
+export const listVendorAssessmentTypes = <ThrowOnError extends boolean = false>(options?: Options<ListVendorAssessmentTypesData, ThrowOnError>) => {
+    return (options?.client ?? client).get<ListVendorAssessmentTypesResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/vendor-assessment-types',
+        ...options
+    });
+};
+
+/**
+ * Get assessment type by ID
+ *
+ * Gets an assessment type by ID.
+ */
+export const getVendorAssessmentTypeById = <ThrowOnError extends boolean = false>(options: Options<GetVendorAssessmentTypeByIdData, ThrowOnError>) => {
+    return (options.client ?? client).get<GetVendorAssessmentTypeByIdResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/vendor-assessment-types/{assessmentTypeId}',
         ...options
     });
 };
@@ -3713,6 +4611,42 @@ export const updateVendor = <ThrowOnError extends boolean = false>(options: Opti
             'Content-Type': 'application/json',
             ...options.headers
         }
+    });
+};
+
+/**
+ * List assessments by vendor ID
+ *
+ * Returns a vendor's assessments across all assessment types.
+ */
+export const getAssessmentsByVendorId = <ThrowOnError extends boolean = false>(options: Options<GetAssessmentsByVendorIdData, ThrowOnError>) => {
+    return (options.client ?? client).get<GetAssessmentsByVendorIdResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/vendors/{vendorId}/assessments',
+        ...options
+    });
+};
+
+/**
+ * Get assessment by ID
+ *
+ * Returns a single assessment for a vendor.
+ */
+export const getAssessmentById = <ThrowOnError extends boolean = false>(options: Options<GetAssessmentByIdData, ThrowOnError>) => {
+    return (options.client ?? client).get<GetAssessmentByIdResponses, unknown, ThrowOnError>({
+        security: [
+            {
+                scheme: 'bearer',
+                type: 'http'
+            }
+        ],
+        url: '/vendors/{vendorId}/assessments/{assessmentId}',
+        ...options
     });
 };
 

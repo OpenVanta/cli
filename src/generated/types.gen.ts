@@ -831,12 +831,45 @@ export type PaginatedResponseVendorDocument = {
 };
 
 /**
- * The current decision made for the security review:
- * - APPROVED: The security review has been approved.
- * - NOT_APPROVED: The security review has been marked not approved.
- * - CONDITIONALLY_APPROVED: The security review has been conditionally approved.
+ * The current decision made for an assessment:
+ * - APPROVED: The assessment has been approved.
+ * - NOT_APPROVED: The assessment has been marked not approved.
+ * - CONDITIONALLY_APPROVED: The assessment has been conditionally approved.
  */
-export type SecurityReviewDecision = 'APPROVED' | 'NOT_APPROVED' | 'CONDITIONALLY_APPROVED';
+export type AssessmentDecision = 'APPROVED' | 'NOT_APPROVED' | 'CONDITIONALLY_APPROVED';
+
+export type AssessmentType = {
+    /**
+     * Unique identifier for the assessment type.
+     */
+    id: string;
+    /**
+     * Display name of the assessment type.
+     */
+    name: string;
+    /**
+     * Description of the assessment type, if set.
+     */
+    description: string | null;
+};
+
+export type AssessmentOwnerType = 'USER' | 'TEAM';
+
+export type AssessmentOwner = {
+    /**
+     * Unique identifier for the owner.
+     */
+    id: string;
+    type: AssessmentOwnerType;
+    /**
+     * Display name of the owner, if available.
+     */
+    displayName: string | null;
+    /**
+     * Email of the owner. Populated for USER owners, null for TEAM owners.
+     */
+    email: string | null;
+};
 
 export type SecurityReview = {
     /**
@@ -883,13 +916,88 @@ export type SecurityReview = {
          * The timestamp of when the security review decision was last set.
          */
         lastUpdatedAt: string;
-        status: SecurityReviewDecision;
+        status: AssessmentDecision;
     } | null;
+    assessmentType: AssessmentType;
+    /**
+     * The owner of this security review, if assigned.
+     */
+    owner: AssessmentOwner | null;
 };
 
 export type PaginatedResponseSecurityReview = {
     results: {
         data: Array<SecurityReview>;
+        pageInfo: PageInfo;
+    };
+};
+
+/**
+ * The lifecycle status of an assessment:
+ * - NOT_STARTED: The assessment has not yet been started.
+ * - IN_PROGRESS: The assessment is underway.
+ * - COMPLETED: The assessment has been completed.
+ */
+export type AssessmentStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+
+export type VendorAssessment = {
+    /**
+     * Unique identifier for the assessment.
+     */
+    id: string;
+    /**
+     * Unique identifier for the vendor.
+     */
+    vendorId: string;
+    status: AssessmentStatus;
+    /**
+     * The Vanta user ID of the person who completed this assessment.
+     */
+    completedByUserId: string | null;
+    /**
+     * The timestamp of when the assessment was started.
+     */
+    startDate: string | null;
+    /**
+     * The timestamp of when the assessment is due.
+     */
+    dueDate: string | null;
+    /**
+     * A manual override timestamp of when the assessment is due.
+     */
+    overrideDueDate: string | null;
+    /**
+     * The timestamp of when the assessment was marked as completed.
+     */
+    completionDate: string | null;
+    /**
+     * The timestamp of when the assessment was created.
+     */
+    createdDate: string;
+    /**
+     * An object containing information about the decision of the assessment.
+     */
+    decision: {
+        /**
+         * Comments about the assessment decision.
+         */
+        comments: string | null;
+        /**
+         * The timestamp of when the assessment decision was last set.
+         */
+        lastUpdatedAt: string;
+        status: AssessmentDecision;
+    } | null;
+    assessmentType: AssessmentType;
+    /**
+     * The owner of this assessment, if assigned.
+     */
+    owner: AssessmentOwner | null;
+};
+
+export type PaginatedResponseVendorAssessment = {
+    results: {
+        data: Array<VendorAssessment>;
         pageInfo: PageInfo;
     };
 };
@@ -994,6 +1102,17 @@ export type UpdateFindingInput = {
     };
 };
 
+export type VendorRiskSection = {
+    /**
+     * Unique identifier for the risk section.
+     */
+    id: string;
+    /**
+     * Display name of the risk section.
+     */
+    name: string;
+};
+
 export type VendorRiskAttribute = {
     /**
      * Unique identifier for the risk attribute.
@@ -1016,11 +1135,42 @@ export type VendorRiskAttribute = {
      */
     enabled: boolean;
     riskLevel: VendorRiskLevel;
+    riskSection: VendorRiskSection;
 };
 
 export type PaginatedResponseVendorRiskAttribute = {
     results: {
         data: Array<VendorRiskAttribute>;
+        pageInfo: PageInfo;
+    };
+};
+
+/**
+ * The lifecycle status of a vendor assessment type:
+ * - ACTIVE: The assessment type is available for use.
+ * - ARCHIVED: The assessment type has been archived and is kept for historical reference.
+ */
+export type VendorAssessmentTypeLifecycleStatus = 'ACTIVE' | 'ARCHIVED';
+
+export type VendorAssessmentType = {
+    /**
+     * Unique identifier for the assessment type.
+     */
+    id: string;
+    /**
+     * Display name of the assessment type.
+     */
+    name: string;
+    /**
+     * Description of the assessment type, if set.
+     */
+    description: string | null;
+    status: VendorAssessmentTypeLifecycleStatus;
+};
+
+export type PaginatedResponseVendorAssessmentType = {
+    results: {
+        data: Array<VendorAssessmentType>;
         pageInfo: PageInfo;
     };
 };
@@ -1047,6 +1197,13 @@ export type PaginatedResponseUser = {
  * - VANTA: Legacy Vanta-themed banner. No longer selectable as a banner style.
  */
 export type BannerSetting = 'CUSTOM_IMAGE' | 'GRADIENT' | 'MINIMAL' | 'VANTA';
+
+/**
+ * Which controls a Trust Center displays, and whether their pass/fail status is
+ * shown. Set as the Trust Center's global default, or per category to override
+ * that default.
+ */
+export type TrustCenterControlVisibilityMode = 'SHOW_OK_ONLY' | 'SHOW_OK_AND_UNMAPPED' | 'SHOW_ALL_WITHOUT_STATUS' | 'SHOW_ALL_WITH_STATUS';
 
 export type TrustCenter = {
     /**
@@ -1115,6 +1272,7 @@ export type TrustCenter = {
      * Custom heading displayed on the Trust Center.
      */
     customHeading: string | null;
+    controlVisibilityMode: TrustCenterControlVisibilityMode;
     /**
      * Date the Trust Center was created.
      */
@@ -1193,6 +1351,7 @@ export type UpdateTrustCenterInput = {
      * the current custom heading.
      */
     customHeading?: string | null;
+    controlVisibilityMode?: TrustCenterControlVisibilityMode;
 };
 
 export type ActivityEventType = 'PAGE_VIEW' | 'RESOURCE_DOWNLOAD' | 'RESOURCE_VIEW' | 'VIDEO_PLAY';
@@ -1312,10 +1471,6 @@ export type TrustCenterViewer = {
          * provider.
          */
         docuSign: {
-            /**
-             * Unique ID used to identify and validate incoming webhook requests.
-             */
-            webhookId: string;
             /**
              * ID of the created envelope in DocuSign.
              */
@@ -1452,6 +1607,16 @@ export type UpdateTrustCenterViewerInput = {
      * Omit to leave unchanged.
      */
     customerTrustAccountId?: string | null;
+};
+
+/**
+ * Response returned after a viewer invite reminder is sent.
+ */
+export type InviteReminderResponse = {
+    /**
+     * Whether the invite reminder email was successfully sent.
+     */
+    isSuccessful: boolean;
 };
 
 export type TrustCenterVideo = {
@@ -1940,7 +2105,7 @@ export type UploadFaviconResponse = {
     /**
      * Whether the favicon was successfully uploaded.
      */
-    success: boolean;
+    isSuccessful: boolean;
 };
 
 export type TrustCenterFaqCategory = {
@@ -2046,6 +2211,13 @@ export type SetDataCollectedInput = {
     dataCollectedHeading?: string | null;
 };
 
+/**
+ * Visibility of a control category's controls on the Trust Center.
+ * `SHAREABLE` categories are only visible to accounts with a matching access
+ * grant.
+ */
+export type TrustCenterControlVisibility = 'PUBLIC' | 'SHAREABLE';
+
 export type TrustCenterControlCategory = {
     /**
      * Unique identifier for the control category.
@@ -2055,17 +2227,37 @@ export type TrustCenterControlCategory = {
      * Name of the category.
      */
     name: string;
+    visibility: TrustCenterControlVisibility;
+    /**
+     * Per-category status-visibility override. `null` means the category
+     * follows the Trust Center's global default.
+     */
+    statusVisibilityOverride: TrustCenterControlVisibilityMode | null;
 };
 
 export type ArrayResponseTrustCenterControlCategory = {
     results: Array<TrustCenterControlCategory>;
 };
 
-export type AddOrEditTrustCenterControlCategoryInput = {
+export type AddTrustCenterControlCategoryInput = {
     /**
      * Name of the category.
      */
     name: string;
+};
+
+export type EditTrustCenterControlCategoryInput = {
+    /**
+     * New name for the category. Omit to leave the name unchanged.
+     */
+    name?: string;
+    visibility?: TrustCenterControlVisibility;
+    /**
+     * Per-category status-visibility override. Omit to leave unchanged; pass
+     * `null` to clear the override and fall back to the Trust Center's global
+     * default.
+     */
+    statusVisibilityOverride?: TrustCenterControlVisibilityMode | null;
 };
 
 /**
@@ -2171,8 +2363,12 @@ export type TrustCenterComplianceFramework = {
     description: string | null;
 };
 
-export type ArrayResponseTrustCenterComplianceFramework = {
+export type TrustCenterComplianceFrameworkListResponse = {
     results: Array<TrustCenterComplianceFramework>;
+    /**
+     * Whether the compliance section is visible on the external Trust Center.
+     */
+    isSectionVisible: boolean;
 };
 
 export type CreateComplianceFrameworkInput = {
@@ -2183,7 +2379,7 @@ export type CreateComplianceFrameworkInput = {
     /**
      * Compliance standard to associate with this framework.
      */
-    standard?: 'aiact' | 'aiuc1' | 'aue8' | 'awsFTR' | 'ccpa' | 'cisv8' | 'cjis' | 'cmmc2' | 'cps234' | 'cri' | 'dora' | 'fedRAMPr5' | 'fedramp' | 'fedramp20x' | 'fedramp20x_2026' | 'gdpr' | 'hipaa' | 'hitruste1' | 'iso9001' | 'iso27001' | 'iso27001_2022' | 'iso27017' | 'iso27018' | 'iso27701' | 'iso27701_2025' | 'iso42001' | 'msftSSPA' | 'mvsp' | 'nis2d' | 'nist53' | 'nist171' | 'nistAiRmf' | 'nistCSF' | 'nistcsf2' | 'ofdss' | 'pciDss4' | 'pciSaqA' | 'pciSaqAEP' | 'pciSaqDMerchant' | 'pciSaqDSP' | 'soc2' | 'soxITGC' | 't23nycrr500' | 'tisax' | 'iso22301' | 'trust' | 'ukCyberEssentials' | 'ukCyberEssentials33' | 'usDataPrivacy' | 'fedrampKSI' | null;
+    standard?: 'aiact' | 'aiuc1' | 'aiuc1_26q3' | 'aue8' | 'awsFTR' | 'bsic5' | 'ccpa' | 'cisv8' | 'cjis' | 'cmmc2' | 'cps234' | 'cri' | 'dora' | 'fedRAMPr5' | 'fedramp' | 'fedramp20x' | 'fedramp20x_2026' | 'gdpr' | 'hipaa' | 'hitruste1' | 'iso9001' | 'iso27001' | 'iso27001_2022' | 'iso27017' | 'iso27018' | 'iso27701' | 'iso27701_2025' | 'iso42001' | 'msftSSPA' | 'mvsp' | 'nis2d' | 'nist53' | 'nist171' | 'nist171r3' | 'nistAiRmf' | 'nistCSF' | 'nistcsf2' | 'ofdss' | 'pciDss4' | 'pciSaqA' | 'pciSaqAEP' | 'pciSaqDMerchant' | 'pciSaqDSP' | 'soc2' | 'soxITGC' | 't23nycrr500' | 'tisax' | 'tisax2027' | 'iso22301' | 'trust' | 'ukCyberEssentials' | 'ukCyberEssentials33' | 'usDataPrivacy' | 'fedrampKSI' | null;
     /**
      * Description of the framework.
      */
@@ -2198,7 +2394,7 @@ export type UpdateComplianceFrameworkInput = {
     /**
      * Compliance standard to associate with this framework. Pass null to unset.
      */
-    standard?: 'aiact' | 'aiuc1' | 'aue8' | 'awsFTR' | 'ccpa' | 'cisv8' | 'cjis' | 'cmmc2' | 'cps234' | 'cri' | 'dora' | 'fedRAMPr5' | 'fedramp' | 'fedramp20x' | 'fedramp20x_2026' | 'gdpr' | 'hipaa' | 'hitruste1' | 'iso9001' | 'iso27001' | 'iso27001_2022' | 'iso27017' | 'iso27018' | 'iso27701' | 'iso27701_2025' | 'iso42001' | 'msftSSPA' | 'mvsp' | 'nis2d' | 'nist53' | 'nist171' | 'nistAiRmf' | 'nistCSF' | 'nistcsf2' | 'ofdss' | 'pciDss4' | 'pciSaqA' | 'pciSaqAEP' | 'pciSaqDMerchant' | 'pciSaqDSP' | 'soc2' | 'soxITGC' | 't23nycrr500' | 'tisax' | 'iso22301' | 'trust' | 'ukCyberEssentials' | 'ukCyberEssentials33' | 'usDataPrivacy' | 'fedrampKSI' | null;
+    standard?: 'aiact' | 'aiuc1' | 'aiuc1_26q3' | 'aue8' | 'awsFTR' | 'bsic5' | 'ccpa' | 'cisv8' | 'cjis' | 'cmmc2' | 'cps234' | 'cri' | 'dora' | 'fedRAMPr5' | 'fedramp' | 'fedramp20x' | 'fedramp20x_2026' | 'gdpr' | 'hipaa' | 'hitruste1' | 'iso9001' | 'iso27001' | 'iso27001_2022' | 'iso27017' | 'iso27018' | 'iso27701' | 'iso27701_2025' | 'iso42001' | 'msftSSPA' | 'mvsp' | 'nis2d' | 'nist53' | 'nist171' | 'nist171r3' | 'nistAiRmf' | 'nistCSF' | 'nistcsf2' | 'ofdss' | 'pciDss4' | 'pciSaqA' | 'pciSaqAEP' | 'pciSaqDMerchant' | 'pciSaqDSP' | 'soc2' | 'soxITGC' | 't23nycrr500' | 'tisax' | 'tisax2027' | 'iso22301' | 'trust' | 'ukCyberEssentials' | 'ukCyberEssentials33' | 'usDataPrivacy' | 'fedrampKSI' | null;
     /**
      * Description of the framework. Pass null to unset.
      */
@@ -2209,7 +2405,7 @@ export type BadgeUploadResponse = {
     /**
      * Whether the upload succeeded.
      */
-    success: boolean;
+    isSuccessful: boolean;
 };
 
 export type TrustCenterChatbotConversation = {
@@ -2392,6 +2588,12 @@ export type DenyTrustCenterAccessRequestInput = {
      * Reason for denying the access request.
      */
     reason?: string;
+    /**
+     * Whether to email the requester to notify them that their request was
+     * denied. The email includes the reason when one is provided. Defaults to
+     * false.
+     */
+    sendEmail?: boolean;
 };
 
 export type DocumentAndTestCategory = 'Accounts access' | 'Account security' | 'Account setup' | 'Computers' | 'Custom' | 'Data storage' | 'Employees' | 'Infrastructure' | 'IT' | 'Logging' | 'Monitoring alerts' | 'People' | 'Policies' | 'Risk analysis' | 'Software development' | 'CSPM alert management' | 'Vendors' | 'Vulnerability management';
@@ -2552,6 +2754,234 @@ export type PaginatedResponseTestResourceEntity = {
     };
 };
 
+/**
+ * A requirement the set does not apply to the personnel it covers.
+ */
+export type RequirementNotApplied = {
+    required: false;
+};
+
+export type AllPoliciesRequired = {
+    required: true;
+    acceptAll: true;
+};
+
+export type SelectedPoliciesRequired = {
+    required: true;
+    acceptAll: false;
+    policyIds: Array<string>;
+};
+
+export type PolicyAcceptanceRequirement = RequirementNotApplied | AllPoliciesRequired | SelectedPoliciesRequired;
+
+export type BackgroundCheckRequired = {
+    required: true;
+    /**
+     * Personnel hired after this date require a check. Null requires a check for everyone in scope.
+     */
+    cutoffDate: string | null;
+};
+
+export type BackgroundCheckRequirement = RequirementNotApplied | BackgroundCheckRequired;
+
+export type SecurityTrainingCategory = 'aiRisk' | 'c5' | 'ccpa' | 'gdpr' | 'general' | 'hipaa' | 'insiderThreat' | 'pci' | 'secureCode' | 'socialEngineering';
+
+export type SecurityTrainingRequired = {
+    required: true;
+    requiredCategories: Array<SecurityTrainingCategory>;
+    requirementIds: Array<string>;
+};
+
+export type SecurityTrainingRequirement = RequirementNotApplied | SecurityTrainingRequired;
+
+export type PasswordManager = 'BITWARDEN' | 'DASHLANE' | 'ENPASS' | 'KEEPER' | 'LASTPASS' | 'NORDPASS' | 'ONEPASSWORD' | 'PROTON' | 'ROBOFORM' | 'SAFEINCLOUD' | 'TRENDMICRO';
+
+export type DeviceMonitoringInstallPrompt = 'INSTALL_VANTA_AGENT' | 'NONE';
+
+export type DeviceMonitoringRequired = {
+    required: true;
+    preferredPasswordManagerId: PasswordManager | null;
+    installPrompt: DeviceMonitoringInstallPrompt;
+};
+
+export type DeviceMonitoringRequirement = RequirementNotApplied | DeviceMonitoringRequired;
+
+export type TaskRequirementSetCustomTask = {
+    checklistTaskId: string;
+    /**
+     * Applies to personnel whose employment start date is after this. Null applies to everyone.
+     */
+    effectiveDate: string | null;
+};
+
+export type CustomTasksRequired = {
+    required: true;
+    tasks: Array<TaskRequirementSetCustomTask>;
+};
+
+export type CustomTasksRequirement = RequirementNotApplied | CustomTasksRequired;
+
+export type OnboardingRequirements = {
+    policyAcceptance: PolicyAcceptanceRequirement;
+    backgroundCheck: BackgroundCheckRequirement;
+    securityTraining: SecurityTrainingRequirement;
+    deviceMonitoring: DeviceMonitoringRequirement;
+    custom: CustomTasksRequirement;
+};
+
+export type DeactivateAllAccounts = {
+    deactivateAll: true;
+};
+
+export type DeactivateSelectedAccounts = {
+    deactivateAll: false;
+    accountIds: Array<string>;
+};
+
+export type AccountSelection = DeactivateAllAccounts | DeactivateSelectedAccounts;
+
+export type AccountDeactivationRequired = {
+    required: true;
+    accounts: AccountSelection;
+};
+
+export type AccountDeactivationRequirement = RequirementNotApplied | AccountDeactivationRequired;
+
+export type OffboardingRequirements = {
+    accountDeactivation: AccountDeactivationRequirement;
+    custom: CustomTasksRequirement;
+};
+
+export type TaskRequirements = {
+    onboarding: OnboardingRequirements;
+    offboarding: OffboardingRequirements;
+};
+
+export type TaskRequirementSet = {
+    /**
+     * The task requirement set's unique ID.
+     */
+    id: string;
+    /**
+     * The task requirement set's display name.
+     */
+    name: string;
+    /**
+     * The task requirement set's description.
+     */
+    description: string | null;
+    /**
+     * Whether groups other than the one that owns this set may also apply it.
+     */
+    isReusable: boolean;
+    /**
+     * The date the set was created.
+     */
+    createdAt: string;
+    /**
+     * The date the set was last updated.
+     */
+    updatedAt: string;
+    taskRequirements: TaskRequirements;
+};
+
+export type PaginatedResponseTaskRequirementSet = {
+    results: {
+        data: Array<TaskRequirementSet>;
+        pageInfo: PageInfo;
+    };
+};
+
+/**
+ * A training supplied by Vanta.
+ */
+export type VantaSecurityTrainingInput = {
+    type: 'VANTA';
+    category: SecurityTrainingCategory;
+    /**
+     * Completion instructions shown to personnel. Null uses Vanta's own.
+     */
+    instructions: string | null;
+    url: null;
+};
+
+/**
+ * A training the organization hosts itself.
+ */
+export type CustomSecurityTrainingInput = {
+    type: 'CUSTOM';
+    category: SecurityTrainingCategory;
+    /**
+     * Completion instructions shown to personnel.
+     */
+    instructions: string | null;
+    /**
+     * Where personnel complete the training.
+     */
+    url: string | null;
+};
+
+/**
+ * A training completed in a connected integration
+ */
+export type IntegrationSecurityTrainingInput = {
+    type: 'INTEGRATION';
+    category: SecurityTrainingCategory;
+    instructions: null;
+    url: null;
+};
+
+export type SecurityTrainingInput = VantaSecurityTrainingInput | CustomSecurityTrainingInput | IntegrationSecurityTrainingInput;
+
+export type SecurityTrainingRequiredInput = {
+    required: true;
+    /**
+     * Replaces the set's trainings wholesale. At most one per category.
+     */
+    trainings: Array<SecurityTrainingInput>;
+};
+
+/**
+ * Security training is written as the trainings to require and read back as the
+ * categories and requirement records the server resolved them into.
+ */
+export type SecurityTrainingRequirementInput = RequirementNotApplied | SecurityTrainingRequiredInput;
+
+export type OnboardingRequirementsInput = {
+    policyAcceptance?: PolicyAcceptanceRequirement;
+    backgroundCheck?: BackgroundCheckRequirement;
+    securityTraining?: SecurityTrainingRequirementInput;
+    deviceMonitoring?: DeviceMonitoringRequirement;
+    custom?: CustomTasksRequirement;
+};
+
+export type OffboardingRequirementsInput = {
+    accountDeactivation?: AccountDeactivationRequirement;
+    custom?: CustomTasksRequirement;
+};
+
+export type CreateTaskRequirementSetInput = {
+    /**
+     * Display name for the set.
+     */
+    name: string;
+    /**
+     * Description of the set. Omit for none.
+     */
+    description?: string | null;
+    /**
+     * Whether groups other than the one that owns this set may also apply it.
+     */
+    isReusable: boolean;
+    onboarding?: OnboardingRequirementsInput;
+    offboarding?: OffboardingRequirementsInput;
+};
+
+export type TaskRequirementsInput = {
+    onboarding?: OnboardingRequirementsInput;
+    offboarding?: OffboardingRequirementsInput;
+};
+
 export type Cia = 'Confidentiality' | 'Integrity' | 'Availability';
 
 export type Treatment = 'Mitigate' | 'Transfer' | 'Avoid' | 'Accept';
@@ -2564,6 +2994,54 @@ export type CustomAttribute = {
 export type ReviewStatus = 'APPROVED' | 'DRAFT' | 'NOT_REVIEWED' | 'AWAITING_SUBMISSION' | 'PENDING_APPROVAL' | 'REQUESTED_CHANGES';
 
 export type RiskScenarioType = 'Risk Scenario' | 'Enterprise Risk';
+
+/**
+ * `SCORE` is the root, `DIMENSION` is a direct child, and `FACTOR` is any deeper node.
+ */
+export type ScoreBreakdownEntryKind = 'SCORE' | 'DIMENSION' | 'FACTOR';
+
+/**
+ * `SCORED` has an entered value; `MISSING` is unscored; `NOT_APPLICABLE`
+ * is excluded from its parent's calculation.
+ */
+export type ScoreBreakdownEntryStatus = 'SCORED' | 'MISSING' | 'NOT_APPLICABLE';
+
+/**
+ * One node in the inherent risk scoring tree. Entries are ordered parents before
+ * children, with `parentId` linking each child to its parent.
+ */
+export type ScoreBreakdownEntry = {
+    /**
+     * Config node ID, unique within this breakdown. IDs can change when the scoring
+     * config is restructured; re-read the breakdown instead of storing them long-term.
+     */
+    id: string;
+    kind: ScoreBreakdownEntryKind;
+    /**
+     * Display name of this node, from the scoring config.
+     */
+    name: string;
+    /**
+     * Entered or calculated value, which may be fractional. `null` when unscored,
+     * not applicable, or no aggregate value is available; see `status` for leaf nodes.
+     */
+    score: number | null;
+    /**
+     * Scoring status for a directly scored node. `null` for aggregates; read their
+     * children's statuses instead.
+     */
+    status: ScoreBreakdownEntryStatus | null;
+    /**
+     * Matching option label for a directly scored node, or the register's range-band
+     * label for the overall score. `null` when no label applies, including non-root
+     * aggregates and overall scores on registers using matrix-based severity.
+     */
+    scoreLabel: string | null;
+    /**
+     * Parent entry's ID, or `null` for the overall score.
+     */
+    parentId: string | null;
+};
 
 export type RiskScenario = {
     /**
@@ -2673,6 +3151,12 @@ export type RiskScenario = {
      * The date this risk was identified. Matches the "Identified Date" field in the Vanta UI. Set by the customer when a risk is created; defaults to the scenario's creation time when not explicitly provided.
      */
     identificationDate: string;
+    /**
+     * Overall inherent score, dimensions, and nested factors, ordered parents before
+     * children and linked by `parentId`. `null` when Flexible Risk Scoring is off or
+     * the scenario has no score or matching config. Closed beta.
+     */
+    scoreBreakdown: Array<ScoreBreakdownEntry> | null;
 };
 
 export type PaginatedResponseRiskScenario = {
@@ -2897,6 +3381,56 @@ export type UpdateRiskScenarioControlInput = {
     controlType: RiskScenarioControlType;
 };
 
+export type RestRiskRegisterType = 'SCOPED' | 'ENTERPRISE';
+
+/**
+ * A risk register — a grouping of risk scenarios.
+ *
+ * Risk scenarios reference their register by **name** (the `riskRegister`
+ * field on `CreateRiskScenarioInput` and `RiskScenario`). Domains with
+ * multiple registers must specify a register name on create.
+ */
+export type RiskRegister = {
+    /**
+     * The unique ID of the risk register.
+     */
+    id: string;
+    /**
+     * The name of the risk register. This is the value used in the
+     * `riskRegister` field on risk-scenario create and update requests.
+     */
+    name: string;
+    /**
+     * Optional description of this register.
+     */
+    description: string | null;
+    registerType: RestRiskRegisterType;
+    /**
+     * When this risk register was created.
+     */
+    creationDate: string;
+};
+
+export type PaginatedResponseRiskRegister = {
+    results: {
+        data: Array<RiskRegister>;
+        pageInfo: PageInfo;
+    };
+};
+
+export type ProgramScope = {
+    id: string;
+    businessUnitId: string | null;
+    frameworkId: string;
+};
+
+export type PaginatedResponseProgramScope = {
+    results: {
+        data: Array<ProgramScope>;
+        pageInfo: PageInfo;
+    };
+};
+
 export type PolicyStatus = 'OK' | 'NEEDS_REMEDIATION';
 
 export type PolicyVersionStatus = 'NOT_STARTED' | 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'RENEW_SOON' | 'EXPIRED';
@@ -2963,6 +3497,35 @@ export type PaginatedResponsePolicy = {
         data: Array<Policy>;
         pageInfo: PageInfo;
     };
+};
+
+export type NotificationFrequencyDaily = 'DAILY';
+
+export type NotificationFrequencyWeekly = 'WEEKLY';
+
+export type NotificationChannelType = 'EMAIL' | 'SLACK';
+
+export type EnabledPersonnelNotificationSettings = {
+    enabled: true;
+    employeeDigestFrequency: NotificationFrequencyDaily | NotificationFrequencyWeekly;
+    enabledChannels: Array<NotificationChannelType>;
+    nextReminderAt: string;
+};
+
+export type DisabledPersonnelNotificationSettings = {
+    enabled: false;
+};
+
+export type PersonnelNotificationSettings = EnabledPersonnelNotificationSettings | DisabledPersonnelNotificationSettings;
+
+export type NotificationFrequency = 'DAILY' | 'NEVER' | 'WEEKLY';
+
+export type UpdatePersonnelNotificationSettingsInput = {
+    frequency?: NotificationFrequency;
+    /**
+     * Replaces the complete channel set. Omit to preserve it; an empty array disables reminders.
+     */
+    channels?: Array<NotificationChannelType>;
 };
 
 /**
@@ -3457,7 +4020,7 @@ export type KnowledgeBaseWebpageResourceOutput = {
     title: string;
     description: string | null;
     url: string;
-    customerVisibility: 'PRIVATE' | 'SHAREABLE' | 'REQUEST_ACCESS' | 'PUBLIC' | null;
+    customerVisibility: 'PUBLIC' | 'SHAREABLE' | 'PRIVATE' | 'REQUEST_ACCESS' | null;
     includeSubPages: boolean | null;
     isUsedInQuestionnaires: boolean | null;
     ownerAssignment: KnowledgeBaseResourceActorAssignment | null;
@@ -3527,8 +4090,8 @@ export type CreateWebpageResourceInput = {
     /**
      * Trust Center category id to associate this resource with. Pass `null`
      * to keep the resource uncategorized. Only valid when `customerVisibility`
-     * is REQUEST_ACCESS or PUBLIC; other combinations and unknown ids return
-     * an InvalidInputError.
+     * is PUBLIC; other combinations and unknown ids return an
+     * InvalidInputError.
      */
     categoryId?: string | null;
 };
@@ -3570,8 +4133,8 @@ export type UpdateWebpageResourceInput = {
      * Trust Center category id to associate this resource with. Pass `null`
      * to move the resource to uncategorized. Only valid when the resource's
      * effective visibility (after applying any patched `customerVisibility`)
-     * is REQUEST_ACCESS or PUBLIC; other combinations and unknown ids return
-     * an InvalidInputError.
+     * is PUBLIC; other combinations and unknown ids return an
+     * InvalidInputError.
      */
     categoryId?: string | null;
 };
@@ -3587,7 +4150,7 @@ export type KnowledgeBaseDocumentResourceOutput = {
      * resource to obtain a fresh URL once this one expires.
      */
     fileUrl: string;
-    customerVisibility: 'PRIVATE' | 'SHAREABLE' | 'REQUEST_ACCESS' | 'PUBLIC' | null;
+    customerVisibility: 'PUBLIC' | 'SHAREABLE' | 'PRIVATE' | 'REQUEST_ACCESS' | null;
     downloadPermission: 'VIEW_ONLY' | 'VIEW_AND_DOWNLOAD' | null;
     isUsedInQuestionnaires: boolean | null;
     ownerAssignment: KnowledgeBaseResourceActorAssignment | null;
@@ -3776,7 +4339,7 @@ export type ExtractIssueTemplateStandardIssue = 'STANDARD_ISSUE';
 
 export type StandardIssueType = 'AREA_OF_CONCERN' | 'MAJOR_NONCONFORMITY' | 'MINOR_NONCONFORMITY' | 'OPP_FOR_IMPROVEMENT' | 'EXCEPTION' | 'PROCESS_FOR_IMPROVEMENT';
 
-export type ActorType = 'USER' | 'WORKFLOW_GENERATED';
+export type ActorType = 'USER' | 'APPLICATION' | 'WORKFLOW_GENERATED';
 
 export type Actor = {
     actorType: ActorType;
@@ -3817,10 +4380,10 @@ export type IssueCustomField = {
 export type StandardIssue = {
     id: string;
     readableIssueId: string;
-    createdAt: string;
+    createdDate: string;
     createdBy: Actor;
     lastModifiedBy: Actor;
-    lastModifiedAt: string;
+    lastModifiedDate: string;
     title: string;
     description: string;
     owners: Array<IssueOwner>;
@@ -3832,7 +4395,7 @@ export type StandardIssue = {
     source: Source | null;
     controlDomain: string | null;
     closedMetadata: ClosedMetadata | null;
-    detectedAt: string | null;
+    detectedDate: string;
     mappedControlIds: Array<string>;
     mappedRiskScenarioIds: Array<string>;
     mappedPolicyIds: Array<string>;
@@ -3849,10 +4412,10 @@ export type ExtractIssueTemplateStandardPoam = 'STANDARD_POAM';
 export type StandardPoam = {
     id: string;
     readableIssueId: string;
-    createdAt: string;
+    createdDate: string;
     createdBy: Actor;
     lastModifiedBy: Actor;
-    lastModifiedAt: string;
+    lastModifiedDate: string;
     title: string;
     description: string;
     owners: Array<IssueOwner>;
@@ -3864,7 +4427,7 @@ export type StandardPoam = {
     source: Source | null;
     controlDomain: string | null;
     closedMetadata: ClosedMetadata | null;
-    detectedAt: string | null;
+    detectedDate: string;
     mappedControlIds: Array<string>;
     mappedRiskScenarioIds: Array<string>;
     mappedPolicyIds: Array<string>;
@@ -3885,14 +4448,10 @@ export type PaginatedResponseIssue = {
 
 export type IssueTemplate = 'STANDARD_ISSUE' | 'STANDARD_POAM';
 
-export type IssueSortField = 'DUE_DATE' | 'CREATED_AT' | 'DETECTED_AT' | 'LAST_MODIFIED_AT' | 'STATUS' | 'SEVERITY';
+export type IssueSortField = 'dueDate' | 'createdDate' | 'detectedDate' | 'lastModifiedDate' | 'status' | 'severity';
 
 /**
- * Sort direction shared across the external REST API surface.
- *
- * `"asc"` for ascending, `"desc"` for descending. Endpoints expose this as the
- * `orderDirection` / `sortDirection` query parameter and map it onto whatever
- * internal direction representation the underlying service expects.
+ * `"asc"` for ascending, `"desc"` for descending.
  */
 export type OrderDirection = 'asc' | 'desc';
 
@@ -4108,71 +4667,6 @@ export type CloudInfrastructure = {
      * Region in which the Resource is located
      */
     region: string;
-};
-
-/**
- * A CloudInfrastructure resource backed by a machine image — e.g. a virtual
- * machine or a Kubernetes node. Carries the machine image identifier and
- * human-readable image name when available.
- */
-export type ComputeInstance = {
-    responseType: ResourceResponseType;
-    /**
-     * The identifier for the resource type, unique within the scope of an Integration.
-     */
-    resourceKind: string;
-    /**
-     * The unique identifier for the Resource.
-     */
-    resourceId: string;
-    /**
-     * The unique identifier for the Connection used to ingest the Resource if it exists.
-     */
-    connectionId: string | null;
-    /**
-     * The Resource's display name.
-     */
-    displayName: string;
-    /**
-     * The unique identifier for the owner of the resource in Vanta.
-     */
-    owner: string | null;
-    /**
-     * Whether the resource is in scope for audits.
-     */
-    inScope: boolean;
-    /**
-     * The description of the resource in Vanta.
-     */
-    description: string | null;
-    /**
-     * When Vanta first ingested the Resource.
-     */
-    creationDate: string;
-    /**
-     * When the resource was deleted/removed from the integration, if applicable.
-     * This field is only present when the resource has been deleted.
-     */
-    deletedDate?: string | null;
-    /**
-     * Name of the account associated with the Resource
-     */
-    account: string;
-    /**
-     * Region in which the Resource is located
-     */
-    region: string;
-    /**
-     * The machine image identifier the resource was launched from (e.g. an AWS
-     * AMI ID, a GCP image self-link, or an Azure publisher/offer/sku/version
-     * composite). Null when the image could not be resolved.
-     */
-    machineImageId?: string | null;
-    /**
-     * A human-readable name describing the machine image's OS and version (e.g.
-     * an AMI name or GCP image name). Null when no descriptive name is available.
-     */
-    machineImageName?: string | null;
 };
 
 export type ContainerRepository = {
@@ -4707,7 +5201,7 @@ export type OrganizationSubunit = {
     accountId: string | null;
 };
 
-export type AnyResource = Resource | CloudInfrastructure | ComputeInstance | ContainerRepository | Database | Device | PaaS | Queue | StorageBucket | Account | AwsAccount | OrganizationSubunit;
+export type AnyResource = Resource | CloudInfrastructure | ContainerRepository | Database | Device | PaaS | Queue | StorageBucket | Account | AwsAccount | OrganizationSubunit;
 
 export type PaginatedResponseAnyResource = {
     results: {
@@ -4729,6 +5223,31 @@ export type Group = {
      * The group's creation date.
      */
     creationDate: string | null;
+    /**
+     * The group's description.
+     */
+    description: string | null;
+    /**
+     * The source that created the group. Manually created groups are set to "Vanta"; groups imported from an external source use that source's display name.
+     */
+    source: string;
+    /**
+     * The number of personnel in the group.
+     */
+    personnelCount: number;
+    /**
+     * The group's point of contact.
+     */
+    pointOfContact: {
+        /**
+         * The point of contact's email address.
+         */
+        email: string;
+        /**
+         * The point of contact's display name.
+         */
+        displayName: string;
+    } | null;
 };
 
 export type PaginatedResponseGroup = {
@@ -4736,6 +5255,98 @@ export type PaginatedResponseGroup = {
         data: Array<Group>;
         pageInfo: PageInfo;
     };
+};
+
+export type ImportableIdpGroup = {
+    id: string;
+    name: string;
+    integrationId: string;
+    externalAccountId: string | null;
+};
+
+export type PaginatedImportableIdpGroupResponse = {
+    results: {
+        data: Array<ImportableIdpGroup>;
+        pageInfo: PageInfo;
+    };
+};
+
+export type ImportIdpGroupSuccess = {
+    idpGroupId: string;
+    status: 'SUCCESS';
+    groupId: string;
+};
+
+export type ImportIdpGroupFailureReason = 'NOT_FOUND' | 'IMPORT_FAILED';
+
+export type ImportIdpGroupError = {
+    idpGroupId: string;
+    status: 'ERROR';
+    reason: ImportIdpGroupFailureReason;
+    message: string;
+};
+
+export type ImportIdpGroupResult = ImportIdpGroupSuccess | ImportIdpGroupError;
+
+export type ImportIdpGroupsResponse = {
+    results: Array<ImportIdpGroupResult>;
+};
+
+export type CreatedFramework = {
+    /**
+     * The created framework's unique ID.
+     */
+    id: string;
+};
+
+/**
+ * One section of a custom framework being created.
+ *
+ * Sections are identified by `shortName`, which must be unique within the
+ * request; nesting and control mappings both reference it.
+ */
+export type CreateFrameworkSectionInput = {
+    /**
+     * The section's display name.
+     */
+    name: string;
+    /**
+     * Unique identifier for this section within the request.
+     */
+    shortName: string;
+    /**
+     * Optional description of the section.
+     */
+    description: string | null;
+    /**
+     * The `shortName` of this section's parent, for a nested section, or `null`
+     * for a top-level section. Must match a `shortName` present in this request.
+     */
+    parentShortName: string | null;
+    /**
+     * External IDs of existing controls to map to this section. Each must match
+     * a control that already exists in your organization.
+     */
+    controlShorthandNames: Array<string>;
+};
+
+export type CreateFrameworkInput = {
+    /**
+     * The framework's display name. Must be unique within your organization.
+     */
+    name: string;
+    /**
+     * A description of what the framework covers.
+     */
+    description: string;
+    /**
+     * Optional short name used to abbreviate the framework in the UI.
+     */
+    shortName: string | null;
+    /**
+     * The framework's sections.
+     */
+    sections: Array<CreateFrameworkSectionInput>;
 };
 
 export type Framework = {
@@ -4933,6 +5544,10 @@ export type Control = {
      * When the control was last modified. Returns null for Vanta library controls.
      */
     modificationDate: string | null;
+    /**
+     * How the control is implemented.
+     */
+    implementationDetails?: string | null;
 };
 
 export type PaginatedResponseControl = {
@@ -5393,7 +6008,14 @@ export type ArrayResponseUserDefinedTagCategory = {
     results: Array<UserDefinedTagCategory>;
 };
 
-export type CustomerTrustProductContextIdFilter = 'EXTERNAL_TRUST_CENTER' | 'DOCUMENT_SHARING' | 'QUESTIONNAIRE';
+export type CustomerTrustProductContextIdFilter = 'EXTERNAL_TRUST_CENTER' | 'DOCUMENT_SHARING' | 'CONTROL_SHARING' | 'QUESTIONNAIRE';
+
+export type CreateTagCategoryInput = {
+    /**
+     * Must be unique within your organization. Surrounding whitespace is trimmed.
+     */
+    displayName: string;
+};
 
 export type UserDefinedTag = {
     id: string;
@@ -5404,6 +6026,12 @@ export type UserDefinedTag = {
 export type TagCategoryWithTags = {
     category: UserDefinedTagCategory;
     tags: Array<UserDefinedTag>;
+};
+
+export type CustomerTrustProductContextIdWritable = 'EXTERNAL_TRUST_CENTER' | 'DOCUMENT_SHARING' | 'CONTROL_SHARING';
+
+export type AddTagCategoryProductContextInput = {
+    productContextId: CustomerTrustProductContextIdWritable;
 };
 
 export type QuestionnaireAssignableUser = {
@@ -5421,7 +6049,7 @@ export type QuestionnaireAssignableUserRole = 'owner' | 'approver';
 
 export type CustomerTrustQuestionnaireType = 'SPREADSHEET' | 'WEBSITE' | 'DOCUMENT';
 
-export type QuestionnaireStatus = 'APPROVED' | 'IN_PROGRESS' | 'IN_REVIEW' | 'READY_FOR_REVIEW' | 'WAITING_ON_ANSWERS' | 'ON_HOLD' | 'NO_LONGER_NEEDED' | 'COMPLETE' | 'ERROR' | 'EXTRACTING_QUESTIONS' | 'QUEUED_FOR_EXTRACTION' | 'PROCESSING' | 'QUEUED_FOR_PROCESSING' | 'WAITING_ON_COLUMN_SELECTION' | 'WAITING_ON_COLUMN_APPROVAL' | 'QUEUED_FOR_COLUMN_DETECTION' | 'DETECTING_COLUMNS';
+export type QuestionnaireStatus = 'APPROVED' | 'IN_PROGRESS' | 'IN_REVIEW' | 'READY_FOR_REVIEW' | 'WAITING_ON_ANSWERS' | 'ON_HOLD' | 'NO_LONGER_NEEDED' | 'COMPLETE' | 'ERROR' | 'EXTRACTING_QUESTIONS' | 'QUEUED_FOR_SECTION_EXTRACTION' | 'EXTRACTING_SECTIONS' | 'MAPPING_SECTIONS' | 'QUEUED_FOR_ANSWERING' | 'GENERATING_ANSWERS' | 'QUEUED_FOR_EXTRACTION' | 'PROCESSING' | 'QUEUED_FOR_PROCESSING' | 'WAITING_ON_COLUMN_SELECTION' | 'WAITING_ON_COLUMN_APPROVAL' | 'QUEUED_FOR_COLUMN_DETECTION' | 'DETECTING_COLUMNS';
 
 export type QuestionnaireUser = {
     id: string;
@@ -5692,6 +6320,217 @@ export type CustomerTrustExportStatusResponse = {
     errorMessage?: string;
 };
 
+export type QuestionnaireResponseOriginType = 'AI' | 'ANSWER_LIBRARY' | 'MANUAL' | 'ORIGINAL_QUESTIONNAIRE' | 'RESOURCE';
+
+/**
+ * Meta schema
+ *
+ * Recommended values:
+ * - 'http://json-schema.org/schema#'
+ * - 'http://json-schema.org/hyper-schema#'
+ * - 'http://json-schema.org/draft-07/schema#'
+ * - 'http://json-schema.org/draft-07/hyper-schema#'
+ */
+export type JsonSchema7Version = string;
+
+export type JsonSchema7 = {
+    $id?: string;
+    $ref?: string;
+    $schema?: JsonSchema7Version;
+    $comment?: string;
+    $defs?: {
+        [key: string]: JsonSchema7Definition;
+    };
+    type?: JsonSchema7TypeName | Array<JsonSchema7TypeName>;
+    enum?: Array<JsonSchema7Type>;
+    const?: JsonSchema7Type;
+    multipleOf?: number;
+    maximum?: number;
+    exclusiveMaximum?: number;
+    minimum?: number;
+    exclusiveMinimum?: number;
+    maxLength?: number;
+    minLength?: number;
+    pattern?: string;
+    items?: JsonSchema7Definition | Array<JsonSchema7Definition>;
+    additionalItems?: JsonSchema7Definition;
+    maxItems?: number;
+    minItems?: number;
+    uniqueItems?: boolean;
+    contains?: JsonSchema7Definition;
+    maxProperties?: number;
+    minProperties?: number;
+    required?: Array<string>;
+    properties?: {
+        [key: string]: JsonSchema7Definition;
+    };
+    patternProperties?: {
+        [key: string]: JsonSchema7Definition;
+    };
+    additionalProperties?: JsonSchema7Definition;
+    dependencies?: {
+        [key: string]: JsonSchema7Definition | Array<string>;
+    };
+    propertyNames?: JsonSchema7Definition;
+    if?: JsonSchema7Definition;
+    then?: JsonSchema7Definition;
+    else?: JsonSchema7Definition;
+    allOf?: Array<JsonSchema7Definition>;
+    anyOf?: Array<JsonSchema7Definition>;
+    oneOf?: Array<JsonSchema7Definition>;
+    not?: JsonSchema7Definition;
+    format?: string;
+    contentMediaType?: string;
+    contentEncoding?: string;
+    definitions?: {
+        [key: string]: JsonSchema7Definition;
+    };
+    title?: string;
+    description?: string;
+    default?: JsonSchema7Type;
+    readOnly?: boolean;
+    writeOnly?: boolean;
+    examples?: JsonSchema7Type;
+};
+
+/**
+ * JSON Schema v7
+ */
+export type JsonSchema7Definition = JsonSchema7 | boolean;
+
+/**
+ * Primitive type
+ */
+export type JsonSchema7TypeName = 'string' | 'number' | 'integer' | 'boolean' | 'object' | 'array' | 'null';
+
+/**
+ * Primitive type
+ */
+export type JsonSchema7Type = string | number | boolean | JsonSchema7Object | JsonSchema7Array | null;
+
+export type JsonSchema7Object = {
+    [key: string]: JsonSchema7Type;
+};
+
+export type JsonSchema7Array = {
+    [key: string]: never;
+};
+
+/**
+ * Valid runtime value types for an answer part. Array values are restricted
+ * to string items to match `ArrayFieldSchema.items` (which is narrowed to
+ * `StringFieldSchema` only).
+ */
+export type AnswerPartValue = string | number | boolean | Array<string> | null;
+
+/**
+ * Construct a type with a set of properties K of type T
+ */
+export type RecordStringAnswerPartValue = {
+    [key: string]: AnswerPartValue;
+};
+
+/**
+ * A questionnaire response without the fields that describe what the
+ * requesting user may do with it. Surfaces that authenticate a client rather
+ * than a user return this, since there is no user those fields could describe.
+ */
+export type QuestionnaireResponseWithoutViewerPermissions = {
+    /**
+     * The unique identifier for the questionnaire response
+     */
+    id: string;
+    /**
+     * The questionnaire section this response belongs to, if any.
+     * Null for standalone questions or legacy responses without a section.
+     */
+    sectionId?: string | null;
+    /**
+     * Sequence label for ordering responses within a questionnaire
+     */
+    sequenceLabel?: string;
+    /**
+     * The actual question text
+     */
+    question: string;
+    /**
+     * The user who last edited the question/answer
+     */
+    editedBy?: CustomerTrustUser | null;
+    /**
+     * The user who approved the current answer
+     */
+    approvedBy?: CustomerTrustUser | null;
+    /**
+     * Indicates whether the answer is currently being worked on by AI.
+     */
+    isPendingAnswerGeneration: boolean;
+    originType?: QuestionnaireResponseOriginType;
+    /**
+     * JSON Schema describing the expected answer format for this question.
+     * Prefer `answerPartsSchema` + `answerPartsValues` — those mirror the
+     * apps/web GraphQL surface and let clients render against the
+     * canonical composite schema.
+     */
+    answerSchema?: string;
+    answerPartsSchema?: JsonSchema7;
+    answerPartsValues?: RecordStringAnswerPartValue;
+    /**
+     * Evidence documents attached to support this questionnaire response
+     */
+    attachedEvidence?: Array<{
+        uploadedDocument: {
+            slugId?: string;
+            filename?: string;
+            id: string;
+        };
+    }>;
+    /**
+     * Id of the QAutoGeneratedAnswerLog that produced the current generated
+     * answer on this response, if any. The browser extension API exposes the log
+     * body and citations at
+     * `GET /questionnaires/{questionnaireId}/responses/{responseId}/generated-answer-log`.
+     */
+    generatedAnswerLogId?: string;
+    /**
+     * The response's owner, or null when no owner is assigned. Resolved from the
+     * object-role grant rather than the response document's legacy `ownerUserId`,
+     * which the object-role registry leaves unset for Team owners.
+     */
+    ownerAssignment: ActorAssignment | null;
+};
+
+export type PaginatedResponseQuestionnaireResponseWithoutViewerPermissions = {
+    results: {
+        data: Array<QuestionnaireResponseWithoutViewerPermissions>;
+        pageInfo: PageInfo;
+    };
+};
+
+/**
+ * Construct a type with a set of properties K of type T
+ */
+export type RecordStringUnknown = {
+    [key: string]: unknown;
+};
+
+/**
+ * Request body for updating a questionnaire response's answer content.
+ */
+export type UpdateQuestionnaireResponseContentArgs = {
+    answerPartsValues: RecordStringUnknown;
+};
+
+/**
+ * Request body for reassigning (or clearing) a questionnaire response's owner.
+ */
+export type UpdateQuestionnaireResponseOwnerArgs = {
+    /**
+     * New owner, or null to clear the current owner.
+     */
+    ownerAssignment: UpdateActorAssignment | null;
+};
+
 /**
  * Response returned after a data deletion request is created.
  */
@@ -5699,7 +6538,7 @@ export type CreateDeletionRequestResponse = {
     /**
      * Whether the deletion request was successfully enqueued.
      */
-    success: boolean;
+    isSuccessful: boolean;
 };
 
 /**
@@ -5852,7 +6691,7 @@ export type EditCustomerTrustAccountInput = {
 
 export type ControlDomain = 'ARTIFICIAL_&_AUTONOMOUS_TECHNOLOGY' | 'ASSET_MANAGEMENT' | 'BUSINESS_CONTINUITY_&_DISASTER_RECOVERY' | 'CAPACITY_&_PERFORMANCE_PLANNING' | 'CHANGE_MANAGEMENT' | 'CLOUD_SECURITY' | 'COMPLIANCE' | 'CONFIGURATION_MANAGEMENT' | 'CONTINUOUS_MONITORING' | 'CRYPTOGRAPHIC_PROTECTIONS' | 'DATA_CLASSIFICATION_&_HANDLING' | 'EMBEDDED_TECHNOLOGY' | 'ENDPOINT_SECURITY' | 'HUMAN_RESOURCES_SECURITY' | 'IDENTIFICATION_&_AUTHENTICATION' | 'INCIDENT_RESPONSE' | 'INFORMATION_ASSURANCE' | 'MAINTENANCE' | 'MOBILE_DEVICE_MANAGEMENT' | 'NETWORK SECURITY' | 'PHYSICAL_&_ENVIRONMENTAL_SECURITY' | 'PRIVACY' | 'PROJECT_&_RESOURCE MANAGEMENT' | 'RISK_MANAGEMENT' | 'SECURE_ENGINEERING_&_ARCHITECTURE' | 'SECURITY_AWARENESS_&_TRAINING' | 'SECURITY_OPERATIONS' | 'SECURITY_&_PRIVACY_GOVERNANCE' | 'TECHNOLOGY_DEVELOPMENT_&_ACQUISITION' | 'THIRD-PARTY_MANAGEMENT' | 'THREAT_MANAGEMENT' | 'VULNERABILITY_&_PATCH_MANAGEMENT' | 'WEB_SECURITY' | 'ADMINISTRATIVE' | 'PHYSICAL' | 'TECHNICAL' | 'BASIC' | 'DERIVED';
 
-export type FrameworkId = 'AU_E_8' | 'AWS_FTR' | 'CCPA' | 'CIS_V8' | 'CPS_234' | 'DORA' | 'FEDRAMP' | 'GDPR' | 'HIPAA' | 'HITRUST_E1' | 'ISO_27001' | 'ISO_27001_2022' | 'ISO_27017' | 'ISO_27018' | 'ISO_27701' | 'ISO_42001' | 'ISO_9001' | 'MSFT_SSPA' | 'MVSP' | 'NIS_2D' | 'NIST_171' | 'NIST_53' | 'NIST_AI_RMF' | 'NIST_CSF' | 'NIST_CSF_2' | 'OFDSS' | 'PCI_SAQ_A' | 'PCI_SAQ_A_EP' | 'PCI_SAQ_D_MERCHANT' | 'PCI_SAQ_D_SP' | 'PCI_DDS_4' | 'SOC_2' | 'SOX_ITGC' | 'UK_CYBER_ESSENTIALS' | 'US_DATA_PRIVACY';
+export type FrameworkId = 'AU_E_8' | 'AWS_FTR' | 'CCPA' | 'CIS_V8' | 'CPS_234' | 'DORA' | 'FEDRAMP' | 'GDPR' | 'HIPAA' | 'HITRUST_E1' | 'ISO_27001' | 'ISO_27001_2022' | 'ISO_27017' | 'ISO_27018' | 'ISO_27701' | 'ISO_42001' | 'ISO_9001' | 'MSFT_SSPA' | 'MVSP' | 'NIS_2D' | 'NIST_171' | 'NIST_171_R3' | 'NIST_53' | 'NIST_AI_RMF' | 'NIST_CSF' | 'NIST_CSF_2' | 'OFDSS' | 'PCI_SAQ_A' | 'PCI_SAQ_A_EP' | 'PCI_SAQ_D_MERCHANT' | 'PCI_SAQ_D_SP' | 'PCI_DDS_4' | 'SOC_2' | 'SOX_ITGC' | 'UK_CYBER_ESSENTIALS' | 'US_DATA_PRIVACY';
 
 export type FrameworkSection = {
     frameworkId: FrameworkId | string;
@@ -5946,6 +6785,10 @@ export type ControlDetail = {
      */
     modificationDate: string | null;
     /**
+     * How the control is implemented.
+     */
+    implementationDetails?: string | null;
+    /**
      * The number of passing documents that are linked to the control.
      */
     numDocumentsPassing: number;
@@ -5999,11 +6842,110 @@ export type SetOwnerForControlInput = {
     userId: string | null;
 };
 
+export type DeactivatedControlFramework = {
+    /**
+     * The framework's unique ID. Accepted by the `frameworkMatchesAny` filter on `GET /v1/controls`.
+     */
+    id: string;
+    /**
+     * The framework's display name.
+     */
+    displayName: string;
+    /**
+     * The short version of the framework's display name.
+     */
+    shorthandName: string;
+    /**
+     * The shorthands of the framework's sections that the control maps to.
+     */
+    sections: Array<string>;
+};
+
+export type DeactivatedControl = {
+    /**
+     * The control's unique ID.
+     */
+    id: string;
+    /**
+     * The control's external ID.
+     */
+    externalId: string | null;
+    /**
+     * The control's name.
+     */
+    name: string;
+    /**
+     * The control's description.
+     */
+    description: string;
+    source: ControlSource;
+    /**
+     * The security domains that the control belongs to.
+     */
+    domains: Array<string>;
+    /**
+     * The control's owner.
+     */
+    owner: Owner | null;
+    /**
+     * The control's GDPR role, if the control is a GDPR control.
+     */
+    role?: string | null;
+    /**
+     * The control's custom field values, if control custom fields is included in your Vanta instance.
+     */
+    customFields: Array<CustomField>;
+    /**
+     * When the control was created. Returns null for Vanta library controls.
+     */
+    creationDate: string | null;
+    /**
+     * When the control was last modified. Returns null for Vanta library controls.
+     */
+    modificationDate: string | null;
+    /**
+     * How the control is implemented.
+     */
+    implementationDetails?: string | null;
+    /**
+     * The frameworks that the control is mapped to. Empty when the control maps to no framework the organization has enabled.
+     */
+    frameworks: Array<DeactivatedControlFramework>;
+    /**
+     * The reason given when the control was deactivated. Null when no reason was recorded, including for deactivations that predate the field.
+     */
+    deactivationReason: string | null;
+};
+
+export type PaginatedResponseDeactivatedControl = {
+    results: {
+        data: Array<DeactivatedControl>;
+        pageInfo: PageInfo;
+    };
+};
+
 export type AddControlDocumentMappingInput = {
     /**
      * The ID of the document to add to the control.
      */
     documentId: string;
+};
+
+export type AddControlDocumentsMappingResult = {
+    /**
+     * The number of mappings this request created. Documents that were already
+     * mapped to the control are not counted, so re-submitting the same list
+     * returns 0.
+     */
+    mappedCount: number;
+};
+
+export type AddControlDocumentsMappingInput = {
+    /**
+     * The IDs of the documents to map to the control. Documents already mapped to
+     * the control are ignored and are not counted in `mappedCount`.
+     */
+    documentIds: Array<string>;
 };
 
 export type AddControlTestMappingInput = {
@@ -6013,11 +6955,170 @@ export type AddControlTestMappingInput = {
     testId: string;
 };
 
+export type AddControlTestsMappingResult = {
+    /**
+     * The number of mappings this request created. Tests that were already
+     * mapped to the control are not counted, so re-submitting the same list
+     * returns 0.
+     */
+    mappedCount: number;
+};
+
+export type AddControlTestsMappingInput = {
+    /**
+     * The IDs of the tests to map to the control. Tests already mapped to the
+     * control are ignored and are not counted in `mappedCount`.
+     */
+    testIds: Array<string>;
+};
+
+/**
+ * Lifecycle of a suggestion job, from accepted through finished.
+ */
+export type EvidenceSuggestionJobStatus = 'NOT_STARTED' | 'GENERATING' | 'EXPORTING' | 'COMPLETED';
+
+/**
+ * Every in-scope control in the organization.
+ */
+export type EvidenceSuggestionJobScopeAll = {
+    type: 'ALL';
+};
+
+/**
+ * The controls mapped to one framework.
+ */
+export type EvidenceSuggestionJobScopeFramework = {
+    type: 'FRAMEWORK';
+    frameworkId: string;
+};
+
+/**
+ * Exactly the controls named.
+ */
+export type EvidenceSuggestionJobScopeControls = {
+    type: 'CONTROLS';
+    controlIds: Array<string>;
+};
+
+/**
+ * Which controls a suggestion job covers.
+ */
+export type EvidenceSuggestionJobScope = EvidenceSuggestionJobScopeAll | EvidenceSuggestionJobScopeFramework | EvidenceSuggestionJobScopeControls;
+
+export type EvidenceSuggestionJobError = {
+    code: 'CONTROL_NOT_FOUND' | 'CONTROL_IGNORED' | 'AI_WORKFLOW_FAILED' | 'EXPORT_FAILED';
+    message: string;
+    /**
+     * The control the error is about, or null for a job-level error.
+     */
+    controlId: string | null;
+};
+
+export type EvidenceSuggestionJobResult = {
+    /**
+     * Covered controls the job has finished, successfully or not.
+     */
+    completedControls: number;
+    /**
+     * Covered controls the job failed to process.
+     */
+    failedControls: number;
+    /**
+     * Suggestions produced so far.
+     */
+    totalSuggestions: number;
+    errors: Array<EvidenceSuggestionJobError>;
+};
+
+/**
+ * Per-control progress within a job. `PENDING` at creation, then `SUCCESS` or
+ * `FAILURE` once the job records that control's outcome.
+ */
+export type EvidenceSuggestionJobControlStatus = 'PENDING' | 'SUCCESS' | 'FAILURE';
+
+export type EvidenceSuggestionJobControl = {
+    controlId: string;
+    status: EvidenceSuggestionJobControlStatus;
+};
+
+/**
+ * An asynchronous job that generates evidence suggestions for a set of
+ * controls.
+ */
+export type EvidenceSuggestionJob = {
+    /**
+     * Poll the job by this ID to follow its progress.
+     */
+    jobId: string;
+    status: EvidenceSuggestionJobStatus;
+    scope: EvidenceSuggestionJobScope;
+    result: EvidenceSuggestionJobResult;
+    controls: Array<EvidenceSuggestionJobControl>;
+    createdAt: string;
+    /**
+     * Null until the job finishes.
+     */
+    completedAt: string | null;
+};
+
+/**
+ * Every custom control in the organization that is not ignored. An
+ * organization whose controls all come from the Vanta library has nothing in
+ * scope and is rejected.
+ */
+export type CreateEvidenceSuggestionJobInputAll = {
+    type: 'ALL';
+    /**
+     * Whether to include deactivated controls. Defaults to `false`.
+     */
+    includeInactive?: boolean;
+};
+
+/**
+ * The framework's custom controls that are not ignored.
+ */
+export type CreateEvidenceSuggestionJobInputFramework = {
+    type: 'FRAMEWORK';
+    /**
+     * A Vanta framework name, such as `soc2`, or a custom framework's ID.
+     */
+    frameworkId: string;
+    /**
+     * Whether to include deactivated controls. Defaults to `false`.
+     */
+    includeInactive?: boolean;
+};
+
+/**
+ * Exactly the controls named.
+ */
+export type CreateEvidenceSuggestionJobInputControls = {
+    type: 'CONTROLS';
+    /**
+     * Duplicates are ignored. The cap bounds how much LLM work one request can
+     * queue; use `ALL` or `FRAMEWORK` to cover a larger set.
+     */
+    controlIds: Array<string>;
+    /**
+     * Whether to include deactivated controls. Defaults to `false`.
+     */
+    includeInactive?: boolean;
+};
+
+/**
+ * Which controls to generate evidence suggestions for.
+ */
+export type CreateEvidenceSuggestionJobInput = CreateEvidenceSuggestionJobInputAll | CreateEvidenceSuggestionJobInputFramework | CreateEvidenceSuggestionJobInputControls;
+
 export type Contract = {
     /**
      * Unique identifier for the contract.
      */
     id: string;
+    /**
+     * Stable source-system identifier for the contract, if any.
+     */
+    externalId: string | null;
     /**
      * Name of the contract.
      */
@@ -6039,6 +7140,24 @@ export type Contract = {
 export type PaginatedResponseContract = {
     results: {
         data: Array<Contract>;
+        pageInfo: PageInfo;
+    };
+};
+
+export type BusinessUnit = {
+    /**
+     * The business unit's unique ID.
+     */
+    id: string;
+    /**
+     * The business unit's display name.
+     */
+    displayName: string;
+};
+
+export type PaginatedResponseBusinessUnit = {
+    results: {
+        data: Array<BusinessUnit>;
         pageInfo: PageInfo;
     };
 };
@@ -6090,6 +7209,43 @@ export type QuestionAnswerInput = {
     tagAndCategoryIds?: Array<TagInput>;
 };
 
+export type ListBusinessUnitsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        pageSize?: PageSize;
+        pageCursor?: PageCursor;
+    };
+    url: '/business-units';
+};
+
+export type ListBusinessUnitsResponses = {
+    /**
+     * Ok
+     */
+    200: PaginatedResponseBusinessUnit;
+};
+
+export type ListBusinessUnitsResponse = ListBusinessUnitsResponses[keyof ListBusinessUnitsResponses];
+
+export type GetBusinessUnitData = {
+    body?: never;
+    path: {
+        businessUnitId: string;
+    };
+    query?: never;
+    url: '/business-units/{businessUnitId}';
+};
+
+export type GetBusinessUnitResponses = {
+    /**
+     * Ok
+     */
+    200: BusinessUnit;
+};
+
+export type GetBusinessUnitResponse = GetBusinessUnitResponses[keyof GetBusinessUnitResponses];
+
 export type ListContractsData = {
     body?: never;
     path?: never;
@@ -6123,6 +7279,10 @@ export type UploadContractData = {
          * ID of the customer trust account to associate with this contract.
          */
         accountId?: string;
+        /**
+         * Stable source-system identifier used to reject duplicate contract uploads; repeats return 409. Use the upstream document or record ID when available, such as the Microsoft Graph DriveItem ID for SharePoint or the Ironclad record ID for Ironclad. If there is no source system, generate and store a durable idempotency key. Maximum 256 characters.
+         */
+        externalId?: string;
     };
     path?: never;
     query?: never;
@@ -6243,10 +7403,29 @@ export type ListLibraryControlsResponses = {
     /**
      * Ok
      */
-    200: PaginatedResponseControl;
+    200: PaginatedResponseDeactivatedControl;
 };
 
 export type ListLibraryControlsResponse = ListLibraryControlsResponses[keyof ListLibraryControlsResponses];
+
+export type ListDeactivatedControlsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        pageSize?: PageSize;
+        pageCursor?: PageCursor;
+    };
+    url: '/controls/deactivated-controls';
+};
+
+export type ListDeactivatedControlsResponses = {
+    /**
+     * Ok
+     */
+    200: PaginatedResponseDeactivatedControl;
+};
+
+export type ListDeactivatedControlsResponse = ListDeactivatedControlsResponses[keyof ListDeactivatedControlsResponses];
 
 export type DeleteControlData = {
     body?: never;
@@ -6534,6 +7713,22 @@ export type UpdateCustomerTrustAccountResponses = {
 
 export type UpdateCustomerTrustAccountResponse = UpdateCustomerTrustAccountResponses[keyof UpdateCustomerTrustAccountResponses];
 
+export type CreateDeletionRequestData = {
+    body: CreateDeletionRequestInput;
+    path?: never;
+    query?: never;
+    url: '/customer-trust/deletion-requests';
+};
+
+export type CreateDeletionRequestResponses = {
+    /**
+     * Ok
+     */
+    200: CreateDeletionRequestResponse;
+};
+
+export type CreateDeletionRequestResponse2 = CreateDeletionRequestResponses[keyof CreateDeletionRequestResponses];
+
 export type ListQuestionnairesData = {
     body?: never;
     path?: never;
@@ -6807,6 +8002,88 @@ export type CompleteQuestionnaireResponses = {
 
 export type CompleteQuestionnaireResponse = CompleteQuestionnaireResponses[keyof CompleteQuestionnaireResponses];
 
+export type ListQuestionnaireResponsesData = {
+    body?: never;
+    path: {
+        questionnaireId: string;
+    };
+    query?: {
+        pageSize?: PageSize;
+        pageCursor?: PageCursor;
+        /**
+         * Filter responses by question text (case-insensitive, partial match).
+         */
+        q?: string;
+    };
+    url: '/customer-trust/questionnaires/{questionnaireId}/responses';
+};
+
+export type ListQuestionnaireResponsesResponses = {
+    /**
+     * Ok
+     */
+    200: PaginatedResponseQuestionnaireResponseWithoutViewerPermissions;
+};
+
+export type ListQuestionnaireResponsesResponse = ListQuestionnaireResponsesResponses[keyof ListQuestionnaireResponsesResponses];
+
+export type GetQuestionnaireResponseData = {
+    body?: never;
+    path: {
+        questionnaireId: string;
+        responseId: string;
+    };
+    query?: never;
+    url: '/customer-trust/questionnaires/{questionnaireId}/responses/{responseId}';
+};
+
+export type GetQuestionnaireResponseResponses = {
+    /**
+     * Ok
+     */
+    200: QuestionnaireResponseWithoutViewerPermissions;
+};
+
+export type GetQuestionnaireResponseResponse = GetQuestionnaireResponseResponses[keyof GetQuestionnaireResponseResponses];
+
+export type UpdateQuestionnaireResponseContentData = {
+    body: UpdateQuestionnaireResponseContentArgs;
+    path: {
+        questionnaireId: string;
+        responseId: string;
+    };
+    query?: never;
+    url: '/customer-trust/questionnaires/{questionnaireId}/responses/{responseId}';
+};
+
+export type UpdateQuestionnaireResponseContentResponses = {
+    /**
+     * Ok
+     */
+    200: QuestionnaireResponseWithoutViewerPermissions;
+};
+
+export type UpdateQuestionnaireResponseContentResponse = UpdateQuestionnaireResponseContentResponses[keyof UpdateQuestionnaireResponseContentResponses];
+
+export type UpdateQuestionnaireResponseOwnerData = {
+    body: UpdateQuestionnaireResponseOwnerArgs;
+    path: {
+        questionnaireId: string;
+        responseId: string;
+    };
+    query?: never;
+    url: '/customer-trust/questionnaires/{questionnaireId}/responses/{responseId}/owner';
+};
+
+export type UpdateQuestionnaireResponseOwnerResponses = {
+    /**
+     * Ok
+     */
+    200: QuestionnaireResponseWithoutViewerPermissions;
+};
+
+export type UpdateQuestionnaireResponseOwnerResponse = UpdateQuestionnaireResponseOwnerResponses[keyof UpdateQuestionnaireResponseOwnerResponses];
+
 export type ListTagCategoriesData = {
     body?: never;
     path?: never;
@@ -6842,6 +8119,43 @@ export type GetTagsForCategoryResponses = {
 };
 
 export type GetTagsForCategoryResponse = GetTagsForCategoryResponses[keyof GetTagsForCategoryResponses];
+
+export type AddTagCategoryProductContextData = {
+    body: AddTagCategoryProductContextInput;
+    path: {
+        tagCategoryId: string;
+    };
+    query?: never;
+    url: '/customer-trust/tag-categories/{tagCategoryId}/product-contexts';
+};
+
+export type AddTagCategoryProductContextResponses = {
+    /**
+     * No content
+     */
+    204: void;
+};
+
+export type AddTagCategoryProductContextResponse = AddTagCategoryProductContextResponses[keyof AddTagCategoryProductContextResponses];
+
+export type RemoveTagCategoryProductContextData = {
+    body?: never;
+    path: {
+        tagCategoryId: string;
+        productContextId: CustomerTrustProductContextIdWritable;
+    };
+    query?: never;
+    url: '/customer-trust/tag-categories/{tagCategoryId}/product-contexts/{productContextId}';
+};
+
+export type RemoveTagCategoryProductContextResponses = {
+    /**
+     * No content
+     */
+    204: void;
+};
+
+export type RemoveTagCategoryProductContextResponse = RemoveTagCategoryProductContextResponses[keyof RemoveTagCategoryProductContextResponses];
 
 export type ListDiscoveredVendorsData = {
     body?: never;
@@ -7286,6 +8600,77 @@ export type ListPersonGroupsResponses = {
 
 export type ListPersonGroupsResponse = ListPersonGroupsResponses[keyof ListPersonGroupsResponses];
 
+export type CreateGroupData = {
+    body: {
+        /**
+         * Email address of the group's point of contact. Must be an active administrator.
+         */
+        pointOfContactEmail?: string | null;
+        /**
+         * Description of the group.
+         */
+        description?: string | null;
+        /**
+         * Display name for the group. Must not duplicate an existing group's name.
+         */
+        name: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/groups';
+};
+
+export type CreateGroupResponses = {
+    /**
+     * Group created
+     */
+    201: Group;
+};
+
+export type CreateGroupResponse = CreateGroupResponses[keyof CreateGroupResponses];
+
+export type ImportIdpGroupsData = {
+    body: {
+        /**
+         * IdP-group resource IDs to import.
+         */
+        idpGroupIds: Array<string>;
+    };
+    path?: never;
+    query?: never;
+    url: '/groups/import-from-idp';
+};
+
+export type ImportIdpGroupsResponses = {
+    /**
+     * IdP groups imported
+     */
+    200: ImportIdpGroupsResponse;
+};
+
+export type ImportIdpGroupsResponse2 = ImportIdpGroupsResponses[keyof ImportIdpGroupsResponses];
+
+export type ListImportableIdpGroupsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        pageSize?: PageSize;
+        pageCursor?: PageCursor;
+        search?: string;
+        integrationId?: Array<string>;
+    };
+    url: '/groups/importable-idp-groups';
+};
+
+export type ListImportableIdpGroupsResponses = {
+    /**
+     * Ok
+     */
+    200: PaginatedImportableIdpGroupResponse;
+};
+
+export type ListImportableIdpGroupsResponse = ListImportableIdpGroupsResponses[keyof ListImportableIdpGroupsResponses];
+
 export type GetGroupData = {
     body?: never;
     path: {
@@ -7303,6 +8688,37 @@ export type GetGroupResponses = {
 };
 
 export type GetGroupResponse = GetGroupResponses[keyof GetGroupResponses];
+
+export type UpdateGroupData = {
+    body: {
+        /**
+         * Email of an active Vanta user with the Admin role in the organization. Omit to preserve; pass null to clear.
+         */
+        pointOfContactEmail?: string | null;
+        /**
+         * New description. Omit to preserve; pass null to clear.
+         */
+        description?: string | null;
+        /**
+         * New display name. Omit to preserve. Names are trimmed, must be non-empty and unique, and cannot change for an IdP-managed group.
+         */
+        name?: string;
+    };
+    path: {
+        groupId: string;
+    };
+    query?: never;
+    url: '/groups/{groupId}';
+};
+
+export type UpdateGroupResponses = {
+    /**
+     * Group updated
+     */
+    200: Group;
+};
+
+export type UpdateGroupResponse = UpdateGroupResponses[keyof UpdateGroupResponses];
 
 export type AddPeopleToGroupData = {
     body: {
@@ -7349,6 +8765,9 @@ export type GetGroupMembersResponse = GetGroupMembersResponses[keyof GetGroupMem
 
 export type AddPersonToGroupData = {
     body: {
+        /**
+         * ID of the person to add to the group.
+         */
         id: string;
     };
     path: {
@@ -7649,6 +9068,136 @@ export type UpdateResourceResponses = {
 };
 
 export type UpdateResourceResponse = UpdateResourceResponses[keyof UpdateResourceResponses];
+
+export type ListData = {
+    body?: never;
+    path?: never;
+    query?: {
+        pageSize?: PageSize;
+        pageCursor?: PageCursor;
+        /**
+         * Full-text search across issue title and description.
+         */
+        search?: string;
+        /**
+         * Filter to issues matching any of the provided readable issue IDs.
+         */
+        readableIssueIdMatchesAny?: Array<string>;
+        /**
+         * Filter to issues matching any of the provided statuses.
+         */
+        statusMatchesAny?: Array<IssueStatus>;
+        /**
+         * Filter to issues matching any of the provided severities.
+         */
+        severityMatchesAny?: Array<IssueSeverity>;
+        /**
+         * Filter to issues matching any of the provided sources.
+         */
+        sourceMatchesAny?: Array<SourceType>;
+        /**
+         * Filter to issues matching any of the provided types.
+         */
+        typeMatchesAny?: Array<StandardIssueType>;
+        /**
+         * Filter to issues owned by any of the provided owner IDs.
+         */
+        ownerIdMatchesAny?: Array<string>;
+        /**
+         * Filter to issues matching any of the provided templates.
+         */
+        templateMatchesAny?: Array<IssueTemplate>;
+        /**
+         * Filter to issues closed for any of the provided reasons. Only applies
+         * to issues with a CLOSED status.
+         */
+        closeReasonMatchesAny?: Array<ClosedReason>;
+        /**
+         * Filter to issues closed on or after this date.
+         */
+        closedAfterDate?: string;
+        /**
+         * Filter to issues closed on or before this date.
+         */
+        closedBeforeDate?: string;
+        /**
+         * Include issues without a due date. This is functionally a no-op if dueBeforeDate or dueAfterDate are not provided.
+         */
+        includeIssuesWithoutDueDate?: boolean;
+        /**
+         * Only include issues without a due date. This filter cannot be used in conjunction with dueBeforeDate or dueAfterDate.
+         */
+        includeOnlyIssuesWithoutDueDate?: boolean;
+        /**
+         * Filter to issues with a due date on or after this date.
+         */
+        dueAfterDate?: string;
+        /**
+         * Filter to issues with a due date on or before this date.
+         */
+        dueBeforeDate?: string;
+        /**
+         * Filter to issues detected on or after this date.
+         */
+        detectedAfterDate?: string;
+        /**
+         * Filter to issues detected on or before this date.
+         */
+        detectedBeforeDate?: string;
+        /**
+         * Filter to issues created on or after this date.
+         */
+        createdAfterDate?: string;
+        /**
+         * Filter to issues created on or before this date.
+         */
+        createdBeforeDate?: string;
+        /**
+         * Filter to issues sourced from any of the provided audit IDs.
+         */
+        auditIdMatchesAny?: Array<string>;
+        /**
+         * Filter to issues mapped to any of the provided control IDs.
+         */
+        controlIdMatchesAny?: Array<string>;
+        /**
+         * Field to sort the results by.
+         */
+        orderBy?: IssueSortField;
+        /**
+         * Direction to sort the results in. One of `asc` or `desc`. Defaults to `asc`.
+         */
+        orderDirection?: OrderDirection;
+    };
+    url: '/issues';
+};
+
+export type ListResponses = {
+    /**
+     * Ok
+     */
+    200: PaginatedResponseIssue;
+};
+
+export type ListResponse = ListResponses[keyof ListResponses];
+
+export type GetIssueData = {
+    body?: never;
+    path: {
+        issueId: string;
+    };
+    query?: never;
+    url: '/issues/{issueId}';
+};
+
+export type GetIssueResponses = {
+    /**
+     * Ok
+     */
+    200: Issue;
+};
+
+export type GetIssueResponse = GetIssueResponses[keyof GetIssueResponses];
 
 export type ListAnswerLibraryEntriesData = {
     body?: never;
@@ -8287,6 +9836,38 @@ export type SetLeaveForPersonResponses = {
 
 export type SetLeaveForPersonResponse = SetLeaveForPersonResponses[keyof SetLeaveForPersonResponses];
 
+export type GetSettingsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/personnel-notification-settings';
+};
+
+export type GetSettingsResponses = {
+    /**
+     * Ok
+     */
+    200: PersonnelNotificationSettings;
+};
+
+export type GetSettingsResponse = GetSettingsResponses[keyof GetSettingsResponses];
+
+export type UpdateSettingsData = {
+    body: UpdatePersonnelNotificationSettingsInput;
+    path?: never;
+    query?: never;
+    url: '/personnel-notification-settings';
+};
+
+export type UpdateSettingsResponses = {
+    /**
+     * Ok
+     */
+    200: PersonnelNotificationSettings;
+};
+
+export type UpdateSettingsResponse = UpdateSettingsResponses[keyof UpdateSettingsResponses];
+
 export type ListPoliciesData = {
     body?: never;
     path?: never;
@@ -8323,6 +9904,45 @@ export type GetPolicyResponses = {
 };
 
 export type GetPolicyResponse = GetPolicyResponses[keyof GetPolicyResponses];
+
+export type ListProgramScopesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        pageSize?: PageSize;
+        pageCursor?: PageCursor;
+        businessUnitIdMatchesAny?: Array<string>;
+        frameworkIdMatchesAny?: Array<string>;
+    };
+    url: '/program-scopes';
+};
+
+export type ListProgramScopesResponses = {
+    /**
+     * Ok
+     */
+    200: PaginatedResponseProgramScope;
+};
+
+export type ListProgramScopesResponse = ListProgramScopesResponses[keyof ListProgramScopesResponses];
+
+export type GetProgramScopeData = {
+    body?: never;
+    path: {
+        programScopeId: string;
+    };
+    query?: never;
+    url: '/program-scopes/{programScopeId}';
+};
+
+export type GetProgramScopeResponses = {
+    /**
+     * Ok
+     */
+    200: ProgramScope;
+};
+
+export type GetProgramScopeResponse = GetProgramScopeResponses[keyof GetProgramScopeResponses];
 
 export type ListRiskScenarioData = {
     body?: never;
@@ -8818,6 +10438,145 @@ export type ListTrustCenterActivityEventsResponses = {
 
 export type ListTrustCenterActivityEventsResponse = ListTrustCenterActivityEventsResponses[keyof ListTrustCenterActivityEventsResponses];
 
+export type ListChatbotConversationsData = {
+    body?: never;
+    path: {
+        slugId: string;
+    };
+    query?: {
+        pageSize?: PageSize;
+        pageCursor?: PageCursor;
+        /**
+         * Search conversations by message content.
+         */
+        searchString?: string;
+    };
+    url: '/trust-centers/{slugId}/chatbot/conversations';
+};
+
+export type ListChatbotConversationsResponses = {
+    /**
+     * Ok
+     */
+    200: PaginatedResponseTrustCenterChatbotConversation;
+};
+
+export type ListChatbotConversationsResponse = ListChatbotConversationsResponses[keyof ListChatbotConversationsResponses];
+
+export type GetChatbotConversationMessagesData = {
+    body?: never;
+    path: {
+        slugId: string;
+        conversationId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/chatbot/conversations/{conversationId}';
+};
+
+export type GetChatbotConversationMessagesResponses = {
+    /**
+     * Ok
+     */
+    200: ArrayResponseTrustCenterChatbotMessage;
+};
+
+export type GetChatbotConversationMessagesResponse = GetChatbotConversationMessagesResponses[keyof GetChatbotConversationMessagesResponses];
+
+export type ListComplianceFrameworksData = {
+    body?: never;
+    path: {
+        slugId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/compliance-frameworks';
+};
+
+export type ListComplianceFrameworksResponses = {
+    /**
+     * Ok
+     */
+    200: TrustCenterComplianceFrameworkListResponse;
+};
+
+export type ListComplianceFrameworksResponse = ListComplianceFrameworksResponses[keyof ListComplianceFrameworksResponses];
+
+export type CreateComplianceFrameworkData = {
+    body: CreateComplianceFrameworkInput;
+    path: {
+        slugId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/compliance-frameworks';
+};
+
+export type CreateComplianceFrameworkResponses = {
+    /**
+     * Trust Center compliance framework created
+     */
+    201: TrustCenterComplianceFramework;
+};
+
+export type CreateComplianceFrameworkResponse = CreateComplianceFrameworkResponses[keyof CreateComplianceFrameworkResponses];
+
+export type DeleteComplianceFrameworkData = {
+    body?: never;
+    path: {
+        slugId: string;
+        frameworkId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/compliance-frameworks/{frameworkId}';
+};
+
+export type DeleteComplianceFrameworkResponses = {
+    /**
+     * No content
+     */
+    204: void;
+};
+
+export type DeleteComplianceFrameworkResponse = DeleteComplianceFrameworkResponses[keyof DeleteComplianceFrameworkResponses];
+
+export type UpdateComplianceFrameworkData = {
+    body: UpdateComplianceFrameworkInput;
+    path: {
+        slugId: string;
+        frameworkId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/compliance-frameworks/{frameworkId}';
+};
+
+export type UpdateComplianceFrameworkResponses = {
+    /**
+     * Ok
+     */
+    200: TrustCenterComplianceFramework;
+};
+
+export type UpdateComplianceFrameworkResponse = UpdateComplianceFrameworkResponses[keyof UpdateComplianceFrameworkResponses];
+
+export type UploadComplianceFrameworkBadgeData = {
+    body: {
+        file: Blob | File;
+    };
+    path: {
+        slugId: string;
+        frameworkId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/compliance-frameworks/{frameworkId}/badge';
+};
+
+export type UploadComplianceFrameworkBadgeResponses = {
+    /**
+     * Ok
+     */
+    200: BadgeUploadResponse;
+};
+
+export type UploadComplianceFrameworkBadgeResponse = UploadComplianceFrameworkBadgeResponses[keyof UploadComplianceFrameworkBadgeResponses];
+
 export type GetTrustCenterControlCategoriesData = {
     body?: never;
     path: {
@@ -8837,7 +10596,7 @@ export type GetTrustCenterControlCategoriesResponses = {
 export type GetTrustCenterControlCategoriesResponse = GetTrustCenterControlCategoriesResponses[keyof GetTrustCenterControlCategoriesResponses];
 
 export type AddTrustCenterControlCategoryData = {
-    body: AddOrEditTrustCenterControlCategoryInput;
+    body: AddTrustCenterControlCategoryInput;
     path: {
         slugId: string;
     };
@@ -8853,6 +10612,24 @@ export type AddTrustCenterControlCategoryResponses = {
 };
 
 export type AddTrustCenterControlCategoryResponse = AddTrustCenterControlCategoryResponses[keyof AddTrustCenterControlCategoryResponses];
+
+export type UpsertTrustCenterControlCategoriesOrderData = {
+    body: ReorderTrustCenterControlCategoriesInput;
+    path: {
+        slugId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/control-categories/order';
+};
+
+export type UpsertTrustCenterControlCategoriesOrderResponses = {
+    /**
+     * Ok
+     */
+    200: ArrayResponseTrustCenterControlCategory;
+};
+
+export type UpsertTrustCenterControlCategoriesOrderResponse = UpsertTrustCenterControlCategoriesOrderResponses[keyof UpsertTrustCenterControlCategoriesOrderResponses];
 
 export type DeleteTrustCenterControlCategoryData = {
     body?: never;
@@ -8893,7 +10670,7 @@ export type GetTrustCenterControlCategoryResponses = {
 export type GetTrustCenterControlCategoryResponse = GetTrustCenterControlCategoryResponses[keyof GetTrustCenterControlCategoryResponses];
 
 export type UpdateTrustCenterControlCategoryData = {
-    body: AddOrEditTrustCenterControlCategoryInput;
+    body: EditTrustCenterControlCategoryInput;
     path: {
         slugId: string;
         categoryId: string;
@@ -8910,6 +10687,44 @@ export type UpdateTrustCenterControlCategoryResponses = {
 };
 
 export type UpdateTrustCenterControlCategoryResponse = UpdateTrustCenterControlCategoryResponses[keyof UpdateTrustCenterControlCategoryResponses];
+
+export type UpdateTrustCenterControlsInCategoryData = {
+    body: BulkEditControlsInCategoryInput;
+    path: {
+        slugId: string;
+        categoryId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/control-categories/{categoryId}/controls';
+};
+
+export type UpdateTrustCenterControlsInCategoryResponses = {
+    /**
+     * Ok
+     */
+    200: TrustCenterControlCategory;
+};
+
+export type UpdateTrustCenterControlsInCategoryResponse = UpdateTrustCenterControlsInCategoryResponses[keyof UpdateTrustCenterControlsInCategoryResponses];
+
+export type UpsertTrustCenterControlsInCategoryOrderData = {
+    body: ReorderTrustCenterControlsInput;
+    path: {
+        slugId: string;
+        categoryId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/control-categories/{categoryId}/controls/order';
+};
+
+export type UpsertTrustCenterControlsInCategoryOrderResponses = {
+    /**
+     * Ok
+     */
+    200: TrustCenterControlCategory;
+};
+
+export type UpsertTrustCenterControlsInCategoryOrderResponse = UpsertTrustCenterControlsInCategoryOrderResponses[keyof UpsertTrustCenterControlsInCategoryOrderResponses];
 
 export type ListTrustCenterControlsData = {
     body?: never;
@@ -8950,6 +10765,42 @@ export type AddControlToTrustCenterResponses = {
 
 export type AddControlToTrustCenterResponse = AddControlToTrustCenterResponses[keyof AddControlToTrustCenterResponses];
 
+export type BulkRemoveTagsFromControlsData = {
+    body: BulkTagControlsInput;
+    path: {
+        slugId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/controls/tags';
+};
+
+export type BulkRemoveTagsFromControlsResponses = {
+    /**
+     * Ok
+     */
+    200: ArrayResponseTrustCenterControl;
+};
+
+export type BulkRemoveTagsFromControlsResponse = BulkRemoveTagsFromControlsResponses[keyof BulkRemoveTagsFromControlsResponses];
+
+export type BulkAddTagsToControlsData = {
+    body: BulkTagControlsInput;
+    path: {
+        slugId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/controls/tags';
+};
+
+export type BulkAddTagsToControlsResponses = {
+    /**
+     * Ok
+     */
+    200: ArrayResponseTrustCenterControl;
+};
+
+export type BulkAddTagsToControlsResponse = BulkAddTagsToControlsResponses[keyof BulkAddTagsToControlsResponses];
+
 export type DeleteTrustCenterControlData = {
     body?: never;
     path: {
@@ -8987,6 +10838,116 @@ export type GetTrustCenterControlResponses = {
 };
 
 export type GetTrustCenterControlResponse = GetTrustCenterControlResponses[keyof GetTrustCenterControlResponses];
+
+export type ListTrustCenterDataCollectedData = {
+    body?: never;
+    path: {
+        slugId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/data-collected';
+};
+
+export type ListTrustCenterDataCollectedResponses = {
+    /**
+     * Ok
+     */
+    200: ArrayResponseTrustCenterDataCollected;
+};
+
+export type ListTrustCenterDataCollectedResponse = ListTrustCenterDataCollectedResponses[keyof ListTrustCenterDataCollectedResponses];
+
+export type UpsertTrustCenterDataCollectedData = {
+    body: SetDataCollectedInput;
+    path: {
+        slugId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/data-collected';
+};
+
+export type UpsertTrustCenterDataCollectedResponses = {
+    /**
+     * Ok
+     */
+    200: ArrayResponseTrustCenterDataCollected;
+};
+
+export type UpsertTrustCenterDataCollectedResponse = UpsertTrustCenterDataCollectedResponses[keyof UpsertTrustCenterDataCollectedResponses];
+
+export type ListTrustCenterFaqCategoriesData = {
+    body?: never;
+    path: {
+        slugId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/faq-categories';
+};
+
+export type ListTrustCenterFaqCategoriesResponses = {
+    /**
+     * Ok
+     */
+    200: ArrayResponseTrustCenterFaqCategory;
+};
+
+export type ListTrustCenterFaqCategoriesResponse = ListTrustCenterFaqCategoriesResponses[keyof ListTrustCenterFaqCategoriesResponses];
+
+export type AddTrustCenterFaqCategoryData = {
+    body: AddTrustCenterFaqCategoryInput;
+    path: {
+        slugId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/faq-categories';
+};
+
+export type AddTrustCenterFaqCategoryResponses = {
+    /**
+     * Ok
+     */
+    200: TrustCenterFaqCategory;
+};
+
+export type AddTrustCenterFaqCategoryResponse = AddTrustCenterFaqCategoryResponses[keyof AddTrustCenterFaqCategoryResponses];
+
+export type DeleteTrustCenterFaqCategoryData = {
+    body?: never;
+    path: {
+        slugId: string;
+        categoryId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/faq-categories/{categoryId}';
+};
+
+export type DeleteTrustCenterFaqCategoryResponses = {
+    /**
+     * No content
+     */
+    204: void;
+};
+
+export type DeleteTrustCenterFaqCategoryResponse = DeleteTrustCenterFaqCategoryResponses[keyof DeleteTrustCenterFaqCategoryResponses];
+
+export type UpdateTrustCenterFaqCategoryData = {
+    body: EditTrustCenterFaqCategoryInput;
+    path: {
+        slugId: string;
+        categoryId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/faq-categories/{categoryId}';
+};
+
+export type UpdateTrustCenterFaqCategoryResponses = {
+    /**
+     * Ok
+     */
+    200: TrustCenterFaqCategory;
+};
+
+export type UpdateTrustCenterFaqCategoryResponse = UpdateTrustCenterFaqCategoryResponses[keyof UpdateTrustCenterFaqCategoryResponses];
 
 export type ListTrustCenterFaqsData = {
     body?: never;
@@ -9080,6 +11041,26 @@ export type UpdateTrustCenterFaqResponses = {
 };
 
 export type UpdateTrustCenterFaqResponse = UpdateTrustCenterFaqResponses[keyof UpdateTrustCenterFaqResponses];
+
+export type UploadTrustCenterFaviconData = {
+    body: {
+        favicon: Blob | File;
+    };
+    path: {
+        slugId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/favicon';
+};
+
+export type UploadTrustCenterFaviconResponses = {
+    /**
+     * Ok
+     */
+    200: UploadFaviconResponse;
+};
+
+export type UploadTrustCenterFaviconResponse = UploadTrustCenterFaviconResponses[keyof UploadTrustCenterFaviconResponses];
 
 export type ListTrustCenterHistoricalAccessRequestsData = {
     body?: never;
@@ -9740,6 +11721,24 @@ export type SendTrustCenterUpdateNotificationsResponses = {
 
 export type SendTrustCenterUpdateNotificationsResponse = SendTrustCenterUpdateNotificationsResponses[keyof SendTrustCenterUpdateNotificationsResponses];
 
+export type UpsertTrustCenterVideosData = {
+    body: SetTrustCenterVideosInput;
+    path: {
+        slugId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/videos';
+};
+
+export type UpsertTrustCenterVideosResponses = {
+    /**
+     * Ok
+     */
+    200: ArrayResponseTrustCenterVideo;
+};
+
+export type UpsertTrustCenterVideosResponse = UpsertTrustCenterVideosResponses[keyof UpsertTrustCenterVideosResponses];
+
 export type ListTrustCenterViewersData = {
     body?: never;
     path: {
@@ -9837,6 +11836,25 @@ export type UpdateTrustCenterViewerResponses = {
 
 export type UpdateTrustCenterViewerResponse = UpdateTrustCenterViewerResponses[keyof UpdateTrustCenterViewerResponses];
 
+export type SendTrustCenterViewerInviteReminderData = {
+    body?: never;
+    path: {
+        slugId: string;
+        viewerId: string;
+    };
+    query?: never;
+    url: '/trust-centers/{slugId}/viewers/{viewerId}/send-invite-reminder';
+};
+
+export type SendTrustCenterViewerInviteReminderResponses = {
+    /**
+     * Ok
+     */
+    200: InviteReminderResponse;
+};
+
+export type SendTrustCenterViewerInviteReminderResponse = SendTrustCenterViewerInviteReminderResponses[keyof SendTrustCenterViewerInviteReminderResponses];
+
 export type ListUsersData = {
     body?: never;
     path?: never;
@@ -9873,6 +11891,47 @@ export type GetUserResponses = {
 };
 
 export type GetUserResponse = GetUserResponses[keyof GetUserResponses];
+
+export type ListVendorAssessmentTypesData = {
+    body?: never;
+    path?: never;
+    query?: {
+        pageSize?: PageSize;
+        pageCursor?: PageCursor;
+        /**
+         * Filter assessment types to a single lifecycle status
+         */
+        status?: VendorAssessmentTypeLifecycleStatus;
+    };
+    url: '/vendor-assessment-types';
+};
+
+export type ListVendorAssessmentTypesResponses = {
+    /**
+     * Ok
+     */
+    200: PaginatedResponseVendorAssessmentType;
+};
+
+export type ListVendorAssessmentTypesResponse = ListVendorAssessmentTypesResponses[keyof ListVendorAssessmentTypesResponses];
+
+export type GetVendorAssessmentTypeByIdData = {
+    body?: never;
+    path: {
+        assessmentTypeId: string;
+    };
+    query?: never;
+    url: '/vendor-assessment-types/{assessmentTypeId}';
+};
+
+export type GetVendorAssessmentTypeByIdResponses = {
+    /**
+     * Ok
+     */
+    200: VendorAssessmentType;
+};
+
+export type GetVendorAssessmentTypeByIdResponse = GetVendorAssessmentTypeByIdResponses[keyof GetVendorAssessmentTypeByIdResponses];
 
 export type ListVendorRiskAttributesData = {
     body?: never;
@@ -9989,6 +12048,54 @@ export type UpdateVendorResponses = {
 };
 
 export type UpdateVendorResponse = UpdateVendorResponses[keyof UpdateVendorResponses];
+
+export type GetAssessmentsByVendorIdData = {
+    body?: never;
+    path: {
+        vendorId: string;
+    };
+    query?: {
+        pageSize?: PageSize;
+        pageCursor?: PageCursor;
+        /**
+         * Filter assessments to any of the given assessment type IDs
+         */
+        typeIdMatchesAny?: Array<string>;
+        /**
+         * Filter assessments to any of the given statuses
+         */
+        statusMatchesAny?: Array<AssessmentStatus>;
+    };
+    url: '/vendors/{vendorId}/assessments';
+};
+
+export type GetAssessmentsByVendorIdResponses = {
+    /**
+     * Ok
+     */
+    200: PaginatedResponseVendorAssessment;
+};
+
+export type GetAssessmentsByVendorIdResponse = GetAssessmentsByVendorIdResponses[keyof GetAssessmentsByVendorIdResponses];
+
+export type GetAssessmentByIdData = {
+    body?: never;
+    path: {
+        vendorId: string;
+        assessmentId: string;
+    };
+    query?: never;
+    url: '/vendors/{vendorId}/assessments/{assessmentId}';
+};
+
+export type GetAssessmentByIdResponses = {
+    /**
+     * Ok
+     */
+    200: VendorAssessment;
+};
+
+export type GetAssessmentByIdResponse = GetAssessmentByIdResponses[keyof GetAssessmentByIdResponses];
 
 export type ListVendorDocumentsData = {
     body?: never;
@@ -10270,10 +12377,6 @@ export type ListVulnerabilitiesData = {
     body?: never;
     path?: never;
     query?: {
-        /**
-         * Filter vulnerabilities by search query
-         */
-        q?: string;
         pageSize?: PageSize;
         pageCursor?: PageCursor;
         /**
@@ -10293,11 +12396,11 @@ export type ListVulnerabilitiesData = {
          */
         packageIdentifier?: string;
         /**
-         * Filter vulnerabilities with a fix due after a specific timestamp
+         * Filter vulnerabilities with a fix due after a specific timestamp.
          */
         slaDeadlineAfterDate?: string;
         /**
-         * Filter vulnerabilities with a fix due before a specific timestamp
+         * Filter vulnerabilities with a fix due before a specific timestamp.
          */
         slaDeadlineBeforeDate?: string;
         /**
@@ -10317,6 +12420,10 @@ export type ListVulnerabilitiesData = {
          * Filter vulnerabilities by a specific asset ID.
          */
         vulnerableAssetId?: string;
+        /**
+         * Full-text filter on the vulnerability's name and description.
+         */
+        q?: string;
     };
     url: '/vulnerabilities';
 };
@@ -10333,7 +12440,7 @@ export type ListVulnerabilitiesResponse = ListVulnerabilitiesResponses[keyof Lis
 export type DeactivateVulnerabilitiesData = {
     body: {
         /**
-         * List of vulnerabilities to deactivate
+         * List of vulnerabilities to deactivate.
          */
         updates: Array<VulnerabilityDeactivateRequest>;
     };
