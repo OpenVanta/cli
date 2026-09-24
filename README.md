@@ -128,16 +128,16 @@ curl -fsSL https://raw.githubusercontent.com/OpenVanta/cli/main/scripts/install.
 
 ## Development
 
-Requires Node 22+. Bun is required to build standalone binaries.
+Requires Node 22+ and pnpm 12. Bun is required to build standalone binaries.
 
 ```bash
-yarn install
-yarn generate   # OpenAPI → src/generated
-yarn dev version
-yarn typecheck
-yarn test
-yarn build              # generate + bundle for Node
-VANTA_VERSION=0.2.0 yarn build:binaries
+pnpm install
+pnpm generate   # OpenAPI → src/generated
+pnpm dev version
+pnpm typecheck
+pnpm test
+pnpm build              # generate + bundle for Node
+VANTA_VERSION=0.2.0 pnpm build:binaries
 ```
 
 The typed API client is generated from [`api-spec.json`](api-spec.json) with [`@hey-api/openapi-ts`](https://heyapi.dev/).
