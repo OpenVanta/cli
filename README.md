@@ -46,7 +46,7 @@ Standalone binaries are published for Linux, macOS, and Windows. macOS builds ar
 
 ## Authenticate
 
-Create an OAuth client in the [Vanta developer portal](https://app.vanta.com), then run:
+Create an OAuth client in the [Vanta developer portal](https://app.vanta.com/settings/developer-console), then run:
 
 ```bash
 vanta login
