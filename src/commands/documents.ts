@@ -37,7 +37,7 @@ import {
   type GetFlags,
 } from "./helpers.js";
 
-async function writeDownloadedMedia(
+export async function writeDownloadedMedia(
   data: unknown,
   outputPath: string | undefined,
 ): Promise<void> {
