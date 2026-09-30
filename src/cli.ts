@@ -73,6 +73,7 @@ function buildProgram(): Command {
       apiBase: opts.apiBase,
       dryRun: Boolean(opts.dryRun),
       pretty: opts.pretty !== false,
+      prettyExplicit: program.getOptionValueSource("pretty") === "cli",
       verbose: Boolean(opts.verbose),
       agentMode: opts.agentMode,
       clientId: opts.clientId,
