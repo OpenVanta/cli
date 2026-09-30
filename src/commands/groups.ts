@@ -1,5 +1,9 @@
 import type { Command } from "commander";
 import {
+  createGroup,
+  updateGroup,
+  importIdpGroups,
+  listImportableIdpGroups,
   addPeopleToGroup,
   addPersonToGroup,
   getGroup,
@@ -9,11 +13,16 @@ import {
   removePersonFromGroup,
 } from "../generated/sdk.gen.js";
 import type {
+  CreateGroupData,
+  UpdateGroupData,
+  ImportIdpGroupsData,
+  ListImportableIdpGroupsData,
   AddPeopleToGroupData,
   AddPersonToGroupData,
   RemovePeopleFromGroupData,
 } from "../generated/types.gen.js";
 import {
+  collectString,
   addJsonFileOptions,
   addPaginationOptions,
   paginationQuery,
@@ -126,6 +135,81 @@ export function registerGroupsCommand(
         client: api.client,
         path: { groupId: opts.id },
         body,
+      }),
+    );
+  });
+
+  addJsonFileOptions(
+    groups.command("create").description("Create a group"),
+  ).action(async (opts: { json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as CreateGroupData["body"];
+    await runSdk(getFlags, (api) =>
+      createGroup({
+        client: api.client,
+        body,
+      }),
+    );
+  });
+
+  addJsonFileOptions(
+    groups
+      .command("update")
+      .description("Update a group")
+      .requiredOption("--id <id>", "Group ID"),
+  ).action(async (opts: { id: string; json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as UpdateGroupData["body"];
+    await runSdk(getFlags, (api) =>
+      updateGroup({
+        client: api.client,
+        path: { groupId: opts.id },
+        body,
+      }),
+    );
+  });
+
+  addJsonFileOptions(
+    groups
+      .command("import-from-idp")
+      .description("Import groups from an identity provider"),
+  ).action(async (opts: { json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as ImportIdpGroupsData["body"];
+    await runSdk(getFlags, (api) =>
+      importIdpGroups({
+        client: api.client,
+        body,
+      }),
+    );
+  });
+
+  addPaginationOptions(
+    groups
+      .command("list-importable-idp-groups")
+      .description("List importable identity provider groups")
+      .option("--search <text>", "Search importable identity provider groups")
+      .option(
+        "--integration-id <id>",
+        "Filter by identity provider integration ID (repeatable)",
+        collectString,
+        [] as string[],
+      ),
+  ).action(async (opts: NonNullable<ListImportableIdpGroupsData["query"]>) => {
+    await runSdk(getFlags, (api) =>
+      listImportableIdpGroups({
+        client: api.client,
+        query: {
+          ...paginationQuery(opts),
+          search: opts.search,
+          integrationId: opts.integrationId,
+        },
       }),
     );
   });

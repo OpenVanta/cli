@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import type { GlobalFlags } from "./api-client.js";
+import { registerBusinessUnitsCommand } from "./commands/business-units.js";
 import { registerContractsCommand } from "./commands/contracts.js";
 import { registerControlsCommand } from "./commands/controls.js";
 import { registerDiscoveredVendorsCommand } from "./commands/discovered-vendors.js";
@@ -8,10 +9,12 @@ import { registerEventLogsCommand } from "./commands/event-logs.js";
 import { registerFrameworksCommand } from "./commands/frameworks.js";
 import { registerGroupsCommand } from "./commands/groups.js";
 import { registerIntegrationsCommand } from "./commands/integrations.js";
+import { registerIssuesCommand } from "./commands/issues.js";
 import { registerLoginCommand } from "./commands/login.js";
 import { registerMonitoredComputersCommand } from "./commands/monitored-computers.js";
 import { registerPeopleCommand } from "./commands/people.js";
 import { registerPoliciesCommand } from "./commands/policies.js";
+import { registerProgramScopesCommand } from "./commands/program-scopes.js";
 import { registerRiskScenariosCommand } from "./commands/risk-scenarios.js";
 import { registerTestsCommand } from "./commands/tests.js";
 import { registerUsersCommand } from "./commands/users.js";
@@ -108,6 +111,9 @@ function buildProgram(): Command {
   registerDiscoveredVendorsCommand(program, getFlags);
   registerIntegrationsCommand(program, getFlags);
   registerEventLogsCommand(program, getFlags);
+  registerBusinessUnitsCommand(program, getFlags);
+  registerIssuesCommand(program, getFlags);
+  registerProgramScopesCommand(program, getFlags);
 
   return program;
 }
