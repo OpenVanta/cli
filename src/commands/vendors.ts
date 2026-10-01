@@ -1,5 +1,9 @@
 import type { Command } from "commander";
+import { registerVendorRiskAttributesCommand } from "./vendor-risk-attributes.js";
+import { registerVendorAssessmentTypesCommand } from "./vendor-assessment-types.js";
 import {
+  getAssessmentsByVendorId,
+  getAssessmentById,
   createVendor,
   createVendorFinding,
   deleteById,
@@ -19,6 +23,7 @@ import {
   uploadDocumentToVendor,
 } from "../generated/sdk.gen.js";
 import type {
+  GetAssessmentsByVendorIdData,
   CreateFindingInput,
   CreateVendorInput,
   UpdateFindingInput,
@@ -41,6 +46,10 @@ export function registerVendorsCommand(
   getFlags: GetFlags,
 ): void {
   const vendors = program.command("vendors").description("Manage vendors");
+
+  registerVendorRiskAttributesCommand(vendors, getFlags);
+
+  registerVendorAssessmentTypesCommand(vendors, getFlags);
 
   addPaginationOptions(
     vendors
@@ -425,6 +434,51 @@ export function registerVendorsCommand(
         deleteFindingById({
           client: api.client,
           path: { vendorId: opts.id, findingId: opts.findingId },
+        }),
+      );
+    });
+
+  addPaginationOptions(
+    vendors
+      .command("list-assessments")
+      .description("List vendor assessments")
+      .requiredOption("--id <id>", "Vendor ID")
+      .option(
+        "--type-id-matches-any <id>",
+        "Filter by assessment type ID from vendors assessment-types list (repeatable)",
+        collectString,
+        [] as string[],
+      )
+      .option(
+        "--status-matches-any <status>",
+        "Filter by assessment status: NOT_STARTED, IN_PROGRESS, COMPLETED (repeatable)",
+        collectString,
+        [] as string[],
+      ),
+  ).action(async (opts: NonNullable<GetAssessmentsByVendorIdData["query"]> & { id: string }) => {
+    await runSdk(getFlags, (api) =>
+      getAssessmentsByVendorId({
+        client: api.client,
+        path: { vendorId: opts.id },
+        query: {
+          ...paginationQuery(opts),
+          typeIdMatchesAny: opts.typeIdMatchesAny,
+          statusMatchesAny: opts.statusMatchesAny,
+        },
+      }),
+    );
+  });
+
+  vendors
+    .command("get-assessment")
+    .description("Get a vendor assessment")
+    .requiredOption("--id <id>", "Vendor ID")
+    .requiredOption("--assessment-id <id>", "Assessment ID")
+    .action(async (opts: { id: string; assessmentId: string }) => {
+      await runSdk(getFlags, (api) =>
+        getAssessmentById({
+          client: api.client,
+          path: { vendorId: opts.id, assessmentId: opts.assessmentId },
         }),
       );
     });

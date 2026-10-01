@@ -1,4 +1,5 @@
 import type { Command } from "commander";
+import { registerPersonnelNotificationSettingsCommand } from "./personnel-notification-settings.js";
 import {
   clearLeaveForPerson,
   getPerson,
@@ -34,6 +35,8 @@ export function registerPeopleCommand(
   getFlags: GetFlags,
 ): void {
   const people = program.command("people").description("Manage people");
+
+  registerPersonnelNotificationSettingsCommand(people, getFlags);
 
   addPaginationOptions(people.command("list").description("List people"))
     .option(

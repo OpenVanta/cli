@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import {
+  listDeactivatedControls,
   listControls,
   getControl,
   createCustomControl,
@@ -16,6 +17,7 @@ import {
   deleteTestForControl,
 } from "../generated/sdk.gen.js";
 import type {
+  ListDeactivatedControlsData,
   AddControlDocumentMappingInput,
   AddControlFromLibraryInput,
   AddControlTestMappingInput,
@@ -264,4 +266,17 @@ export function registerControlsCommand(
         }),
       );
     });
+
+  addPaginationOptions(
+    controls.command("list-deactivated").description("List deactivated controls"),
+  ).action(async (opts: NonNullable<ListDeactivatedControlsData["query"]>) => {
+    await runSdk(getFlags, (api) =>
+      listDeactivatedControls({
+        client: api.client,
+        query: {
+          ...paginationQuery(opts),
+        },
+      }),
+    );
+  });
 }
