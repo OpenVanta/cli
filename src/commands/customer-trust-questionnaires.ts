@@ -51,7 +51,7 @@ export function registerCustomerTrustQuestionnairesCommand(
       .command("list")
       .description("List questionnaires")
       .option(
-        "--q <text>",
+        "--q <query>",
         "Filter questionnaires by display name (case-insensitive, partial match).",
       )
       .option(
@@ -122,7 +122,7 @@ export function registerCustomerTrustQuestionnairesCommand(
     .description("Create a questionnaire from a file")
     .requiredOption("--file <path>", "Path to file to upload")
     .requiredOption(
-      "--display-name <text>",
+      "--display-name <name>",
       "Display name for the questionnaire.",
     )
     .option(
@@ -147,7 +147,7 @@ export function registerCustomerTrustQuestionnairesCommand(
       "ID of the customer trust account to associate with this questionnaire.",
     )
     .option(
-      "--include-untagged-entities-for-category-ids <id>",
+      "--include-untagged-entities-for-category-ids <ids>",
       "Comma-separated category IDs for which to include untagged entities.",
     )
     .option(
@@ -155,7 +155,7 @@ export function registerCustomerTrustQuestionnairesCommand(
       "Custom key-value pairs, as a JSON string array: [{\"key\": \"<key>\", \"value\": \"<value>\"}]. Keys and values may contain alphanumeric characters, hyphens, underscores, and periods.",
     )
     .option(
-      "--tag-and-category-ids <id>",
+      "--tag-and-category-ids <json>",
       "Tags to assign, as a JSON string array: [{\"categoryId\": \"<id>\", \"tagId\": \"<id>\"}]. Replaces all existing tags.",
     )
     .action(
@@ -287,7 +287,7 @@ export function registerCustomerTrustQuestionnairesCommand(
     .command("list")
     .description("List users who can be assigned to questionnaires")
     .option("--role <role>", "Filter by role: owner, approver")
-    .option("--q <text>", "Filter users by name or email")
+    .option("--q <query>", "Filter users by name or email")
     .action(async (opts: NonNullable<ListAssignableUsersData["query"]>) => {
       await runSdk(getFlags, (api) =>
         listAssignableUsers({
@@ -339,7 +339,7 @@ export function registerCustomerTrustQuestionnairesCommand(
       .description("List responses for a questionnaire")
       .requiredOption("--questionnaire-id <id>", "Questionnaire ID")
       .option(
-        "--q <text>",
+        "--q <query>",
         "Filter responses by question text (case-insensitive, partial match).",
       ),
   ).action(

@@ -1,4 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
+import { basename, extname } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import type { Command } from "commander";
@@ -106,9 +107,31 @@ export async function runSdk<T>(
   });
 }
 
+// Upload formats the API accepts; anything else is sent as application/octet-stream.
+const UPLOAD_CONTENT_TYPES: Record<string, string> = {
+  ".ai": "application/postscript",
+  ".csv": "text/csv",
+  ".doc": "application/msword",
+  ".docx":
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".jpeg": "image/jpeg",
+  ".jpg": "image/jpeg",
+  ".json": "application/json",
+  ".pdf": "application/pdf",
+  ".png": "image/png",
+  ".txt": "text/plain",
+  ".webp": "image/webp",
+  ".xls": "application/vnd.ms-excel",
+  ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ".zip": "application/zip",
+};
+
 export async function readBinaryFile(path: string): Promise<Blob> {
   const buf = await readFile(path);
-  return new Blob([buf]);
+  // Name the part so Bun-compiled binaries don't send filename="" (read as a
+  // text field), and type it so the API accepts formats it can't sniff (e.g. .txt).
+  const type = UPLOAD_CONTENT_TYPES[extname(path).toLowerCase()] ?? "";
+  return new File([buf], basename(path), { type });
 }
 
 export async function writeDownloadedMedia(

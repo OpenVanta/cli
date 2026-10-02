@@ -33,9 +33,9 @@ export function registerCustomerTrustAccountsCommand(
     accounts
       .command("list")
       .description("List Customer Trust accounts")
-      .option("--search-string <text>", "Search accounts by text")
+      .option("--search-string <query>", "Search accounts by text")
       .option(
-        "--is-auto-approval-enabled <boolean>",
+        "--is-auto-approval-enabled <bool>",
         "Filter by whether access requests are auto-approved (true/false)",
         (value) => parseOptionalBoolString(value, "is-auto-approval-enabled"),
       )

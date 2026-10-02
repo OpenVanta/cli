@@ -28,7 +28,7 @@ export function registerTrustCenterChatbotCommand(
       .description("List Trust Center chatbot conversations")
       .requiredOption("--slug-id <slug>", "Trust Center slug ID")
       .option(
-        "--search-string <text>",
+        "--search-string <query>",
         "Search conversations by message content.",
       ),
   ).action(

@@ -34,7 +34,7 @@ export function registerKnowledgeBaseAnswerLibraryCommand(
     answerLibrary
       .command("list")
       .description("List Answer Library entries")
-      .option("--q <text>", "Full-text search across question and answer.")
+      .option("--q <query>", "Full-text search across question and answer.")
       .option(
         "--last-updated-after <timestamp>",
         "Only include entries updated at or after this ISO 8601 timestamp.",

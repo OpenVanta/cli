@@ -23,7 +23,7 @@ export function registerIssuesCommand(
       .command("list")
       .description("List issues")
       .option(
-        "--search <text>",
+        "--search <query>",
         "Search issue titles and descriptions",
       )
       .option(
@@ -83,12 +83,12 @@ export function registerIssuesCommand(
         "Filter issues closed on or before an ISO 8601 timestamp",
       )
       .option(
-        "--include-issues-without-due-date <boolean>",
+        "--include-issues-without-due-date <bool>",
         "Include undated issues with --due-before-date or --due-after-date (true/false)",
         (value) => parseOptionalBoolString(value, "include-issues-without-due-date"),
       )
       .option(
-        "--include-only-issues-without-due-date <boolean>",
+        "--include-only-issues-without-due-date <bool>",
         "Include only undated issues (true/false); cannot combine with --due-before-date or --due-after-date",
         (value) => parseOptionalBoolString(value, "include-only-issues-without-due-date"),
       )

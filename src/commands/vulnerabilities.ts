@@ -50,11 +50,11 @@ export function registerVulnerabilitiesCommand(
         "Filter vulnerabilities by package identifier",
       )
       .option(
-        "--sla-deadline-after-date <date>",
+        "--sla-deadline-after-date <timestamp>",
         "Filter vulnerabilities with SLA deadline after this RFC3339 timestamp",
       )
       .option(
-        "--sla-deadline-before-date <date>",
+        "--sla-deadline-before-date <timestamp>",
         "Filter vulnerabilities with SLA deadline before this RFC3339 timestamp",
       )
       .option(

@@ -35,7 +35,7 @@ export function registerTrustCenterViewersCommand(
       .description("List Trust Center viewers")
       .requiredOption("--slug-id <slug>", "Trust Center slug ID")
       .option(
-        "--include-removed <boolean>",
+        "--include-removed <bool>",
         "Include removed viewers (true/false; default: true)",
         (value) => parseOptionalBoolString(value, "include-removed"),
       ),

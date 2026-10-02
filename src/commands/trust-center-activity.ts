@@ -23,7 +23,7 @@ export function registerTrustCenterActivityCommand(
       .description("List Trust Center viewer activity events")
       .requiredOption("--slug-id <slug>", "Trust Center slug ID")
       .option(
-        "--event-types-matches-any <event>",
+        "--event-types-matches-any <type>",
         "Event types to filter by: PAGE_VIEW, RESOURCE_DOWNLOAD, RESOURCE_VIEW, VIDEO_PLAY (repeatable)",
         collectString,
         [] as string[],

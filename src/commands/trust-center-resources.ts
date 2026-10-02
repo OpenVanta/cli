@@ -59,9 +59,9 @@ export function registerTrustCenterResourcesCommand(
     .description("Create a Trust Center document")
     .requiredOption("--slug-id <slug>", "Trust Center slug ID")
     .requiredOption("--file <path>", "Path to file to upload")
-    .requiredOption("--title <text>", "Title of the Trust Center document.")
+    .requiredOption("--title <title>", "Title of the Trust Center document.")
     .requiredOption(
-      "--is-public <boolean>",
+      "--is-public <bool>",
       "Whether the document is publicly available (true/false)",
     )
     .option("--description <text>", "Description of the uploaded document.")

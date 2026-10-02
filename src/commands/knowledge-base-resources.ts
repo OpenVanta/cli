@@ -40,7 +40,7 @@ export function registerKnowledgeBaseResourcesCommand(
     resources
       .command("list")
       .description("List Knowledge Base resources")
-      .option("--q <text>", "Full-text search across resource titles.")
+      .option("--q <query>", "Full-text search across resource titles.")
       .option(
         "--type-matches-any <type>",
         "Filter by resource type: FILE, URL (repeatable)",
@@ -136,7 +136,7 @@ export function registerKnowledgeBaseResourcesCommand(
     .command("create-document")
     .description("Create a document resource")
     .requiredOption("--file <path>", "Path to file to upload")
-    .requiredOption("--title <text>", "Title of the document resource.")
+    .requiredOption("--title <title>", "Title of the document resource.")
     .option("--description <text>", "Description of the document resource.")
     .option(
       "--owner-assignment <json>",
@@ -151,7 +151,7 @@ export function registerKnowledgeBaseResourcesCommand(
       "Trust Center download permission: VIEW_ONLY | VIEW_AND_DOWNLOAD.",
     )
     .option(
-      "--is-used-in-questionnaires <boolean>",
+      "--is-used-in-questionnaires <bool>",
       "Whether to use this resource for Questionnaire Automation answer generation (true/false)",
     )
     .option(
