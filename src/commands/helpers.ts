@@ -128,8 +128,8 @@ const UPLOAD_CONTENT_TYPES: Record<string, string> = {
 
 export async function readBinaryFile(path: string): Promise<Blob> {
   const buf = await readFile(path);
-  // Name the part so Bun-compiled binaries don't send filename="" (read as a
-  // text field), and type it so the API accepts formats it can't sniff (e.g. .txt).
+  // Unnamed binary files can be sent with filename="", which the API reads as a
+  // text field. Type it too so the API accepts formats it can't sniff (e.g. .txt).
   const type = UPLOAD_CONTENT_TYPES[extname(path).toLowerCase()] ?? "";
   return new File([buf], basename(path), { type });
 }

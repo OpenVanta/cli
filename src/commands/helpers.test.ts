@@ -30,8 +30,8 @@ describe("readBinaryFile", () => {
   });
 
   it("serializes as a multipart file part with a non-empty filename", async () => {
-    // An unnamed Blob is sent with filename="" by Bun-compiled binaries,
-    // which the API treats as a text field and rejects with "'file' is required".
+    // An unnamed binary file can be sent with filename="", which the API treats
+    // as a text field and rejects with "'file' is required".
     const form = new FormData();
     form.append("file", await readBinaryFile(filePath));
     const body = await new Response(form).text();

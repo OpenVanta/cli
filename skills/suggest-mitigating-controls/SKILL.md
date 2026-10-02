@@ -31,7 +31,7 @@ Requires the `vanta` CLI on `$PATH` and a completed `vanta login`. See the `vant
 | Need | Command |
 |---|---|
 | The risk scenario under analysis | `vanta risk-scenarios get --id <riskId>` |
-| Finding the risk when the user gave a phrase, not an ID | `vanta risk-scenarios list --search-string "<text>" --page-size 100` |
+| Finding the risk when the user gave a phrase, not an ID | `vanta risk-scenarios list --search-string "<query>" --page-size 100` |
 | The org's control library | `vanta controls list --page-size 100` |
 | Controls already linked to this risk | `vanta risk-scenarios list-controls --id <riskId> --page-size 100` |
 
