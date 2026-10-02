@@ -1,4 +1,6 @@
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import type { Command } from "commander";
 import { newAPIClient, type ApiClient, type GlobalFlags } from "../api-client.js";
 import { printResponse } from "../output.js";
@@ -107,4 +109,97 @@ export async function runSdk<T>(
 export async function readBinaryFile(path: string): Promise<Blob> {
   const buf = await readFile(path);
   return new Blob([buf]);
+}
+
+export async function writeDownloadedMedia(
+  data: unknown,
+  outputPath: string | undefined,
+): Promise<void> {
+  const dest = outputPath?.trim();
+
+  const writeBytes = async (buf: Buffer) => {
+    if (dest) {
+      await writeFile(dest, buf);
+      return;
+    }
+    process.stdout.write(buf);
+  };
+
+  if (typeof Blob !== "undefined" && data instanceof Blob) {
+    await writeBytes(Buffer.from(await data.arrayBuffer()));
+    return;
+  }
+
+  if (
+    data &&
+    typeof data === "object" &&
+    "arrayBuffer" in data &&
+    typeof (data as { arrayBuffer: unknown }).arrayBuffer === "function"
+  ) {
+    const ab = await (
+      data as { arrayBuffer: () => Promise<ArrayBuffer> }
+    ).arrayBuffer();
+    await writeBytes(Buffer.from(ab));
+    return;
+  }
+
+  if (data instanceof ArrayBuffer) {
+    await writeBytes(Buffer.from(data));
+    return;
+  }
+
+  if (Buffer.isBuffer(data) || data instanceof Uint8Array) {
+    await writeBytes(Buffer.from(data));
+    return;
+  }
+
+  if (
+    data instanceof ReadableStream ||
+    (data &&
+      typeof data === "object" &&
+      "getReader" in data &&
+      typeof (data as { getReader: unknown }).getReader === "function")
+  ) {
+    const stream = data as ReadableStream<Uint8Array>;
+    if (dest) {
+      const { createWriteStream } = await import("node:fs");
+      await pipeline(
+        Readable.fromWeb(stream as import("node:stream/web").ReadableStream),
+        createWriteStream(dest),
+      );
+      return;
+    }
+    const reader = stream.getReader();
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) process.stdout.write(value);
+    }
+    return;
+  }
+
+  if (
+    data &&
+    typeof data === "object" &&
+    "pipe" in data &&
+    typeof (data as { pipe: unknown }).pipe === "function"
+  ) {
+    const nodeStream = data as NodeJS.ReadableStream;
+    if (dest) {
+      const { createWriteStream } = await import("node:fs");
+      await pipeline(nodeStream, createWriteStream(dest));
+      return;
+    }
+    await new Promise<void>((resolve, reject) => {
+      nodeStream.on("error", reject);
+      nodeStream.on("end", () => resolve());
+      nodeStream.on("close", () => resolve());
+      nodeStream.pipe(process.stdout, { end: false });
+    });
+    return;
+  }
+
+  throw new Error(
+    `unsupported media response type: ${Object.prototype.toString.call(data)}`,
+  );
 }
