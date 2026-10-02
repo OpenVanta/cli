@@ -194,7 +194,7 @@ export function registerGroupsCommand(
     groups
       .command("list-importable-idp-groups")
       .description("List importable identity provider groups")
-      .option("--search <text>", "Search importable identity provider groups")
+      .option("--search <query>", "Search importable identity provider groups")
       .option(
         "--integration-id <id>",
         "Filter by identity provider integration ID (repeatable)",
