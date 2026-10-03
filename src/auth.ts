@@ -57,6 +57,17 @@ type SecureCredentialState = {
   oauth_api_base?: string;
 };
 
+export type OAuthCredentialProviders = {
+  loadSecureCredentialState: () => Promise<SecureCredentialState | null>;
+  loadConfig: () => Promise<CliConfig>;
+  env: NodeJS.ProcessEnv;
+};
+
+export type AuthRuntimeDependencies = Partial<OAuthCredentialProviders> & {
+  loadCachedAccessToken: typeof loadCachedAccessToken;
+  cacheAccessToken: typeof cacheAccessToken;
+};
+
 export type AuthOverrides = {
   apiBase?: string;
   clientId?: string;
@@ -294,9 +305,9 @@ export function classifyOAuthCredentialSource(
     storedClientID.trim() || storedClientSecret.trim(),
   );
 
-  if (hasExplicitID !== hasExplicitSecret && hasStoredCredentials) {
+  if (hasExplicitID !== hasExplicitSecret) {
     throw new Error(
-      "Provide both OAuth credentials explicitly or use the saved login; mixed credential sources are not allowed.",
+      "Provide both OAuth credentials explicitly or use the complete saved login; mixed credential sources are not allowed.",
     );
   }
   if (hasExplicitID && hasExplicitSecret) return "explicit";
@@ -324,6 +335,11 @@ export function assertStoredOAuthCredentialBinding(
 
 export async function resolveOAuthCredentials(
   overrides: AuthOverrides = {},
+  providers: OAuthCredentialProviders = {
+    loadSecureCredentialState,
+    loadConfig,
+    env: process.env,
+  },
 ): Promise<{
   clientID: string;
   clientSecret: string;
@@ -333,21 +349,46 @@ export async function resolveOAuthCredentials(
 }> {
   const overrideClientID = overrides.clientId?.trim() ?? "";
   const overrideClientSecret = overrides.clientSecret?.trim() ?? "";
-  const envClientID = process.env[oauthClientIDEnvVar]?.trim() ?? "";
-  const envClientSecret = process.env[oauthClientSecretEnvVar]?.trim() ?? "";
-  const explicitClientID = overrideClientID || envClientID;
-  const explicitClientSecret = overrideClientSecret || envClientSecret;
+  const envClientID = providers.env[oauthClientIDEnvVar]?.trim() ?? "";
+  const envClientSecret = providers.env[oauthClientSecretEnvVar]?.trim() ?? "";
+  const hasOverrideCredentials = Boolean(overrideClientID || overrideClientSecret);
+  const explicitClientID = hasOverrideCredentials ? overrideClientID : envClientID;
+  const explicitClientSecret = hasOverrideCredentials
+    ? overrideClientSecret
+    : envClientSecret;
+  if (Boolean(explicitClientID) !== Boolean(explicitClientSecret)) {
+    throw new Error(
+      "Provide both OAuth credentials from the same explicit source; partial credential pairs are not allowed.",
+    );
+  }
   let scope = overrides.scope?.trim() ?? "";
-  if (!scope) scope = process.env[oauthScopeEnvVar]?.trim() ?? "";
+  if (!scope) scope = providers.env[oauthScopeEnvVar]?.trim() ?? "";
 
-  const secureState = await loadSecureCredentialState();
-  const cfg = await loadConfig();
-  const storedClientID =
-    secureState?.oauth_client_id?.trim() || cfg.oauth_client_id?.trim() || "";
-  const storedClientSecret =
-    secureState?.oauth_client_secret?.trim() ||
-    cfg.oauth_client_secret?.trim() ||
-    "";
+  const secureState = await providers.loadSecureCredentialState();
+  const cfg = await providers.loadConfig();
+  const secureClientID = secureState?.oauth_client_id?.trim() ?? "";
+  const secureClientSecret = secureState?.oauth_client_secret?.trim() ?? "";
+  const configClientID = cfg.oauth_client_id?.trim() ?? "";
+  const configClientSecret = cfg.oauth_client_secret?.trim() ?? "";
+  const hasSecureCredentials = Boolean(secureClientID || secureClientSecret);
+  const hasConfigCredentials = Boolean(configClientID || configClientSecret);
+  const storedClientID = hasSecureCredentials ? secureClientID : configClientID;
+  const storedClientSecret = hasSecureCredentials
+    ? secureClientSecret
+    : configClientSecret;
+
+  if (
+    !explicitClientID &&
+    !explicitClientSecret &&
+    ((hasSecureCredentials && (!secureClientID || !secureClientSecret)) ||
+      (!hasSecureCredentials && hasConfigCredentials &&
+        (!configClientID || !configClientSecret)))
+  ) {
+    throw new Error(
+      "Saved OAuth credentials are incomplete in one credential store. Run `vanta login` again.",
+    );
+  }
+
   const source = classifyOAuthCredentialSource(
     explicitClientID,
     explicitClientSecret,
@@ -356,8 +397,9 @@ export async function resolveOAuthCredentials(
   );
   let credentialAPIBase = "";
   if (source === "stored") {
-    credentialAPIBase =
-      secureState?.oauth_api_base?.trim() || cfg.oauth_api_base?.trim() || "";
+    credentialAPIBase = hasSecureCredentials
+      ? secureState?.oauth_api_base?.trim() ?? ""
+      : cfg.oauth_api_base?.trim() ?? "";
   }
 
   if (!scope) scope = secureState?.oauth_scope?.trim() ?? "";
@@ -439,12 +481,18 @@ export async function requestOAuthToken(
   };
 }
 
-async function loadCachedAccessToken(apiBase: string): Promise<{
+export async function loadCachedAccessToken(
+  apiBase: string,
+  providers: Pick<
+    OAuthCredentialProviders,
+    "loadSecureCredentialState" | "loadConfig"
+  > = { loadSecureCredentialState, loadConfig },
+): Promise<{
   token: string;
   expiresAt: Date | null;
 }> {
   const normalizedAPIBase = normalizeAPIBase(apiBase);
-  const secureState = await loadSecureCredentialState();
+  const secureState = await providers.loadSecureCredentialState();
   if (secureState) {
     const token = secureState.cached_access_token?.trim() ?? "";
     const cachedAPIBase = secureState.cached_token_api_base?.trim() ?? "";
@@ -463,7 +511,7 @@ async function loadCachedAccessToken(apiBase: string): Promise<{
     }
   }
 
-  const cfg = await loadConfig();
+  const cfg = await providers.loadConfig();
   const token = cfg.cached_access_token?.trim() ?? "";
   const cachedAPIBase = cfg.cached_token_api_base?.trim() ?? "";
   if (!token) return { token: "", expiresAt: null };
@@ -487,9 +535,20 @@ async function loadCachedAccessToken(apiBase: string): Promise<{
 export async function resolveAccessToken(
   apiBase: string,
   overrides: AuthOverrides = {},
-  options: { dryRun?: boolean } = {},
+  options: {
+    dryRun?: boolean;
+    dependencies?: AuthRuntimeDependencies;
+  } = {},
 ): Promise<string> {
   if (options.dryRun) return "<dry-run>";
+
+  const dependencies = options.dependencies;
+  const credentialProviders: OAuthCredentialProviders = {
+    loadSecureCredentialState:
+      dependencies?.loadSecureCredentialState ?? loadSecureCredentialState,
+    loadConfig: dependencies?.loadConfig ?? loadConfig,
+    env: dependencies?.env ?? process.env,
+  };
 
   const {
     clientID,
@@ -497,11 +556,13 @@ export async function resolveAccessToken(
     scope,
     apiBase: credentialAPIBase,
     source: credentialSource,
-  } = await resolveOAuthCredentials(overrides);
+  } = await resolveOAuthCredentials(overrides, credentialProviders);
   const trustedBase = assertTrustedTokenDestination(apiBase, credentialAPIBase);
   const cacheEligible = isOAuthTokenCacheEligible(credentialSource);
   const cached = cacheEligible
-    ? await loadCachedAccessToken(trustedBase)
+    ? await (dependencies?.loadCachedAccessToken ?? loadCachedAccessToken)(
+        trustedBase,
+      )
     : { token: "", expiresAt: null };
   if (
     cached.token &&
@@ -526,7 +587,12 @@ export async function resolveAccessToken(
     { trustedAPIBase: credentialAPIBase },
   );
   if (cacheEligible) {
-    await cacheAccessToken(trustedBase, accessToken, "Bearer", expiresAt);
+    await (dependencies?.cacheAccessToken ?? cacheAccessToken)(
+      trustedBase,
+      accessToken,
+      "Bearer",
+      expiresAt,
+    );
   }
   return accessToken;
 }

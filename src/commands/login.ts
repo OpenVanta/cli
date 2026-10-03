@@ -37,10 +37,38 @@ async function promptValue(
   }
 }
 
+export type LoginCommandDependencies = {
+  promptValue: typeof promptValue;
+  resolveAPIBase: typeof resolveAPIBase;
+  normalizeAPIBase: typeof normalizeAPIBase;
+  isTrustedVantaAPIBase: typeof isTrustedVantaAPIBase;
+  requestOAuthToken: typeof requestOAuthToken;
+  saveOAuthCredentials: typeof saveOAuthCredentials;
+  cacheAccessToken: typeof cacheAccessToken;
+  credentialStorageDescription: typeof credentialStorageDescription;
+  configFilePath: typeof configFilePath;
+  log: (message: string) => void;
+};
+
+const defaultLoginDependencies: LoginCommandDependencies = {
+  promptValue,
+  resolveAPIBase,
+  normalizeAPIBase,
+  isTrustedVantaAPIBase,
+  requestOAuthToken,
+  saveOAuthCredentials,
+  cacheAccessToken,
+  credentialStorageDescription,
+  configFilePath,
+  log: (message) => console.log(message),
+};
+
 export function registerLoginCommand(
   program: Command,
   getOverrides: () => AuthOverrides,
+  dependencies: Partial<LoginCommandDependencies> = {},
 ): void {
+  const deps = { ...defaultLoginDependencies, ...dependencies };
   program
     .command("login")
     .description("Save OAuth credentials for the CLI")
@@ -53,13 +81,13 @@ export function registerLoginCommand(
       scope?: string;
     }) => {
       const overrides = getOverrides();
-      const apiBaseDefault = await resolveAPIBase(overrides);
-      const apiBase = normalizeAPIBase(
-        await promptValue("API base URL", apiBaseDefault, true),
+      const apiBaseDefault = await deps.resolveAPIBase(overrides);
+      const apiBase = deps.normalizeAPIBase(
+        await deps.promptValue("API base URL", apiBaseDefault, true),
       );
-      const customAPIBase = !isTrustedVantaAPIBase(apiBase);
+      const customAPIBase = !deps.isTrustedVantaAPIBase(apiBase);
       if (customAPIBase) {
-        const confirmation = await promptValue(
+        const confirmation = await deps.promptValue(
           `Custom API host ${new URL(apiBase).host} will receive your OAuth client secret. Type TRUST to continue`,
           "",
           true,
@@ -68,40 +96,40 @@ export function registerLoginCommand(
           throw new Error("custom API host was not explicitly trusted");
         }
       }
-      const clientID = await promptValue(
+      const clientID = await deps.promptValue(
         "OAuth client ID",
         opts.clientId ?? "",
         true,
       );
-      const clientSecret = await promptValue(
+      const clientSecret = await deps.promptValue(
         "OAuth client secret",
         opts.clientSecret ?? "",
         true,
       );
       const scopeDefault = opts.scope?.trim() || defaultOAuthScope;
       const scope =
-        (await promptValue(
+        (await deps.promptValue(
           `OAuth scope (default: ${scopeDefault})`,
           scopeDefault,
           false,
         )) || scopeDefault;
 
-      const { accessToken, expiresAt } = await requestOAuthToken(
+      const { accessToken, expiresAt } = await deps.requestOAuthToken(
         apiBase,
         clientID,
         clientSecret,
         scope,
         { allowCustomAPIBase: customAPIBase },
       );
-      await saveOAuthCredentials(apiBase, clientID, clientSecret, scope);
-      await cacheAccessToken(apiBase, accessToken, "Bearer", expiresAt);
+      await deps.saveOAuthCredentials(apiBase, clientID, clientSecret, scope);
+      await deps.cacheAccessToken(apiBase, accessToken, "Bearer", expiresAt);
 
-      console.log(
-        `OAuth credentials saved to ${credentialStorageDescription()}`,
+      deps.log(
+        `OAuth credentials saved to ${deps.credentialStorageDescription()}`,
       );
-      console.log(`API base saved as ${apiBase}`);
-      console.log(`CLI configuration saved to ${configFilePath()}`);
-      console.log(
+      deps.log(`API base saved as ${apiBase}`);
+      deps.log(`CLI configuration saved to ${deps.configFilePath()}`);
+      deps.log(
         `Access token cached (expires at ${expiresAt.toISOString().replace(/\.\d{3}Z$/, "Z")})`,
       );
     });

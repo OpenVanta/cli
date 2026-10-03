@@ -67,6 +67,8 @@ You can also pass credentials via environment variables or flags:
 | OAuth scope | `--scope` | `VANTA_OAUTH_SCOPE` |
 | API base URL | `--api-base` | `VANTA_API_BASE` |
 
+Provide the client ID and client secret together from the same source. If either credential flag is supplied, both flags are required; a complete flag pair takes precedence over environment credentials. Partial flag or environment pairs are rejected rather than combined with another source or a saved login.
+
 Default API base: `https://api.vanta.com/v1`  
 Default scope: `vanta-api.all:read vanta-api.all:write`
 

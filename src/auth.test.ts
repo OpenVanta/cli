@@ -6,8 +6,10 @@ import {
   encodeKeyringPassword,
   useSystemCredentialStore,
   isTrustedVantaAPIBase,
+  loadCachedAccessToken,
   normalizeAPIBase,
   requestOAuthToken,
+  resolveOAuthCredentials,
   resolveAccessToken,
   classifyOAuthCredentialSource,
   isOAuthTokenCacheEligible,
@@ -254,6 +256,237 @@ describe("credential source binding", () => {
       assertStoredOAuthCredentialBinding("stored", "https://api.vanta.com/v1"),
     );
     assert.doesNotThrow(() => assertStoredOAuthCredentialBinding("explicit", ""));
+  });
+
+  it("rejects incomplete explicit pairs even when no stored pair exists", async () => {
+    await assert.rejects(
+      resolveOAuthCredentials(
+        { clientId: "explicit-id" },
+        {
+          loadSecureCredentialState: async () => null,
+          loadConfig: async () => ({}),
+          env: {},
+        },
+      ),
+      /provide both OAuth credentials/i,
+    );
+  });
+
+  it("never combines credentials or API-base bindings across stores", async () => {
+    await assert.rejects(
+      resolveOAuthCredentials(
+        {},
+        {
+          loadSecureCredentialState: async () => ({
+            oauth_client_id: "secure-id",
+            oauth_api_base: "https://api.eu.vanta.com/v1",
+          }),
+          loadConfig: async () => ({
+            oauth_client_secret: "config-secret",
+            oauth_api_base: "https://tenant.example/v1",
+          }),
+          env: {},
+        },
+      ),
+      /saved OAuth credentials are incomplete/i,
+    );
+  });
+
+  it("uses the complete secure-store credential pair and its own binding", async () => {
+    const credentials = await resolveOAuthCredentials(
+      {},
+      {
+        loadSecureCredentialState: async () => ({
+          oauth_client_id: "secure-id",
+          oauth_client_secret: "secure-secret",
+          oauth_api_base: "https://api.eu.vanta.com/v1",
+        }),
+        loadConfig: async () => ({
+          oauth_client_id: "stale-config-id",
+          oauth_client_secret: "stale-config-secret",
+          oauth_api_base: "https://tenant.example/v1",
+        }),
+        env: {},
+      },
+    );
+
+    assert.equal(credentials.clientID, "secure-id");
+    assert.equal(credentials.clientSecret, "secure-secret");
+    assert.equal(credentials.apiBase, "https://api.eu.vanta.com/v1");
+  });
+
+  it("does not borrow a config-file binding for secure-store credentials", async () => {
+    const credentials = await resolveOAuthCredentials(
+      {},
+      {
+        loadSecureCredentialState: async () => ({
+          oauth_client_id: "secure-id",
+          oauth_client_secret: "secure-secret",
+        }),
+        loadConfig: async () => ({
+          oauth_client_id: "config-id",
+          oauth_client_secret: "config-secret",
+          oauth_api_base: "https://tenant.example/v1",
+        }),
+        env: {},
+      },
+    );
+
+    assert.equal(credentials.clientID, "secure-id");
+    assert.equal(credentials.clientSecret, "secure-secret");
+    assert.equal(credentials.apiBase, "");
+    assert.throws(
+      () => assertStoredOAuthCredentialBinding(credentials.source, credentials.apiBase),
+      /not bound to an API base/,
+    );
+  });
+
+  it("uses a complete config-file login only when the secure store has no credentials", async () => {
+    const credentials = await resolveOAuthCredentials(
+      {},
+      {
+        loadSecureCredentialState: async () => ({ oauth_scope: "secure-scope" }),
+        loadConfig: async () => ({
+          oauth_client_id: "config-id",
+          oauth_client_secret: "config-secret",
+          oauth_api_base: "https://api.vanta.com/v1",
+        }),
+        env: {},
+      },
+    );
+
+    assert.equal(credentials.clientID, "config-id");
+    assert.equal(credentials.clientSecret, "config-secret");
+    assert.equal(credentials.apiBase, "https://api.vanta.com/v1");
+    assert.equal(credentials.scope, "secure-scope");
+  });
+
+  it("rejects a partial environment credential pair instead of falling back", async () => {
+    await assert.rejects(
+      resolveOAuthCredentials(
+        {},
+        {
+          loadSecureCredentialState: async () => ({
+            oauth_client_id: "saved-id",
+            oauth_client_secret: "saved-secret",
+            oauth_api_base: "https://api.vanta.com/v1",
+          }),
+          loadConfig: async () => ({}),
+          env: { VANTA_CLIENT_ID: "environment-id" },
+        },
+      ),
+      /provide both OAuth credentials/i,
+    );
+  });
+
+  it("does not combine a command-line credential with an environment credential", async () => {
+    await assert.rejects(
+      resolveOAuthCredentials(
+        { clientId: "flag-id" },
+        {
+          loadSecureCredentialState: async () => null,
+          loadConfig: async () => ({}),
+          env: { VANTA_CLIENT_SECRET: "environment-secret" },
+        },
+      ),
+      /same explicit source/i,
+    );
+  });
+
+  it("uses a complete command-line pair as a pair ahead of environment credentials", async () => {
+    const credentials = await resolveOAuthCredentials(
+      { clientId: "flag-id", clientSecret: "flag-secret" },
+      {
+        loadSecureCredentialState: async () => null,
+        loadConfig: async () => ({}),
+        env: {
+          VANTA_CLIENT_ID: "environment-id",
+          VANTA_CLIENT_SECRET: "environment-secret",
+        },
+      },
+    );
+
+    assert.equal(credentials.clientID, "flag-id");
+    assert.equal(credentials.clientSecret, "flag-secret");
+    assert.equal(credentials.source, "explicit");
+  });
+
+  it("reuses a cached token only for the normalized API base it is bound to", async () => {
+    let config = {
+      cached_access_token: "cached-token",
+      cached_token_expires: "2030-01-01T00:00:00.000Z",
+      cached_token_api_base: "https://api.eu.vanta.com/v1/",
+    };
+    const providers = {
+      loadSecureCredentialState: async () => null,
+      loadConfig: async () => config,
+      env: {},
+    };
+    const dependencies = {
+      ...providers,
+      loadCachedAccessToken: (base: string) =>
+        loadCachedAccessToken(base, providers),
+      cacheAccessToken: async () => {},
+    };
+
+    assert.equal(
+      await resolveAccessToken(
+        "https://API.EU.VANTA.COM:443/v1",
+        {},
+        { dependencies },
+      ),
+      "cached-token",
+    );
+
+    config = {
+      ...config,
+      cached_token_api_base: "https://api.vanta.com/v1",
+    };
+    await assert.rejects(
+      resolveAccessToken(
+        "https://api.eu.vanta.com/v1",
+        {},
+        { dependencies },
+      ),
+      /missing auth credentials/,
+    );
+  });
+
+  it("rejects a changed API base before token fetch in the full resolver flow", async () => {
+    const originalFetch = globalThis.fetch;
+    let requests = 0;
+    globalThis.fetch = (async () => {
+      requests += 1;
+      return new Response(JSON.stringify({ access_token: "token", expires_in: 3600 }), {
+        status: 200,
+      });
+    }) as typeof fetch;
+
+    try {
+      await assert.rejects(
+        resolveAccessToken(
+          "https://attacker.example/v1",
+          {},
+          {
+            dependencies: {
+              loadSecureCredentialState: async () => ({
+                oauth_client_id: "saved-id",
+                oauth_client_secret: "saved-secret",
+                oauth_api_base: "https://api.eu.vanta.com/v1",
+              }),
+              loadConfig: async () => ({}),
+              loadCachedAccessToken: async () => ({ token: "", expiresAt: null }),
+              cacheAccessToken: async () => {},
+              env: {},
+            },
+          },
+        ),
+        /does not match the host bound/i,
+      );
+      assert.equal(requests, 0);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 });
 
