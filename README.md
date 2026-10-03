@@ -54,6 +54,10 @@ vanta login
 
 You’ll be prompted for your API base URL, client ID, and client secret. Credentials are stored in the OS keychain when available (macOS Keychain or Windows Credential Manager), matching the previous Go CLI (`com.vanta.cli` / `oauth`). Your API base is saved to `~/.vanta/config.json`.
 
+OAuth credentials are bound to the API base used at login; changing it requires logging in again. The supported Vanta hosts are `api.vanta.com`, `api.eu.vanta.com`, `api.aus.vanta.com`, and `api.vanta-gov.com`.
+
+Ad-hoc credentials supplied by flags or environment variables are restricted to those supported Vanta hosts and do not inherit custom-host trust from a saved login. To use a custom HTTPS host, run `vanta login` and type `TRUST` after the host is displayed; the OAuth client secret will be sent there and the saved credentials will be bound to that API base. Existing saved logins created before API-base binding was added must be saved again with `vanta login` before a new token can be requested.
+
 You can also pass credentials via environment variables or flags:
 
 | Option | Flag | Environment variable |

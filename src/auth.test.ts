@@ -5,6 +5,13 @@ import {
   decodeKeyringPassword,
   encodeKeyringPassword,
   useSystemCredentialStore,
+  isTrustedVantaAPIBase,
+  normalizeAPIBase,
+  requestOAuthToken,
+  resolveAccessToken,
+  classifyOAuthCredentialSource,
+  isOAuthTokenCacheEligible,
+  assertStoredOAuthCredentialBinding,
 } from "./auth.js";
 
 describe("credential store selection", () => {
@@ -44,5 +51,217 @@ describe("go-keyring encoding", () => {
 
   it("passes through legacy plaintext values", () => {
     assert.equal(decodeKeyringPassword('{"a":1}'), '{"a":1}');
+  });
+});
+
+describe("OAuth token destination guard", () => {
+  it("accepts exact Vanta regional hosts and normalizes their API base", () => {
+    for (const base of [
+      "https://api.vanta.com/v1/",
+      "https://api.eu.vanta.com/v1",
+      "https://api.aus.vanta.com/v1",
+      "https://api.vanta-gov.com/v1",
+    ]) {
+      assert.equal(isTrustedVantaAPIBase(base), true);
+    }
+    assert.equal(
+      normalizeAPIBase(" HTTPS://API.VANTA.COM:443/v1/ "),
+      "https://api.vanta.com/v1",
+    );
+  });
+
+  it("rejects untrusted and malformed destinations before making a request", async () => {
+    const originalFetch = globalThis.fetch;
+    let requests = 0;
+    globalThis.fetch = (async () => {
+      requests += 1;
+      return new Response("{}", { status: 200 });
+    }) as typeof fetch;
+
+    try {
+      for (const base of [
+        "http://api.vanta.com/v1",
+        "https://api.vanta.com.attacker.test/v1",
+        "https://api.vanta.com@attacker.test/v1",
+        "https://user@api.vanta.com/v1",
+        "https://attacker.test/v1",
+        "https://127.0.0.1/v1",
+        "https://api.vanta.com:444/v1",
+        "https://api.vanta.com/v1?next=attacker.test",
+        "https://api.vanta.com/v1#fragment",
+        "https://api.vanta.com/other",
+        "not a url",
+      ]) {
+        await assert.rejects(
+          requestOAuthToken(base, "id", "secret", "scope"),
+          /API base|HTTPS URL/,
+          base,
+        );
+      }
+      assert.equal(requests, 0, "rejected bases must not issue token requests");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it("permits custom HTTPS hosts only when explicitly trusted or approved at login", async () => {
+    const originalFetch = globalThis.fetch;
+    let requestOptions: RequestInit | undefined;
+    globalThis.fetch = (async (_input, init) => {
+      requestOptions = init;
+      return new Response(JSON.stringify({ access_token: "token", expires_in: 3600 }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }) as typeof fetch;
+
+    try {
+      await assert.rejects(
+        requestOAuthToken("https://tenant.example/v1", "id", "secret", "scope"),
+        /not an approved Vanta host/,
+      );
+      await requestOAuthToken(
+        "https://tenant.example/v1",
+        "id",
+        "secret",
+        "scope",
+        { allowCustomAPIBase: true },
+      );
+      assert.equal(requestOptions?.redirect, "error");
+      assert.equal(
+        await requestOAuthToken(
+          "https://tenant.example/v1",
+          "id",
+          "secret",
+          "scope",
+          { trustedAPIBase: "https://tenant.example/v1/" },
+        ).then((result) => result.accessToken),
+        "token",
+      );
+      await assert.rejects(
+        requestOAuthToken(
+          "https://other.example/v1",
+          "id",
+          "secret",
+          "scope",
+          { trustedAPIBase: "https://tenant.example/v1" },
+        ),
+        /does not match the host bound/,
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it("rejects invalid stored API-base bindings before requesting a token", async () => {
+    const originalFetch = globalThis.fetch;
+    let requests = 0;
+    globalThis.fetch = (async () => {
+      requests += 1;
+      return new Response("{}", { status: 200 });
+    }) as typeof fetch;
+
+    try {
+      await assert.rejects(
+        requestOAuthToken(
+          "https://api.vanta.com/v1",
+          "id",
+          "secret",
+          "scope",
+          { trustedAPIBase: "http://invalid.example/v1" },
+        ),
+        /invalid API-base binding/,
+      );
+      assert.equal(requests, 0);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it("does not expose malformed successful response bodies", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response("invalid payload that contains secret", { status: 200 })) as typeof fetch;
+
+    try {
+      await assert.rejects(
+        requestOAuthToken("https://api.vanta.com/v1", "id", "secret", "scope"),
+        (error: unknown) => {
+          assert.equal(error instanceof Error, true);
+          assert.equal((error as Error).message, "oauth response was invalid JSON");
+          assert.equal((error as Error).message.includes("secret"), false);
+          return true;
+        },
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it("does not expose token endpoint response bodies in errors", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response("secret echoed by server", { status: 400 })) as typeof fetch;
+
+    try {
+      await assert.rejects(
+        requestOAuthToken("https://api.vanta.com/v1", "id", "secret", "scope"),
+        (error: unknown) => {
+          assert.equal(error instanceof Error, true);
+          assert.equal((error as Error).message, "oauth error (400)");
+          assert.equal((error as Error).message.includes("secret echoed"), false);
+          return true;
+        },
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});
+
+describe("credential source binding", () => {
+  it("does not reuse or persist cached tokens for explicit credentials", () => {
+    assert.equal(isOAuthTokenCacheEligible("explicit"), false);
+    assert.equal(isOAuthTokenCacheEligible("stored"), true);
+    assert.equal(isOAuthTokenCacheEligible("none"), true);
+  });
+
+  it("keeps explicit credential pairs separate from stored credentials", () => {
+    assert.equal(
+      classifyOAuthCredentialSource("override-id", "override-secret", "saved-id", "saved-secret"),
+      "explicit",
+    );
+    assert.equal(
+      classifyOAuthCredentialSource("", "", "saved-id", "saved-secret"),
+      "stored",
+    );
+    assert.throws(
+      () => classifyOAuthCredentialSource("override-id", "", "saved-id", "saved-secret"),
+      /mixed credential sources are not allowed/,
+    );
+    assert.throws(
+      () => classifyOAuthCredentialSource("", "override-secret", "saved-id", "saved-secret"),
+      /mixed credential sources are not allowed/,
+    );
+  });
+
+  it("requires old stored logins without a binding to be re-established", () => {
+    assert.throws(
+      () => assertStoredOAuthCredentialBinding("stored", ""),
+      /not bound to an API base/,
+    );
+    assert.doesNotThrow(() =>
+      assertStoredOAuthCredentialBinding("stored", "https://api.vanta.com/v1"),
+    );
+    assert.doesNotThrow(() => assertStoredOAuthCredentialBinding("explicit", ""));
+  });
+});
+
+describe("dry-run authentication", () => {
+  it("does not resolve credentials or validate token destinations", async () => {
+    assert.equal(
+      await resolveAccessToken("http://untrusted.example/v1", {}, { dryRun: true }),
+      "<dry-run>",
+    );
   });
 });

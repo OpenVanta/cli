@@ -6,6 +6,8 @@ import {
   configFilePath,
   credentialStorageDescription,
   defaultOAuthScope,
+  isTrustedVantaAPIBase,
+  normalizeAPIBase,
   requestOAuthToken,
   resolveAPIBase,
   saveOAuthCredentials,
@@ -52,7 +54,20 @@ export function registerLoginCommand(
     }) => {
       const overrides = getOverrides();
       const apiBaseDefault = await resolveAPIBase(overrides);
-      const apiBase = await promptValue("API base URL", apiBaseDefault, true);
+      const apiBase = normalizeAPIBase(
+        await promptValue("API base URL", apiBaseDefault, true),
+      );
+      const customAPIBase = !isTrustedVantaAPIBase(apiBase);
+      if (customAPIBase) {
+        const confirmation = await promptValue(
+          `Custom API host ${new URL(apiBase).host} will receive your OAuth client secret. Type TRUST to continue`,
+          "",
+          true,
+        );
+        if (confirmation !== "TRUST") {
+          throw new Error("custom API host was not explicitly trusted");
+        }
+      }
       const clientID = await promptValue(
         "OAuth client ID",
         opts.clientId ?? "",
@@ -76,9 +91,10 @@ export function registerLoginCommand(
         clientID,
         clientSecret,
         scope,
+        { allowCustomAPIBase: customAPIBase },
       );
       await saveOAuthCredentials(apiBase, clientID, clientSecret, scope);
-      await cacheAccessToken(accessToken, "Bearer", expiresAt);
+      await cacheAccessToken(apiBase, accessToken, "Bearer", expiresAt);
 
       console.log(
         `OAuth credentials saved to ${credentialStorageDescription()}`,
