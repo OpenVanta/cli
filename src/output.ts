@@ -39,6 +39,10 @@ function unwrapResultsData(value: unknown): unknown {
   return normalized;
 }
 
+function sanitizeTerminalControls(value: string): string {
+  return value.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/g, "");
+}
+
 export function printResponse(
   value: unknown,
   options: OutputOptions,
@@ -52,7 +56,7 @@ export function printResponse(
   const normalized = unwrapResultsData(value);
 
   if (agentModeEnabled(options.agentMode)) {
-    write(`${encode(normalized)}\n`);
+    write(`${sanitizeTerminalControls(encode(normalized))}\n`);
     return;
   }
 
