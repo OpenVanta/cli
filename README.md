@@ -110,6 +110,9 @@ vanta tests list --status-filter NEEDS_ATTENTION
 | Discovered vendors | `vanta discovered-vendors` |
 | Integrations | `vanta integrations` |
 | Event logs | `vanta event-logs` |
+| Customer Trust accounts, questionnaires, exports, and tags | `vanta customer-trust` |
+| Knowledge Base answers and resources | `vanta knowledge-base` |
+| Trust Center configuration, content, access, and subscribers | `vanta trust-centers` |
 
 Run `vanta <resource> --help` for the full list of actions on each resource.
 

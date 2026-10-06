@@ -19,7 +19,7 @@ export function registerEventLogsCommand(
     eventLogs.command("list").description("List event logs"),
   )
     .option(
-      "--start-date <date>",
+      "--start-date <timestamp>",
       "Filter to event logs created at or after this timestamp",
     )
     .action(async (opts: { pageSize?: number; pageCursor?: string; startDate?: string }) => {

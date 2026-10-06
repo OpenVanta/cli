@@ -2,6 +2,7 @@
 
 - Group related commands by user-facing domain, not API resource boundaries (e.g. `people notification-settings`, `vendors assessment-types`).
 - Make inputs discoverable in `--help`: list enum choices, identify ID resources, and use specific placeholders (`<status>`, `<id>`, `<timestamp>`), not `<value>`.
+- Use the same placeholder for common inputs: `<id>` for IDs, `<timestamp>` for date-times, `<date>` for date-only values, `<bool>` for true/false, `<query>` for search terms, `<json>` for inline JSON, `<path>` for local files, and `<text>` for other free text.
 - Mark repeatable flags `(repeatable)`. Describe timestamps as “ISO 8601 timestamp”; avoid repeated format examples.
 
 # Testing

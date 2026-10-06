@@ -3,6 +3,7 @@ import type { GlobalFlags } from "./api-client.js";
 import { registerBusinessUnitsCommand } from "./commands/business-units.js";
 import { registerContractsCommand } from "./commands/contracts.js";
 import { registerControlsCommand } from "./commands/controls.js";
+import { registerCustomerTrustCommand } from "./commands/customer-trust.js";
 import { registerDiscoveredVendorsCommand } from "./commands/discovered-vendors.js";
 import { registerDocumentsCommand } from "./commands/documents.js";
 import { registerEventLogsCommand } from "./commands/event-logs.js";
@@ -10,6 +11,7 @@ import { registerFrameworksCommand } from "./commands/frameworks.js";
 import { registerGroupsCommand } from "./commands/groups.js";
 import { registerIntegrationsCommand } from "./commands/integrations.js";
 import { registerIssuesCommand } from "./commands/issues.js";
+import { registerKnowledgeBaseCommand } from "./commands/knowledge-base.js";
 import { registerLoginCommand } from "./commands/login.js";
 import { registerMonitoredComputersCommand } from "./commands/monitored-computers.js";
 import { registerPeopleCommand } from "./commands/people.js";
@@ -17,6 +19,7 @@ import { registerPoliciesCommand } from "./commands/policies.js";
 import { registerProgramScopesCommand } from "./commands/program-scopes.js";
 import { registerRiskScenariosCommand } from "./commands/risk-scenarios.js";
 import { registerTestsCommand } from "./commands/tests.js";
+import { registerTrustCentersCommand } from "./commands/trust-centers.js";
 import { registerUsersCommand } from "./commands/users.js";
 import { registerVendorsCommand } from "./commands/vendors.js";
 import { registerVersionCommand } from "./commands/version.js";
@@ -114,6 +117,9 @@ function buildProgram(): Command {
   registerBusinessUnitsCommand(program, getFlags);
   registerIssuesCommand(program, getFlags);
   registerProgramScopesCommand(program, getFlags);
+  registerCustomerTrustCommand(program, getFlags);
+  registerKnowledgeBaseCommand(program, getFlags);
+  registerTrustCentersCommand(program, getFlags);
 
   return program;
 }
