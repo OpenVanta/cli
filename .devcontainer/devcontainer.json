@@ -1,0 +1,21 @@
+{
+    "name": "Ona",
+    "image": "mcr.microsoft.com/devcontainers/base:2.0.4-noble",
+    "containerEnv": {
+        "DO_NOT_TRACK": "1",
+        "NO_UPDATE_NOTIFIER": "1",
+        "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0",
+        "PNPM_HOME": "/home/vscode/.local/share/pnpm"
+    },
+    "remoteEnv": {
+        "PATH": "/home/vscode/.local/bin:/home/vscode/.local/share/pnpm/bin:${containerEnv:PATH}"
+    },
+    "postCreateCommand": ".devcontainer/lifecycle/post-create.sh",
+    "remoteUser": "vscode",
+    "features": {
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "22",
+            "pnpmVersion": "none"
+        }
+    }
+}
