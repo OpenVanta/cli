@@ -26,7 +26,7 @@ Requires the `vanta` CLI on `$PATH` and a completed `vanta login`. See the `vant
 | Need | Command |
 |---|---|
 | Full roster, each record carrying its task summary | `vanta people list --page-size 100` |
-| A single person, if a record needs re-reading | `vanta people get --id <personId>` |
+| A single person, if a record needs re-reading | `vanta people get --person-id <personId>` |
 
 The roster listing returns each person's complete task summary inline — every task's own `status`, `dueDate`, `completionDate`, and `disabled` block. **One full pass over the roster is all the data this report needs**; never fetch per-person records to fill in task detail.
 

@@ -1,12 +1,19 @@
+# Changing commands
+
+- API commands are generated from `api-spec.json` and `codegen.config.ts` by the rules in `scripts/codegen/spec-to-commands.ts`. Never edit `api-spec.json` or `src/commands/generated/`; only `login` and `version` are hand-written.
+- Sync the spec with `curl -sSL -o api-spec.json https://developer.vanta.com/reference/manage-vanta.json`.
+- Work around spec problems with a generator rule (tested in `spec-to-commands.test.ts`) when they affect many commands, otherwise in `codegen.config.ts` (sections explained in `scripts/codegen/config.ts`).
+- Run `pnpm generate` and commit `src/commands/generated/`; its diff is the change to the CLI surface. CI fails if it is stale.
+
 # CLI conventions
 
-- Group related commands by user-facing domain, not API resource boundaries (e.g. `people notification-settings`, `vendors assessment-types`).
-- Make inputs discoverable in `--help`: list enum choices, identify ID resources, and use specific placeholders (`<status>`, `<id>`, `<timestamp>`), not `<value>`.
-- Use the same placeholder for common inputs: `<id>` for IDs, `<timestamp>` for date-times, `<date>` for date-only values, `<bool>` for true/false, `<query>` for search terms, `<json>` for inline JSON, `<path>` for local files, and `<text>` for other free text.
-- Mark repeatable flags `(repeatable)`. Describe timestamps as “ISO 8601 timestamp”; avoid repeated format examples.
+The generator applies these and `spec-to-commands.test.ts` checks them; follow them by hand in `login` and `version`.
+
+- Group commands by user-facing domain (`people notification-settings`), not API resource boundaries.
+- ID flags keep the API parameter name (`--control-id`, `--document-id`); no flag reuses a global flag name (`--scope`).
+- `--help` lists enum choices, marks `(repeatable)` flags, calls timestamps "ISO 8601", and uses these placeholders, never `<value>`: `<id>`, `<timestamp>`, `<date>`, `<bool>`, `<query>`, `<json>`, `<path>`, `<text>`, or the enum's name (`<status>`).
 
 # Testing
 
-- Test changes end to end when modifying the CLI. Build the binary and test the commands.
-- Simulate a client with only the binary: discover inputs through the CLI itself, not the codebase. Always use an isolated tester without codebase access to test.
-- Confirm the target API and available credentials with user before making calls.
+- Build the binary and test changed commands end to end, using an isolated tester that has only the binary and discovers inputs through `--help`.
+- Confirm the target API and credentials with the user before making calls.

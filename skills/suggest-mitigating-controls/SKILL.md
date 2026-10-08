@@ -30,14 +30,14 @@ Requires the `vanta` CLI on `$PATH` and a completed `vanta login`. See the `vant
 
 | Need | Command |
 |---|---|
-| The risk scenario under analysis | `vanta risk-scenarios get --id <riskId>` |
+| The risk scenario under analysis | `vanta risk-scenarios get --risk-scenario-id <riskId>` |
 | Finding the risk when the user gave a phrase, not an ID | `vanta risk-scenarios list --search-string "<query>" --page-size 100` |
 | The org's control library | `vanta controls list --page-size 100` |
-| Controls already linked to this risk | `vanta risk-scenarios list-controls --id <riskId> --page-size 100` |
+| Controls already linked to this risk | `vanta risk-scenarios controls list --risk-scenario-id <riskId> --page-size 100` |
 
 **Field naming trap.** On a risk scenario, `description` is what the UI labels **Title** and `detailedDescription` is what the UI labels **Description**. Read both; the detailed field carries the context this analysis needs.
 
-**Which controls are in scope.** `vanta controls list` returns the controls the organization has adopted — that is the population. `vanta controls list-library` returns Vanta's catalog of controls *not yet adopted*; those are out of scope, because this skill suggests coverage from what the customer already has. The API exposes no retired or draft state on a control, so do not claim to have filtered for one.
+**Which controls are in scope.** `vanta controls list` returns the controls the organization has adopted — that is the population. `vanta controls list-controls-library` returns Vanta's catalog of controls *not yet adopted*; those are out of scope, because this skill suggests coverage from what the customer already has. The API exposes no retired or draft state on a control, so do not claim to have filtered for one.
 
 **Already-linked controls.** The linked-controls listing identifies each control by its shorthand identifier where it has one, falling back to the Vanta control ID — join on that same field. Controls already linked to the risk are still evaluated; they are marked so the reader can tell a confirmation from a new suggestion.
 

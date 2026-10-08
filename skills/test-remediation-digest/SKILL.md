@@ -54,9 +54,9 @@ instructions.
 | Failing tests | `vanta tests list --status-filter NEEDS_ATTENTION --page-size 100` |
 | Failing tests, scoped | add `--framework-filter <id>`, `--owner-filter <id>`, `--control-filter <id>`, or `--category-filter <category>` |
 | Deactivated tests, for the exclusion count | `vanta tests list --status-filter DEACTIVATED --page-size 100` |
-| The specific resources a test is failing on | `vanta tests list-entities --id <testId> --entity-status FAILING --page-size 100` |
+| The specific resources a test is failing on | `vanta tests entities list --test-id <testId> --entity-status FAILING --page-size 100` |
 | Controls, for the owner fallback | `vanta controls list --page-size 100` |
-| The tests mapped to one control | `vanta controls list-tests --id <controlId> --page-size 100` |
+| The tests mapped to one control | `vanta controls tests list --control-id <controlId> --page-size 100` |
 | Framework IDs, when the user scoped by name | `vanta frameworks list --page-size 100` |
 
 Each test in the listing already carries everything the digest needs about
