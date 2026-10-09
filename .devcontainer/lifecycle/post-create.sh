@@ -4,6 +4,10 @@ set -e
 
 corepack enable
 
+echo "Installing tmux..."
+sudo apt-get update
+sudo apt-get install -y --no-install-recommends tmux
+
 echo "Installing repo dependencies..."
 pnpm install --frozen-lockfile
 
