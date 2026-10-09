@@ -1,31 +1,9 @@
 import { Command } from "commander";
 import type { GlobalFlags } from "./api-client.js";
-import { registerBusinessUnitsCommand } from "./commands/business-units.js";
-import { registerContractsCommand } from "./commands/contracts.js";
-import { registerControlsCommand } from "./commands/controls.js";
-import { registerCustomerTrustCommand } from "./commands/customer-trust.js";
-import { registerDiscoveredVendorsCommand } from "./commands/discovered-vendors.js";
-import { registerDocumentsCommand } from "./commands/documents.js";
-import { registerEventLogsCommand } from "./commands/event-logs.js";
-import { registerFrameworksCommand } from "./commands/frameworks.js";
-import { registerGroupsCommand } from "./commands/groups.js";
-import { registerIntegrationsCommand } from "./commands/integrations.js";
-import { registerIssuesCommand } from "./commands/issues.js";
-import { registerKnowledgeBaseCommand } from "./commands/knowledge-base.js";
+import { commands, groups } from "./commands/generated/index.js";
 import { registerLoginCommand } from "./commands/login.js";
-import { registerMonitoredComputersCommand } from "./commands/monitored-computers.js";
-import { registerPeopleCommand } from "./commands/people.js";
-import { registerPoliciesCommand } from "./commands/policies.js";
-import { registerProgramScopesCommand } from "./commands/program-scopes.js";
-import { registerRiskScenariosCommand } from "./commands/risk-scenarios.js";
-import { registerTestsCommand } from "./commands/tests.js";
-import { registerTrustCentersCommand } from "./commands/trust-centers.js";
-import { registerUsersCommand } from "./commands/users.js";
-import { registerVendorsCommand } from "./commands/vendors.js";
+import { registerApiCommands } from "./commands/api-commands.js";
 import { registerVersionCommand } from "./commands/version.js";
-import { registerVulnerabilitiesCommand } from "./commands/vulnerabilities.js";
-import { registerVulnerabilityRemediationsCommand } from "./commands/vulnerability-remediations.js";
-import { registerVulnerableAssetsCommand } from "./commands/vulnerable-assets.js";
 import {
   finishBackgroundUpdateCheck,
   startBackgroundUpdateCheck,
@@ -96,30 +74,7 @@ function buildProgram(): Command {
 
   registerLoginCommand(program, getFlags);
   registerVersionCommand(program);
-  registerControlsCommand(program, getFlags);
-  registerPoliciesCommand(program, getFlags);
-  registerDocumentsCommand(program, getFlags);
-  registerTestsCommand(program, getFlags);
-  registerPeopleCommand(program, getFlags);
-  registerGroupsCommand(program, getFlags);
-  registerFrameworksCommand(program, getFlags);
-  registerUsersCommand(program, getFlags);
-  registerVulnerabilitiesCommand(program, getFlags);
-  registerVulnerableAssetsCommand(program, getFlags);
-  registerVulnerabilityRemediationsCommand(program, getFlags);
-  registerContractsCommand(program, getFlags);
-  registerRiskScenariosCommand(program, getFlags);
-  registerMonitoredComputersCommand(program, getFlags);
-  registerVendorsCommand(program, getFlags);
-  registerDiscoveredVendorsCommand(program, getFlags);
-  registerIntegrationsCommand(program, getFlags);
-  registerEventLogsCommand(program, getFlags);
-  registerBusinessUnitsCommand(program, getFlags);
-  registerIssuesCommand(program, getFlags);
-  registerProgramScopesCommand(program, getFlags);
-  registerCustomerTrustCommand(program, getFlags);
-  registerKnowledgeBaseCommand(program, getFlags);
-  registerTrustCentersCommand(program, getFlags);
+  registerApiCommands(program, getFlags, groups, commands);
 
   return program;
 }

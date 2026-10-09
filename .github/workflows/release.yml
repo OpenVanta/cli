@@ -60,8 +60,8 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Generate API client
-        run: pnpm generate
+      - name: Generate API client and check generated commands are up to date
+        run: pnpm generate --check
 
       - name: Resolve version
         id: version

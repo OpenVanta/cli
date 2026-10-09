@@ -44,7 +44,7 @@ vanta <resource> [sub-resource] <method> [flags]
 
 | Flag | Description |
 |------|-------------|
-| `--id <ID>` | Resource identifier for get/update/delete-style commands |
+| `--<resource>-id <ID>` | Resource identifiers, named as in the API (`--control-id`, `--vendor-id`) |
 | `--json '{"key":"val"}'` | Raw JSON payload for write commands |
 | `--file <PATH>` | Path to JSON payload file (or upload file for upload commands) |
 | `-o, --output <PATH>` | Save binary responses to file |

@@ -73,10 +73,10 @@ Default scope: `vanta-api.all:read vanta-api.all:write`
 vanta controls list --page-size 50
 
 # Get a policy
-vanta policies get --id code-of-conduct-bsi
+vanta policies get --policy-id code-of-conduct-bsi
 
 # List controls for a framework
-vanta frameworks list-controls --id soc2
+vanta frameworks controls list --framework-id soc2
 
 # Find tests that need attention
 vanta tests list --status-filter NEEDS_ATTENTION
@@ -141,7 +141,7 @@ Requires Node 22+ and pnpm 12. Bun is required to build standalone binaries.
 
 ```bash
 pnpm install
-pnpm generate   # OpenAPI → src/generated
+pnpm generate   # api-spec.json → src/generated (API client) and src/commands/generated
 pnpm dev version
 pnpm typecheck
 pnpm test
@@ -149,4 +149,4 @@ pnpm build              # generate + bundle for Node
 VANTA_VERSION=0.2.0 pnpm build:binaries
 ```
 
-The typed API client is generated from [`api-spec.json`](api-spec.json) with [`@hey-api/openapi-ts`](https://heyapi.dev/).
+The typed API client is generated from [`api-spec.json`](api-spec.json) with [`@hey-api/openapi-ts`](https://heyapi.dev/). The API commands are generated from the same spec plus [`codegen.config.ts`](codegen.config.ts); see [`scripts/codegen/spec-to-commands.ts`](scripts/codegen/spec-to-commands.ts).

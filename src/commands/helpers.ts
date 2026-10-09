@@ -12,30 +12,10 @@ export function collectString(value: string, previous: string[]): string[] {
   return [...previous, value];
 }
 
-export function addPaginationOptions(cmd: Command): Command {
-  return cmd
-    .option("--page-size <n>", "Number of results to return", (v) =>
-      Number.parseInt(v, 10),
-    )
-    .option("--page-cursor <cursor>", "Pagination cursor");
-}
-
 export function addJsonFileOptions(cmd: Command): Command {
   return cmd
     .option("--json <json>", "Inline JSON payload")
     .option("--file <path>", "Path to a JSON payload file");
-}
-
-export function paginationQuery(opts: {
-  pageSize?: number;
-  pageCursor?: string;
-}): { pageSize?: number; pageCursor?: string } {
-  return {
-    ...(opts.pageSize && opts.pageSize > 0 ? { pageSize: opts.pageSize } : {}),
-    ...(opts.pageCursor?.trim()
-      ? { pageCursor: opts.pageCursor.trim() }
-      : {}),
-  };
 }
 
 export async function readJSONPayload(

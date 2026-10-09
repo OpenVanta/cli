@@ -52,10 +52,10 @@ evidence already exists. See the `vanta` skill for auth and global flags.
 |---|---|
 | The org's controls, with descriptions, domains, and owners | `vanta controls list --page-size 100` |
 | Controls for one framework | `vanta controls list --framework-matches-any <frameworkId> --page-size 100` |
-| One control | `vanta controls get --id <controlId>` |
+| One control | `vanta controls get --control-id <controlId>` |
 | Framework IDs, when the user scoped by name | `vanta frameworks list --page-size 100` |
-| Automated tests already covering a control | `vanta controls list-tests --id <controlId> --page-size 100` |
-| Evidence documents already attached to a control | `vanta controls list-documents --id <controlId> --page-size 100` |
+| Automated tests already covering a control | `vanta controls tests list --control-id <controlId> --page-size 100` |
+| Evidence documents already attached to a control | `vanta controls documents list --control-id <controlId> --page-size 100` |
 | Personnel, policy, computer, and vendor records as evidence sources | `vanta people list`, `vanta policies list`, `vanta monitored-computers list`, `vanta vendors list` |
 
 Pagination: pass `--page-size 100` and follow `nextCursor` into `--page-cursor`

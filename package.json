@@ -12,7 +12,7 @@
   "scripts": {
     "generate": "openapi-ts && tsx scripts/codegen/write-commands.ts",
     "dev": "tsx src/cli.ts",
-    "build": "pnpm run generate && tsup",
+    "build": "pnpm run generate --check && tsup",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.scripts.json",
     "test": "node --import tsx --test 'src/**/*.test.ts' 'scripts/**/*.test.ts'",
     "build:binaries": "tsx scripts/build-binaries.ts"
