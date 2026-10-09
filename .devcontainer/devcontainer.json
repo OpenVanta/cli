@@ -4,11 +4,7 @@
     "containerEnv": {
         "DO_NOT_TRACK": "1",
         "NO_UPDATE_NOTIFIER": "1",
-        "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0",
-        "PNPM_HOME": "/home/vscode/.local/share/pnpm"
-    },
-    "remoteEnv": {
-        "PATH": "/home/vscode/.local/share/pnpm/bin:${containerEnv:PATH}"
+        "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"
     },
     "postCreateCommand": ".devcontainer/lifecycle/post-create.sh",
     "remoteUser": "vscode",
