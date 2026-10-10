@@ -1,6 +1,7 @@
 import { createClient, type Client } from "./generated/client/index.js";
 import {
   type AuthOverrides,
+  normalizeAPIBase,
   resolveAccessToken,
   resolveAPIBase,
 } from "./auth.js";
@@ -79,12 +80,11 @@ function createInstrumentedFetch(flags: GlobalFlags): typeof fetch {
 }
 
 export async function newAPIClient(flags: GlobalFlags): Promise<ApiClient> {
-  const base = await resolveAPIBase(flags);
+  const base = normalizeAPIBase(await resolveAPIBase(flags));
   const token = await resolveAccessToken(base, flags, { dryRun: flags.dryRun });
-  const baseUrl = base.replace(/\/+$/, "");
 
   const client = createClient({
-    baseUrl,
+    baseUrl: base,
     auth: token,
     fetch: createInstrumentedFetch(flags),
   });
