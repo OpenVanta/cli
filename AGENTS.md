@@ -1,5 +1,7 @@
 # Command structure
 
+Commands in `src/commands/` are generated from `api-spec.json` by `scripts/codegen/`; put exceptions in `scripts/codegen/config.ts` instead of editing generated files.
+
 We map from the REST api path to a command structure for CLI with the following rules:
 - A command is `<group> <verb>-<noun>`. The group is the path's first segment (`/vendors/...` → `vendors`).
 - The verb is a trailing action in the path (`/vendors/{vendorId}/set-status` → `set-status`), or comes from the method when there is no trailing action: GET → `list` or `get`, POST → `create` or `upload` (files), PATCH → `update`, PUT → `set`, DELETE → `delete`. A POST or DELETE that attaches or detaches an existing resource is `add` or `remove` (`groups add-person`), and a GET that returns a file is `download` (`trust-centers download-resource-media`). A multi-word action puts the noun after its first word: `trust-centers send-viewer-invite-reminder`.
