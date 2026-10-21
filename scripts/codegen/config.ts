@@ -14,6 +14,9 @@ export type Noun = {
   // Name used in verb-noun commands when it differs from the singular path
   // segment, e.g. "file" for `uploads` (`documents upload-file`).
   commandSingular?: string;
+  // Name used in `list` and bulk commands when it differs from the path
+  // segment, e.g. "files" for `uploads` (`documents list-files`).
+  commandPlural?: string;
 };
 
 export type OptionOverride = {
@@ -42,6 +45,7 @@ export const topLevelOrder = [
   "documents",
   "tests",
   "people",
+  "personnel-notification-settings",
   "groups",
   "frameworks",
   "users",
@@ -52,6 +56,8 @@ export const topLevelOrder = [
   "risk-scenarios",
   "monitored-computers",
   "vendors",
+  "vendor-assessment-types",
+  "vendor-risk-attributes",
   "discovered-vendors",
   "integrations",
   "event-logs",
@@ -62,14 +68,6 @@ export const topLevelOrder = [
   "knowledge-base",
   "trust-centers",
 ];
-
-// Domain grouping: API resources mounted under another group instead of at the
-// top level. Keyed by the API path prefix.
-export const mounts: Record<string, string> = {
-  "/personnel-notification-settings": "people notification-settings",
-  "/vendor-risk-attributes": "vendors risk-attributes",
-  "/vendor-assessment-types": "vendors assessment-types",
-};
 
 // Display names, keyed by "<group> <segment>" or by path segment. Defaults humanize the segment, so only
 // proper nouns, acronyms, and irregular forms belong here.
@@ -89,10 +87,10 @@ export const nouns: Record<string, Noun> = {
     plural: "Knowledge Base resources",
   },
   "trust-centers": { singular: "Trust Center", plural: "Trust Centers" },
-  uploads: { commandSingular: "file" },
+  uploads: { commandSingular: "file", commandPlural: "files" },
 };
 
-// Keyed by CLI group path, e.g. "trust-centers".
+// Keyed by group, e.g. "trust-centers".
 export const groups: Record<string, GroupOverride> = {
   "trust-centers": {
     id: {
@@ -136,26 +134,29 @@ export const actionVerbs = [
   "verify",
 ];
 
+// Operations that attach or detach an existing resource rather than create or
+// delete one, keyed by operationId: POST is `add` and DELETE is `remove`
+// (`groups add-person`). The spec can't tell these apart; its summaries say
+// "Add" for creates too.
+export const links = [
+  "AddPersonToGroup",
+  "RemovePersonFromGroup",
+  "DeleteDocumentForcontrol",
+  "DeleteTestForControl",
+  "CreateRiskScenarioControl",
+  "DeleteRiskScenarioControl",
+  "AddControlToTrustCenter",
+  "DeleteTrustCenterControl",
+  "BulkAddTagsToControls",
+  "BulkRemoveTagsFromControls",
+  "AddTagCategoryProductContext",
+  "RemoveTagCategoryProductContext",
+];
+
 // Command names that differ from the naming rules, keyed by operationId.
 export const operations: Record<string, OperationOverride> = {
-  // Linking existing people, documents, tests, and controls: add/remove, not
-  // create/delete.
-  AddPersonToGroup: { name: "add-person" },
-  RemovePersonFromGroup: { name: "remove-person" },
-  DeleteDocumentForcontrol: { name: "remove-document" },
-  DeleteTestForControl: { name: "remove-test" },
-  CreateRiskScenarioControl: { name: "add-control" },
-  AddDocumentToControl: { name: "add-document" },
-  AddTestToControl: { name: "add-test" },
-  BulkAddTagsToControls: { name: "add-control-tags" },
-  BulkRemoveTagsFromControls: { name: "remove-control-tags" },
-  // Don't repeat the group's noun.
-  ListLibraryControls: { name: "list-library" },
-  ListDeactivatedControls: { name: "list-deactivated" },
   // A single settings object, not a collection.
   GetSettings: { name: "get" },
-  // The path names the media, not the action.
-  GetUploadedfileMedia: { name: "download-file" },
   // Replaces the file on an existing resource; `upload-resource-document`
   // creates one.
   ReplaceDocumentResourceFile: { name: "replace-resource-document-file" },
@@ -174,11 +175,11 @@ export const operations: Record<string, OperationOverride> = {
 // the default.
 export const commandHelp: Record<string, string> = {
   "controls create": "Create a custom control",
-  "controls list-library": "List controls from the library",
+  "controls list-controls-library": "List controls from the library",
   "controls set-owner": "Set or clear a control owner",
   "customer-trust": "Manage Customer Trust accounts, questionnaires, and tags",
-  "customer-trust create-tag-category-product-context": "Enable a tag category for a product context",
-  "customer-trust delete-tag-category-product-context": "Disable a tag category for a product context",
+  "customer-trust add-tag-category-product-context": "Enable a tag category for a product context",
+  "customer-trust remove-tag-category-product-context": "Disable a tag category for a product context",
   "customer-trust get-questionnaire-export": "Get a questionnaire export's status by ID",
   "customer-trust get-tag-category": "Get the tags in a tag category by ID",
   "customer-trust list-questionnaire-assignable-users": "List users who can be assigned to questionnaires",
@@ -191,7 +192,6 @@ export const commandHelp: Record<string, string> = {
   "knowledge-base replace-resource-document-file": "Replace the file for a document resource",
   "people mark-as-not-people": "Mark accounts as not people",
   "people mark-as-people": "Mark accounts as people",
-  "trust-centers create-control": "Add a control to a Trust Center",
   "trust-centers get": "Get a Trust Center by slug ID",
   "trust-centers get-chatbot-conversation": "Get messages for a Trust Center chatbot conversation",
   "trust-centers list-chatbot-conversations": "List Trust Center chatbot conversations",
@@ -204,7 +204,7 @@ export const optionHelp: Record<string, Record<string, string>> = {
   "controls list": {
     "--framework-matches-any": "Framework IDs to filter by (repeatable)",
   },
-  "customer-trust delete-tag-category-product-context": {
+  "customer-trust remove-tag-category-product-context": {
     "--product-context-id": "Product context: EXTERNAL_TRUST_CENTER, DOCUMENT_SHARING, CONTROL_SHARING",
   },
   "customer-trust get-questionnaire-export": {
@@ -258,7 +258,7 @@ export const optionHelp: Record<string, Record<string, string>> = {
     "--include-removed": "Include removed viewers (true/false; default: true)",
   },
   "vendors list-assessments": {
-    "--type-id-matches-any": "Filter by assessment type ID from vendors assessment-types list (repeatable)",
+    "--type-id-matches-any": "Filter by assessment type ID from vendor-assessment-types list (repeatable)",
   },
   "vulnerabilities list": {
     "--include-vulnerabilities-without-slas": "Include vulnerabilities without SLA dates (true/false)",
