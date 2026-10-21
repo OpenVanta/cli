@@ -212,21 +212,12 @@ const displayPlural = (segment: string, group?: string) =>
 
 // Where an operation sits in the CLI and what its path is made of.
 type Placement = {
-  // CLI group path: ["vendors"], or ["people", "notification-settings"] for a mount.
-  group: string[];
-  // The path segment the group stands for.
+  // The path's first segment, which names the group.
   groupSegment: Segment;
   // Segments after the group, minus a trailing action: they form the noun.
   resources: Segment[];
   action?: string;
 };
-
-function findMount(path: string): string[] | undefined {
-  const prefix = Object.keys(config.mounts).find(
-    (mount) => path === mount || path.startsWith(`${mount}/`),
-  );
-  return prefix ? config.mounts[prefix]!.split(" ") : undefined;
-}
 
 function place(op: Operation): Placement {
   const [groupSegment, ...rest] = op.segments as [Segment, ...Segment[]];
@@ -234,7 +225,6 @@ function place(op: Operation): Placement {
   const isAction =
     last && !last.param && config.actionVerbs.includes(last.name.split("-")[0]!);
   return {
-    group: findMount(op.path) ?? [groupSegment.name],
     groupSegment,
     resources: isAction ? rest.slice(0, -1) : rest,
     action: isAction ? last.name : undefined,
@@ -248,21 +238,25 @@ function commandName(op: Operation, placement: Placement): string {
   let rest: string[] = [];
   // Operations on a whole collection keep the last noun plural.
   let plural = !atItem;
+  const link = config.links.includes(op.id);
   if (placement.action) {
     [verb, ...rest] = placement.action.split("-") as [string, ...string[]];
     plural = false;
   } else if (op.method === "get") {
-    verb = atItem || op.returnsFile ? "get" : "list";
+    verb = op.returnsFile ? "download" : atItem ? "get" : "list";
     plural = verb === "list";
   } else if (op.method === "post") {
-    verb = op.body === "multipart" ? "upload" : "create";
-    plural = false;
+    verb = link ? "add" : op.body === "multipart" ? "upload" : "create";
+    // `create` and `add` make one item, unless the API adds many at once.
+    plural = op.id.startsWith("Bulk");
+  } else if (op.method === "delete" && link) {
+    verb = "remove";
   } else {
     verb = { patch: "update", put: "set", delete: "delete" }[op.method];
   }
   const noun = placement.resources.map((s, i) =>
     plural && i === placement.resources.length - 1
-      ? s.name
+      ? (config.nouns[s.name]?.commandPlural ?? s.name)
       : (config.nouns[s.name]?.commandSingular ?? singular(s.name)),
   );
   return [verb, ...noun, ...rest].join("-");
@@ -287,9 +281,7 @@ type Option = {
   key: string;
 };
 
-const topLevelGroups = new Set(
-  operations.map((op) => findMount(op.path)?.[0] ?? op.segments[0]!.name),
-);
+const topLevelGroups = new Set(operations.map((op) => op.segments[0]!.name));
 
 const searchParams = new Set(["q", "search", "searchString"]);
 const placeholderWords = new Set([
@@ -392,7 +384,7 @@ function pathParamDescription(name: string, placement: Placement): string {
   const segment = placement.resources.find((s) => s.param === name);
   const display =
     segment &&
-    (nounFor(segment.name, placement.group[0])?.singular ??
+    (nounFor(segment.name, placement.groupSegment.name)?.singular ??
       (name === "id" ? displaySingular(segment.name) : undefined));
   if (display) return `${upperFirst(display)} ID`;
   return upperFirst(humanize(name).replace(/ id$/, " ID"));
@@ -411,7 +403,7 @@ function buildOptions(op: Operation, placement: Placement, group: Group): Option
     overrides[key]?.placeholder ?? config.params[key]?.placeholder;
   // What a search flag searches: the listed resource, else the group.
   const last = placement.resources.at(-1);
-  const listed = last ? displayPlural(last.name, placement.group[0]) : group.plural;
+  const listed = last ? displayPlural(last.name, placement.groupSegment.name) : group.plural;
   const withOverrides = (option: Option, ...extra: (config.OptionOverride | undefined)[]) => {
     for (const o of [...extra, config.params[option.key], overrides[option.key]]) {
       Object.assign(option, Object.fromEntries(Object.entries(o ?? {}).filter(([, v]) => v)));
@@ -436,7 +428,7 @@ function buildOptions(op: Operation, placement: Placement, group: Group): Option
       target: "path",
       key: param.name,
     };
-    options.push(withOverrides(option, own ? config.groups[group.path.join(" ")]?.id : undefined));
+    options.push(withOverrides(option, own ? config.groups[group.name]?.id : undefined));
   }
 
   for (const param of op.queryParams) {
@@ -502,12 +494,12 @@ const prepositions = new Set(["as", "for", "from", "in", "to", "with"]);
 function commandDescription(name: string, op: Operation, placement: Placement, group: Group): string {
   const atItem = op.segments.at(-1)!.param !== undefined;
   const verb = upperFirst(name.split("-")[0]!);
-  const topGroup = placement.group[0];
+  const topGroup = placement.groupSegment.name;
   const subjectSegment = placement.resources.at(-1);
   const parents = placement.resources.slice(0, -1);
   const parentSegment = parents.at(-1) ?? placement.groupSegment;
 
-  const ownsResources = groupsWithEndpoints.has(placement.groupSegment.name) || findMount(op.path);
+  const ownsResources = groupsWithEndpoints.has(placement.groupSegment.name);
   const ownerWords = [
     ...(ownsResources ? [group.singular] : []),
     ...parents.map((s) => displaySingular(s.name, topGroup)),
@@ -629,56 +621,40 @@ type Command = {
   download: boolean;
 };
 
+// A group is named after its path segment, which also names its file.
 type Group = {
-  path: string[];
   name: string;
   description: string;
   singular: string;
   plural: string;
-  // Mounted subgroups (`vendors assessment-types`).
-  children: Group[];
   commands: Command[];
-  // Output file name without `.ts`.
-  file: string;
 };
 
-function newGroup(path: string[], apiSegment: string): Group {
-  const noun = config.nouns[path.join(" ")];
-  const plural = noun?.plural ?? displayPlural(apiSegment);
+function newGroup(name: string): Group {
+  const noun = config.nouns[name];
+  const plural = noun?.plural ?? displayPlural(name);
   return {
-    path,
-    name: path.at(-1)!,
+    name,
     description: `Manage ${plural}`,
-    singular: noun?.singular ?? displaySingular(apiSegment),
+    singular: noun?.singular ?? displaySingular(name),
     plural,
-    children: [],
     commands: [],
-    // Mounted groups are named after their API path: `vendor-assessment-types`.
-    file: path.length === 1 ? path[0]! : apiSegment,
   };
 }
 
-// Every group, keyed by its CLI path ("vendors", "vendors assessment-types").
+// Every group, keyed by name.
 function buildGroups(): Map<string, Group> {
   const groups = new Map<string, Group>();
-  // The group at `path`, created on first use along with its parent.
-  const groupAt = (path: string[], apiSegment: string): Group => {
-    const key = path.join(" ");
-    if (!groups.has(key)) {
-      const group = newGroup(path, apiSegment);
-      groups.set(key, group);
-      if (path.length > 1) groupAt(path.slice(0, -1), path.at(-2)!).children.push(group);
-    }
-    return groups.get(key)!;
-  };
   for (const op of operations) {
     const placement = place(op);
-    const group = groupAt(placement.group, placement.groupSegment.name);
-    const name = config.operations[op.id]?.name ?? commandName(op, placement);
+    const name = placement.groupSegment.name;
+    if (!groups.has(name)) groups.set(name, newGroup(name));
+    const group = groups.get(name)!;
+    const command = config.operations[op.id]?.name ?? commandName(op, placement);
     const queryNames = op.queryParams.map((q) => q.name);
     group.commands.push({
-      name,
-      description: commandDescription(name, op, placement, group),
+      name: command,
+      description: commandDescription(command, op, placement, group),
       op,
       options: buildOptions(op, placement, group),
       paginated: queryNames.includes("pageSize") && queryNames.includes("pageCursor"),
@@ -692,14 +668,11 @@ function checkUniqueNames(groups: Group[]): void {
   for (const group of groups) {
     const seen = new Map<string, string>();
     for (const { name, op } of group.commands) {
-      const path = [...group.path, name].join(" ");
+      const path = `${group.name} ${name}`;
       if (seen.has(name)) {
         throw new Error(
           `duplicate command "${path}" for ${seen.get(name)} and ${op.id}; add a name override in scripts/codegen/config.ts`,
         );
-      }
-      if (group.children.some((child) => child.name === name)) {
-        throw new Error(`command "${path}" collides with a group`);
       }
       seen.set(name, op.id);
     }
@@ -725,7 +698,7 @@ function applyHelpOverrides(groups: Group[]): void {
   };
 
   for (const group of groups) {
-    const groupKey = group.path.join(" ");
+    const groupKey = group.name;
     group.description = override(groupKey, group.description, config.commandHelp[groupKey], unusedCommands);
     for (const command of group.commands) {
       const key = `${groupKey} ${command.name}`;
@@ -753,7 +726,7 @@ const indent = (text: string, n: number) =>
     .map((line) => (line ? pad(n) + line : line))
     .join("\n");
 const sdkFunction = (op: Operation) => lowerFirst(op.id);
-const registerFunction = (g: Group) => `register${pascal(g.file)}Command`;
+const registerFunction = (g: Group) => `register${pascal(g.name)}Command`;
 const groupVariable = (g: Group) => {
   const name = camel(g.name);
   return ["delete", "export", "import", "new"].includes(name) ? `${name}Group` : name;
@@ -779,7 +752,6 @@ type Imports = {
   types: Set<string>;
   helpers: Set<string>;
   output: boolean;
-  registers: Map<string, string>;
 };
 
 // The SDK call for a command, and statements that must run before it.
@@ -932,19 +904,14 @@ function renderAction(
   return `.action(\n  async (opts: {\n${type}\n  }) => {\n${indent(body, 4)}\n  },\n)`;
 }
 
-function renderGroup(group: Group, parent: string, files: Map<string, string>, imports: Imports): string {
+function renderGroup(group: Group, imports: Imports): string {
   const v = groupVariable(group);
-  const declaration = `  const ${v} = ${parent}.command(${quote(group.name)}).description(${quote(group.description)});`;
+  const declaration = `  const ${v} = program.command(${quote(group.name)}).description(${quote(group.description)});`;
   const parts = [
     declaration.length <= 80
       ? declaration
-      : `  const ${v} = ${parent}\n    .command(${quote(group.name)})\n    .description(${quote(group.description)});`,
+      : `  const ${v} = program\n    .command(${quote(group.name)})\n    .description(${quote(group.description)});`,
   ];
-  for (const child of group.children) {
-    imports.registers.set(registerFunction(child), child.file);
-    parts.push(`  ${registerFunction(child)}(${v}, getFlags);`);
-    renderFile(child, files);
-  }
   // list, get, create, update, delete first; the rest in spec order.
   const order = ["list", "get", "create", "update", "delete"];
   const rank = (c: Command) => (order.includes(c.name) ? order.indexOf(c.name) : order.length);
@@ -967,15 +934,10 @@ function renderFile(group: Group, files: Map<string, string>): void {
     types: new Set(),
     helpers: new Set(),
     output: false,
-    registers: new Map(),
   };
-  const parent = group.path.length === 1 ? "program" : "parent";
-  const body = renderGroup(group, parent, files, imports);
+  const body = renderGroup(group, imports);
 
   const lines = [generatedHeader, `import type { Command } from "commander";`];
-  for (const [fn, file] of imports.registers) {
-    lines.push(`import { ${fn} } from "./${file}.js";`);
-  }
   if (imports.sdk.size) lines.push(renderImport("import", imports.sdk, "../generated/sdk.gen.js"));
   if (imports.types.size) {
     lines.push(renderImport("import type", imports.types, "../generated/types.gen.js"));
@@ -985,8 +947,8 @@ function renderFile(group: Group, files: Map<string, string>): void {
   lines.push(renderImport("import", [...[...imports.helpers].sort(), "type GetFlags"], "./helpers.js"));
 
   files.set(
-    `${group.file}.ts`,
-    `${lines.join("\n")}\n\nexport function ${registerFunction(group)}(\n  ${parent}: Command,\n  getFlags: GetFlags,\n): void {\n${body}\n}\n`,
+    `${group.name}.ts`,
+    `${lines.join("\n")}\n\nexport function ${registerFunction(group)}(\n  program: Command,\n  getFlags: GetFlags,\n): void {\n${body}\n}\n`,
   );
 }
 
@@ -996,16 +958,14 @@ function renderFiles(groups: Group[]): Map<string, string> {
     const i = config.topLevelOrder.indexOf(g.name);
     return i === -1 ? config.topLevelOrder.length : i;
   };
-  const topLevel = groups
-    .filter((g) => g.path.length === 1)
-    .sort((x, y) => order(x) - order(y) || x.name.localeCompare(y.name));
+  const topLevel = [...groups].sort((x, y) => order(x) - order(y) || x.name.localeCompare(y.name));
   for (const group of topLevel) renderFile(group, files);
   files.set(
     "index.ts",
     [
       generatedHeader,
       `import type { Command } from "commander";`,
-      ...topLevel.map((g) => `import { ${registerFunction(g)} } from "./${g.file}.js";`),
+      ...topLevel.map((g) => `import { ${registerFunction(g)} } from "./${g.name}.js";`),
       `import type { GetFlags } from "./helpers.js";`,
       "",
       "export function registerApiCommands(program: Command, getFlags: GetFlags): void {",
