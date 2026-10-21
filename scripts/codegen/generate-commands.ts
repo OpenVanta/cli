@@ -487,9 +487,11 @@ function commandDescription(name: string, op: Operation, p: Placement, group: Gr
   if (p.action) {
     // `add-document-to-control` under `controls` → "document".
     const own = singular(p.groupSegment.name);
-    const rest = humanize(p.action.replace(new RegExp(`-(to|from|for)-${own}$`), ""))
-      .split(" ")
-      .slice(1);
+    const suffix = ["to", "from", "for"]
+      .map((preposition) => `-${preposition}-${own}`)
+      .find((s) => p.action!.endsWith(s));
+    const action = suffix ? p.action.slice(0, -suffix.length) : p.action;
+    const rest = humanize(action).split(" ").slice(1);
     const target = subject && owner ? `${owner} ${subject.one}` : one;
     // Actions on the collection, e.g. `people offboard`.
     if (!op.segments.some((s) => s.param)) {
