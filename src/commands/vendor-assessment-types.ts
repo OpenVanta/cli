@@ -12,11 +12,11 @@ import {
 } from "./helpers.js";
 
 export function registerVendorAssessmentTypesCommand(
-  vendors: Command,
+  program: Command,
   getFlags: GetFlags,
 ): void {
-  const vendorAssessmentTypes = vendors
-    .command("assessment-types")
+  const vendorAssessmentTypes = program
+    .command("vendor-assessment-types")
     .description("Manage vendor assessment types");
 
   addPaginationOptions(
@@ -25,24 +25,27 @@ export function registerVendorAssessmentTypesCommand(
       .description("List vendor assessment types")
       .option(
         "--status <status>",
-        "Filter by lifecycle status: ACTIVE, ARCHIVED",
+        "Filter assessment types to a single lifecycle status: ACTIVE, ARCHIVED",
       ),
-  ).action(async (opts: NonNullable<ListVendorAssessmentTypesData["query"]>) => {
-    await runSdk(getFlags, (api) =>
-      listVendorAssessmentTypes({
-        client: api.client,
-        query: {
-          ...paginationQuery(opts),
-          status: opts.status,
-        },
-      }),
-    );
-  });
+  ).action(
+    async (opts: {
+      pageSize?: number;
+      pageCursor?: string;
+      status?: NonNullable<ListVendorAssessmentTypesData["query"]>["status"];
+    }) => {
+      await runSdk(getFlags, (api) =>
+        listVendorAssessmentTypes({
+          client: api.client,
+          query: { ...paginationQuery(opts), status: opts.status },
+        }),
+      );
+    },
+  );
 
   vendorAssessmentTypes
     .command("get")
     .description("Get a vendor assessment type by ID")
-    .requiredOption("--id <id>", "Assessment type ID")
+    .requiredOption("--id <id>", "Vendor assessment type ID")
     .action(async (opts: { id: string }) => {
       await runSdk(getFlags, (api) =>
         getVendorAssessmentTypeById({

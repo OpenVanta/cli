@@ -1,30 +1,29 @@
 import type { Command } from "commander";
 import {
+  listPersonGroups,
+  getGroup,
   createGroup,
   updateGroup,
   importIdpGroups,
   listImportableIdpGroups,
   addPeopleToGroup,
-  addPersonToGroup,
-  getGroup,
   getGroupMembers,
-  listPersonGroups,
-  removePeopleFromGroup,
+  addPersonToGroup,
   removePersonFromGroup,
+  removePeopleFromGroup,
 } from "../generated/sdk.gen.js";
 import type {
   CreateGroupData,
   UpdateGroupData,
   ImportIdpGroupsData,
-  ListImportableIdpGroupsData,
   AddPeopleToGroupData,
   AddPersonToGroupData,
   RemovePeopleFromGroupData,
 } from "../generated/types.gen.js";
 import {
-  collectString,
   addJsonFileOptions,
   addPaginationOptions,
+  collectString,
   paginationQuery,
   readJSONPayload,
   runSdk,
@@ -41,10 +40,7 @@ export function registerGroupsCommand(
     groups.command("list").description("List groups"),
   ).action(async (opts) => {
     await runSdk(getFlags, (api) =>
-      listPersonGroups({
-        client: api.client,
-        query: paginationQuery(opts),
-      }),
+      listPersonGroups({ client: api.client, query: paginationQuery(opts) }),
     );
   });
 
@@ -58,9 +54,94 @@ export function registerGroupsCommand(
       );
     });
 
+  addJsonFileOptions(
+    groups.command("create").description("Create a group"),
+  ).action(async (opts: { json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as CreateGroupData["body"];
+    await runSdk(getFlags, (api) =>
+      createGroup({ client: api.client, body }),
+    );
+  });
+
+  addJsonFileOptions(
+    groups
+      .command("update")
+      .description("Update a group")
+      .requiredOption("--id <id>", "Group ID"),
+  ).action(async (opts: { id: string; json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as UpdateGroupData["body"];
+    await runSdk(getFlags, (api) =>
+      updateGroup({ client: api.client, path: { groupId: opts.id }, body }),
+    );
+  });
+
+  addJsonFileOptions(
+    groups.command("import-from-idp").description("Import IdP groups"),
+  ).action(async (opts: { json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as ImportIdpGroupsData["body"];
+    await runSdk(getFlags, (api) =>
+      importIdpGroups({ client: api.client, body }),
+    );
+  });
+
+  addPaginationOptions(
+    groups
+      .command("list-importable-idp-groups")
+      .description("List importable identity provider groups")
+      .option("--search <query>", "Search importable identity provider groups")
+      .option(
+        "--integration-id <id>",
+        "Filter by integration ID (repeatable)",
+        collectString,
+        [] as string[],
+      ),
+  ).action(
+    async (opts: {
+      pageSize?: number;
+      pageCursor?: string;
+      search?: string;
+      integrationId: string[];
+    }) => {
+      await runSdk(getFlags, (api) =>
+        listImportableIdpGroups({
+          client: api.client,
+          query: {
+            ...paginationQuery(opts),
+            search: opts.search,
+            integrationId: opts.integrationId,
+          },
+        }),
+      );
+    },
+  );
+
+  addJsonFileOptions(
+    groups
+      .command("add-people")
+      .description("Add people to a group")
+      .requiredOption("--id <id>", "Group ID"),
+  ).action(async (opts: { id: string; json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as AddPeopleToGroupData["body"];
+    await runSdk(getFlags, (api) =>
+      addPeopleToGroup({ client: api.client, path: { groupId: opts.id }, body }),
+    );
+  });
+
   groups
     .command("list-people")
-    .description("List people in a group")
+    .description("List people for a group")
     .requiredOption("--id <id>", "Group ID")
     .action(async (opts: { id: string }) => {
       await runSdk(getFlags, (api) =>
@@ -79,11 +160,7 @@ export function registerGroupsCommand(
       opts.file,
     )) as AddPersonToGroupData["body"];
     await runSdk(getFlags, (api) =>
-      addPersonToGroup({
-        client: api.client,
-        path: { groupId: opts.id },
-        body,
-      }),
+      addPersonToGroup({ client: api.client, path: { groupId: opts.id }, body }),
     );
   });
 
@@ -103,25 +180,6 @@ export function registerGroupsCommand(
 
   addJsonFileOptions(
     groups
-      .command("add-people")
-      .description("Add people to a group")
-      .requiredOption("--id <id>", "Group ID"),
-  ).action(async (opts: { id: string; json?: string; file?: string }) => {
-    const body = (await readJSONPayload(
-      opts.json,
-      opts.file,
-    )) as AddPeopleToGroupData["body"];
-    await runSdk(getFlags, (api) =>
-      addPeopleToGroup({
-        client: api.client,
-        path: { groupId: opts.id },
-        body,
-      }),
-    );
-  });
-
-  addJsonFileOptions(
-    groups
       .command("remove-people")
       .description("Remove people from a group")
       .requiredOption("--id <id>", "Group ID"),
@@ -135,81 +193,6 @@ export function registerGroupsCommand(
         client: api.client,
         path: { groupId: opts.id },
         body,
-      }),
-    );
-  });
-
-  addJsonFileOptions(
-    groups.command("create").description("Create a group"),
-  ).action(async (opts: { json?: string; file?: string }) => {
-    const body = (await readJSONPayload(
-      opts.json,
-      opts.file,
-    )) as CreateGroupData["body"];
-    await runSdk(getFlags, (api) =>
-      createGroup({
-        client: api.client,
-        body,
-      }),
-    );
-  });
-
-  addJsonFileOptions(
-    groups
-      .command("update")
-      .description("Update a group")
-      .requiredOption("--id <id>", "Group ID"),
-  ).action(async (opts: { id: string; json?: string; file?: string }) => {
-    const body = (await readJSONPayload(
-      opts.json,
-      opts.file,
-    )) as UpdateGroupData["body"];
-    await runSdk(getFlags, (api) =>
-      updateGroup({
-        client: api.client,
-        path: { groupId: opts.id },
-        body,
-      }),
-    );
-  });
-
-  addJsonFileOptions(
-    groups
-      .command("import-from-idp")
-      .description("Import groups from an identity provider"),
-  ).action(async (opts: { json?: string; file?: string }) => {
-    const body = (await readJSONPayload(
-      opts.json,
-      opts.file,
-    )) as ImportIdpGroupsData["body"];
-    await runSdk(getFlags, (api) =>
-      importIdpGroups({
-        client: api.client,
-        body,
-      }),
-    );
-  });
-
-  addPaginationOptions(
-    groups
-      .command("list-importable-idp-groups")
-      .description("List importable identity provider groups")
-      .option("--search <query>", "Search importable identity provider groups")
-      .option(
-        "--integration-id <id>",
-        "Filter by identity provider integration ID (repeatable)",
-        collectString,
-        [] as string[],
-      ),
-  ).action(async (opts: NonNullable<ListImportableIdpGroupsData["query"]>) => {
-    await runSdk(getFlags, (api) =>
-      listImportableIdpGroups({
-        client: api.client,
-        query: {
-          ...paginationQuery(opts),
-          search: opts.search,
-          integrationId: opts.integrationId,
-        },
       }),
     );
   });

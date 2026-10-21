@@ -1,9 +1,59 @@
 import type { Command } from "commander";
-import { registerCustomerTrustAccountsCommand } from "./customer-trust-accounts.js";
-import { registerCustomerTrustDeletionRequestsCommand } from "./customer-trust-deletion-requests.js";
-import { registerCustomerTrustQuestionnairesCommand } from "./customer-trust-questionnaires.js";
-import { registerCustomerTrustTagCategoriesCommand } from "./customer-trust-tag-categories.js";
-import type { GetFlags } from "./helpers.js";
+import {
+  listCustomerTrustAccounts,
+  createCustomerTrustAccount,
+  getCustomerTrustAccount,
+  updateCustomerTrustAccount,
+  deleteCustomerTrustAccount,
+  createDeletionRequest,
+  listQuestionnaires,
+  listAssignableUsers,
+  createQuestionnaireExport,
+  getQuestionnaireExport,
+  createFileQuestionnaire,
+  createWebsiteQuestionnaire,
+  getQuestionnaire,
+  updateQuestionnaire,
+  deleteQuestionnaire,
+  approveQuestionnaire,
+  completeQuestionnaire,
+  listQuestionnaireResponses,
+  getQuestionnaireResponse,
+  updateQuestionnaireResponseContent,
+  updateQuestionnaireResponseOwner,
+  listTagCategories,
+  getTagsForCategory,
+  addTagCategoryProductContext,
+  removeTagCategoryProductContext,
+} from "../generated/sdk.gen.js";
+import type {
+  CreateCustomerTrustAccountData,
+  UpdateCustomerTrustAccountData,
+  CreateDeletionRequestData,
+  ListQuestionnairesData,
+  ListAssignableUsersData,
+  CreateQuestionnaireExportData,
+  CreateWebsiteQuestionnaireData,
+  UpdateQuestionnaireData,
+  ApproveQuestionnaireData,
+  CompleteQuestionnaireData,
+  UpdateQuestionnaireResponseContentData,
+  UpdateQuestionnaireResponseOwnerData,
+  ListTagCategoriesData,
+  AddTagCategoryProductContextData,
+  RemoveTagCategoryProductContextData,
+} from "../generated/types.gen.js";
+import {
+  addJsonFileOptions,
+  addPaginationOptions,
+  collectString,
+  paginationQuery,
+  parseOptionalBoolString,
+  readBinaryFile,
+  readJSONPayload,
+  runSdk,
+  type GetFlags,
+} from "./helpers.js";
 
 export function registerCustomerTrustCommand(
   program: Command,
@@ -13,11 +63,610 @@ export function registerCustomerTrustCommand(
     .command("customer-trust")
     .description("Manage Customer Trust accounts, questionnaires, and tags");
 
-  registerCustomerTrustAccountsCommand(customerTrust, getFlags);
+  addPaginationOptions(
+    customerTrust
+      .command("list-accounts")
+      .description("List Customer Trust accounts")
+      .option("--search-string <query>", "Search Customer Trust accounts")
+      .option(
+        "--is-auto-approval-enabled <bool>",
+        "Filter by whether access requests are auto-approved (true/false)",
+        (value) => parseOptionalBoolString(value, "is-auto-approval-enabled"),
+      )
+      .option("--custom-fields-filter <text>", "Filter by custom field values"),
+  ).action(
+    async (opts: {
+      pageSize?: number;
+      pageCursor?: string;
+      searchString?: string;
+      isAutoApprovalEnabled?: boolean;
+      customFieldsFilter?: string;
+    }) => {
+      await runSdk(getFlags, (api) =>
+        listCustomerTrustAccounts({
+          client: api.client,
+          query: {
+            ...paginationQuery(opts),
+            searchString: opts.searchString,
+            isAutoApprovalEnabled: opts.isAutoApprovalEnabled,
+            customFieldsFilter: opts.customFieldsFilter,
+          },
+        }),
+      );
+    },
+  );
 
-  registerCustomerTrustDeletionRequestsCommand(customerTrust, getFlags);
+  addJsonFileOptions(
+    customerTrust
+      .command("create-account")
+      .description("Create a Customer Trust account"),
+  ).action(async (opts: { json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as CreateCustomerTrustAccountData["body"];
+    await runSdk(getFlags, (api) =>
+      createCustomerTrustAccount({ client: api.client, body }),
+    );
+  });
 
-  registerCustomerTrustQuestionnairesCommand(customerTrust, getFlags);
+  customerTrust
+    .command("get-account")
+    .description("Get a Customer Trust account by ID")
+    .requiredOption("--account-id <id>", "Customer Trust account ID")
+    .action(async (opts: { accountId: string }) => {
+      await runSdk(getFlags, (api) =>
+        getCustomerTrustAccount({
+          client: api.client,
+          path: { accountId: opts.accountId },
+        }),
+      );
+    });
 
-  registerCustomerTrustTagCategoriesCommand(customerTrust, getFlags);
+  addJsonFileOptions(
+    customerTrust
+      .command("update-account")
+      .description("Update a Customer Trust account")
+      .requiredOption("--account-id <id>", "Customer Trust account ID"),
+  ).action(async (opts: { accountId: string; json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as UpdateCustomerTrustAccountData["body"];
+    await runSdk(getFlags, (api) =>
+      updateCustomerTrustAccount({
+        client: api.client,
+        path: { accountId: opts.accountId },
+        body,
+      }),
+    );
+  });
+
+  customerTrust
+    .command("delete-account")
+    .description("Delete a Customer Trust account")
+    .requiredOption("--account-id <id>", "Customer Trust account ID")
+    .action(async (opts: { accountId: string }) => {
+      await runSdk(getFlags, (api) =>
+        deleteCustomerTrustAccount({
+          client: api.client,
+          path: { accountId: opts.accountId },
+        }),
+      );
+    });
+
+  addJsonFileOptions(
+    customerTrust
+      .command("create-deletion-request")
+      .description("Create a deletion request"),
+  ).action(async (opts: { json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as CreateDeletionRequestData["body"];
+    await runSdk(getFlags, (api) =>
+      createDeletionRequest({ client: api.client, body }),
+    );
+  });
+
+  addPaginationOptions(
+    customerTrust
+      .command("list-questionnaires")
+      .description("List questionnaires")
+      .option(
+        "--q <query>",
+        "Filter questionnaires by display name (case-insensitive, partial match)",
+      )
+      .option(
+        "--status-matches-any <status>",
+        "Filter questionnaires matching any of the provided statuses: APPROVED, IN_PROGRESS, IN_REVIEW, READY_FOR_REVIEW, WAITING_ON_ANSWERS, ON_HOLD, NO_LONGER_NEEDED, COMPLETE, ERROR, EXTRACTING_QUESTIONS, QUEUED_FOR_SECTION_EXTRACTION, EXTRACTING_SECTIONS, MAPPING_SECTIONS, QUEUED_FOR_ANSWERING, GENERATING_ANSWERS, QUEUED_FOR_EXTRACTION, PROCESSING, QUEUED_FOR_PROCESSING, WAITING_ON_COLUMN_SELECTION, WAITING_ON_COLUMN_APPROVAL, QUEUED_FOR_COLUMN_DETECTION, DETECTING_COLUMNS (repeatable)",
+        collectString,
+        [] as string[],
+      )
+      .option(
+        "--type-matches-any <type>",
+        "Filter questionnaires matching any of the provided types: SPREADSHEET, WEBSITE, DOCUMENT (repeatable)",
+        collectString,
+        [] as string[],
+      )
+      .option(
+        "--created-after <timestamp>",
+        "Filter to questionnaires created after this date (ISO 8601 timestamp)",
+      )
+      .option(
+        "--created-before <timestamp>",
+        "Filter to questionnaires created before this date (ISO 8601 timestamp)",
+      )
+      .option(
+        "--owner-id-matches-any <id>",
+        "Filter to questionnaires owned by any of the provided user IDs (repeatable)",
+        collectString,
+        [] as string[],
+      )
+      .option(
+        "--approver-id-matches-any <id>",
+        "Filter to questionnaires with an approver matching any of the provided user IDs (repeatable)",
+        collectString,
+        [] as string[],
+      ),
+  ).action(
+    async (opts: {
+      pageSize?: number;
+      pageCursor?: string;
+      q?: string;
+      statusMatchesAny: NonNullable<NonNullable<ListQuestionnairesData["query"]>["statusMatchesAny"]>;
+      typeMatchesAny: NonNullable<NonNullable<ListQuestionnairesData["query"]>["typeMatchesAny"]>;
+      createdAfter?: string;
+      createdBefore?: string;
+      ownerIdMatchesAny: string[];
+      approverIdMatchesAny: string[];
+    }) => {
+      await runSdk(getFlags, (api) =>
+        listQuestionnaires({
+          client: api.client,
+          query: {
+            ...paginationQuery(opts),
+            q: opts.q,
+            statusMatchesAny: opts.statusMatchesAny,
+            typeMatchesAny: opts.typeMatchesAny,
+            createdAfter: opts.createdAfter,
+            createdBefore: opts.createdBefore,
+            ownerIdMatchesAny: opts.ownerIdMatchesAny,
+            approverIdMatchesAny: opts.approverIdMatchesAny,
+          },
+        }),
+      );
+    },
+  );
+
+  customerTrust
+    .command("list-questionnaire-assignable-users")
+    .description("List users who can be assigned to questionnaires")
+    .option("--role <role>", "Filter by role: \"owner\" or \"approver\"")
+    .option(
+      "--q <query>",
+      "Optional search string to filter users by name or email",
+    )
+    .action(
+      async (opts: {
+        role?: NonNullable<ListAssignableUsersData["query"]>["role"];
+        q?: string;
+      }) => {
+        await runSdk(getFlags, (api) =>
+          listAssignableUsers({
+            client: api.client,
+            query: { role: opts.role, q: opts.q },
+          }),
+        );
+      },
+    );
+
+  addJsonFileOptions(
+    customerTrust
+      .command("create-questionnaire-export")
+      .description("Create a questionnaire export"),
+  ).action(async (opts: { json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as CreateQuestionnaireExportData["body"];
+    await runSdk(getFlags, (api) =>
+      createQuestionnaireExport({ client: api.client, body }),
+    );
+  });
+
+  customerTrust
+    .command("get-questionnaire-export")
+    .description("Get a questionnaire export's status by ID")
+    .requiredOption(
+      "--id <id>",
+      "Export job ID returned by `customer-trust create-questionnaire-export`",
+    )
+    .action(async (opts: { id: string }) => {
+      await runSdk(getFlags, (api) =>
+        getQuestionnaireExport({ client: api.client, path: { id: opts.id } }),
+      );
+    });
+
+  customerTrust
+    .command("upload-questionnaire-file")
+    .description("Upload a file to create a questionnaire")
+    .requiredOption("--file <path>", "Path to file to upload")
+    .requiredOption(
+      "--display-name <name>",
+      "Display name for the questionnaire",
+    )
+    .option(
+      "--owner-assignment <json>",
+      "Owner to assign, as a JSON string: {\"type\": \"User\" | \"Team\", \"id\": \"<id>\"}",
+    )
+    .option(
+      "--approver-assignment <json>",
+      "Approver to assign, as a JSON string: {\"type\": \"User\" | \"Team\", \"id\": \"<id>\"}",
+    )
+    .option("--description <text>", "Description of the questionnaire")
+    .option(
+      "--company-url <url>",
+      "URL of the company associated with this questionnaire",
+    )
+    .option(
+      "--due-date <timestamp>",
+      "Due date for questionnaire completion (ISO 8601 timestamp)",
+    )
+    .option(
+      "--customer-trust-account-id <id>",
+      "ID of the customer trust account to associate with this questionnaire",
+    )
+    .option(
+      "--include-untagged-entities-for-category-ids <ids>",
+      "Comma-separated category IDs for which to include untagged entities",
+    )
+    .option(
+      "--metadata <json>",
+      "Custom key-value pairs, as a JSON string array: [{\"key\": \"<key>\", \"value\": \"<value>\"}]. Keys and values may contain alphanumeric characters, hyphens, underscores, and periods",
+    )
+    .option(
+      "--tag-and-category-ids <json>",
+      "Tags to assign, as a JSON string array: [{\"categoryId\": \"<id>\", \"tagId\": \"<id>\"}]. Replaces all existing tags",
+    )
+    .action(
+      async (opts: {
+        file: string;
+        displayName: string;
+        ownerAssignment?: string;
+        approverAssignment?: string;
+        description?: string;
+        companyUrl?: string;
+        dueDate?: string;
+        customerTrustAccountId?: string;
+        includeUntaggedEntitiesForCategoryIds?: string;
+        metadata?: string;
+        tagAndCategoryIds?: string;
+      }) => {
+        const file = await readBinaryFile(opts.file);
+        await runSdk(getFlags, (api) =>
+          createFileQuestionnaire({
+            client: api.client,
+            body: {
+              file,
+              displayName: opts.displayName,
+              ownerAssignment: opts.ownerAssignment,
+              approverAssignment: opts.approverAssignment,
+              description: opts.description,
+              companyUrl: opts.companyUrl,
+              dueDate: opts.dueDate,
+              customerTrustAccountId: opts.customerTrustAccountId,
+              includeUntaggedEntitiesForCategoryIds: opts.includeUntaggedEntitiesForCategoryIds,
+              metadata: opts.metadata,
+              tagAndCategoryIds: opts.tagAndCategoryIds,
+            },
+          }),
+        );
+      },
+    );
+
+  addJsonFileOptions(
+    customerTrust
+      .command("create-questionnaire-website")
+      .description("Create a website questionnaire"),
+  ).action(async (opts: { json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as CreateWebsiteQuestionnaireData["body"];
+    await runSdk(getFlags, (api) =>
+      createWebsiteQuestionnaire({ client: api.client, body }),
+    );
+  });
+
+  customerTrust
+    .command("get-questionnaire")
+    .description("Get a questionnaire by ID")
+    .requiredOption("--questionnaire-id <id>", "Questionnaire ID")
+    .action(async (opts: { questionnaireId: string }) => {
+      await runSdk(getFlags, (api) =>
+        getQuestionnaire({
+          client: api.client,
+          path: { questionnaireId: opts.questionnaireId },
+        }),
+      );
+    });
+
+  addJsonFileOptions(
+    customerTrust
+      .command("update-questionnaire")
+      .description("Update a questionnaire")
+      .requiredOption("--questionnaire-id <id>", "Questionnaire ID"),
+  ).action(
+    async (opts: {
+      questionnaireId: string;
+      json?: string;
+      file?: string;
+    }) => {
+      const body = (await readJSONPayload(
+        opts.json,
+        opts.file,
+      )) as UpdateQuestionnaireData["body"];
+      await runSdk(getFlags, (api) =>
+        updateQuestionnaire({
+          client: api.client,
+          path: { questionnaireId: opts.questionnaireId },
+          body,
+        }),
+      );
+    },
+  );
+
+  customerTrust
+    .command("delete-questionnaire")
+    .description("Delete a questionnaire")
+    .requiredOption("--questionnaire-id <id>", "Questionnaire ID")
+    .action(async (opts: { questionnaireId: string }) => {
+      await runSdk(getFlags, (api) =>
+        deleteQuestionnaire({
+          client: api.client,
+          path: { questionnaireId: opts.questionnaireId },
+        }),
+      );
+    });
+
+  addJsonFileOptions(
+    customerTrust
+      .command("approve-questionnaire")
+      .description("Approve a questionnaire")
+      .requiredOption("--questionnaire-id <id>", "Questionnaire ID"),
+  ).action(
+    async (opts: {
+      questionnaireId: string;
+      json?: string;
+      file?: string;
+    }) => {
+      const body = (await readJSONPayload(
+        opts.json,
+        opts.file,
+      )) as ApproveQuestionnaireData["body"];
+      await runSdk(getFlags, (api) =>
+        approveQuestionnaire({
+          client: api.client,
+          path: { questionnaireId: opts.questionnaireId },
+          body,
+        }),
+      );
+    },
+  );
+
+  addJsonFileOptions(
+    customerTrust
+      .command("complete-questionnaire")
+      .description("Complete a questionnaire")
+      .requiredOption("--questionnaire-id <id>", "Questionnaire ID"),
+  ).action(
+    async (opts: {
+      questionnaireId: string;
+      json?: string;
+      file?: string;
+    }) => {
+      const body = (await readJSONPayload(
+        opts.json,
+        opts.file,
+      )) as CompleteQuestionnaireData["body"];
+      await runSdk(getFlags, (api) =>
+        completeQuestionnaire({
+          client: api.client,
+          path: { questionnaireId: opts.questionnaireId },
+          body,
+        }),
+      );
+    },
+  );
+
+  addPaginationOptions(
+    customerTrust
+      .command("list-questionnaire-responses")
+      .description("List responses for a questionnaire")
+      .requiredOption("--questionnaire-id <id>", "Questionnaire ID")
+      .option(
+        "--q <query>",
+        "Filter responses by question text (case-insensitive, partial match)",
+      ),
+  ).action(
+    async (opts: {
+      questionnaireId: string;
+      pageSize?: number;
+      pageCursor?: string;
+      q?: string;
+    }) => {
+      await runSdk(getFlags, (api) =>
+        listQuestionnaireResponses({
+          client: api.client,
+          path: { questionnaireId: opts.questionnaireId },
+          query: { ...paginationQuery(opts), q: opts.q },
+        }),
+      );
+    },
+  );
+
+  customerTrust
+    .command("get-questionnaire-response")
+    .description("Get a questionnaire response by ID")
+    .requiredOption("--questionnaire-id <id>", "Questionnaire ID")
+    .requiredOption("--response-id <id>", "Response ID")
+    .action(async (opts: { questionnaireId: string; responseId: string }) => {
+      await runSdk(getFlags, (api) =>
+        getQuestionnaireResponse({
+          client: api.client,
+          path: {
+            questionnaireId: opts.questionnaireId,
+            responseId: opts.responseId,
+          },
+        }),
+      );
+    });
+
+  addJsonFileOptions(
+    customerTrust
+      .command("update-questionnaire-response")
+      .description("Update a questionnaire response")
+      .requiredOption("--questionnaire-id <id>", "Questionnaire ID")
+      .requiredOption("--response-id <id>", "Response ID"),
+  ).action(
+    async (opts: {
+      questionnaireId: string;
+      responseId: string;
+      json?: string;
+      file?: string;
+    }) => {
+      const body = (await readJSONPayload(
+        opts.json,
+        opts.file,
+      )) as UpdateQuestionnaireResponseContentData["body"];
+      await runSdk(getFlags, (api) =>
+        updateQuestionnaireResponseContent({
+          client: api.client,
+          path: {
+            questionnaireId: opts.questionnaireId,
+            responseId: opts.responseId,
+          },
+          body,
+        }),
+      );
+    },
+  );
+
+  addJsonFileOptions(
+    customerTrust
+      .command("update-questionnaire-response-owner")
+      .description("Update a questionnaire response owner")
+      .requiredOption("--questionnaire-id <id>", "Questionnaire ID")
+      .requiredOption("--response-id <id>", "Response ID"),
+  ).action(
+    async (opts: {
+      questionnaireId: string;
+      responseId: string;
+      json?: string;
+      file?: string;
+    }) => {
+      const body = (await readJSONPayload(
+        opts.json,
+        opts.file,
+      )) as UpdateQuestionnaireResponseOwnerData["body"];
+      await runSdk(getFlags, (api) =>
+        updateQuestionnaireResponseOwner({
+          client: api.client,
+          path: {
+            questionnaireId: opts.questionnaireId,
+            responseId: opts.responseId,
+          },
+          body,
+        }),
+      );
+    },
+  );
+
+  customerTrust
+    .command("list-tag-categories")
+    .description("List tag categories")
+    .option(
+      "--product-context-ids-matches-any <product>",
+      "Filter by product context IDs: EXTERNAL_TRUST_CENTER, DOCUMENT_SHARING, CONTROL_SHARING, QUESTIONNAIRE (repeatable)",
+      collectString,
+      [] as string[],
+    )
+    .action(
+      async (opts: {
+        productContextIdsMatchesAny: NonNullable<NonNullable<ListTagCategoriesData["query"]>["productContextIdsMatchesAny"]>;
+      }) => {
+        await runSdk(getFlags, (api) =>
+          listTagCategories({
+            client: api.client,
+            query: {
+              productContextIdsMatchesAny: opts.productContextIdsMatchesAny,
+            },
+          }),
+        );
+      },
+    );
+
+  customerTrust
+    .command("get-tag-category")
+    .description("Get the tags in a tag category by ID")
+    .requiredOption("--tag-category-id <id>", "Tag category ID")
+    .action(async (opts: { tagCategoryId: string }) => {
+      await runSdk(getFlags, (api) =>
+        getTagsForCategory({
+          client: api.client,
+          path: { tagCategoryId: opts.tagCategoryId },
+        }),
+      );
+    });
+
+  addJsonFileOptions(
+    customerTrust
+      .command("add-tag-category-product-context")
+      .description("Enable a tag category for a product context")
+      .requiredOption("--tag-category-id <id>", "Tag category ID"),
+  ).action(
+    async (opts: {
+      tagCategoryId: string;
+      json?: string;
+      file?: string;
+    }) => {
+      const body = (await readJSONPayload(
+        opts.json,
+        opts.file,
+      )) as AddTagCategoryProductContextData["body"];
+      await runSdk(getFlags, (api) =>
+        addTagCategoryProductContext({
+          client: api.client,
+          path: { tagCategoryId: opts.tagCategoryId },
+          body,
+        }),
+      );
+    },
+  );
+
+  customerTrust
+    .command("remove-tag-category-product-context")
+    .description("Disable a tag category for a product context")
+    .requiredOption("--tag-category-id <id>", "Tag category ID")
+    .requiredOption(
+      "--product-context-id <product>",
+      "Product context: EXTERNAL_TRUST_CENTER, DOCUMENT_SHARING, CONTROL_SHARING",
+    )
+    .action(
+      async (opts: {
+        tagCategoryId: string;
+        productContextId: RemoveTagCategoryProductContextData["path"]["productContextId"];
+      }) => {
+        await runSdk(getFlags, (api) =>
+          removeTagCategoryProductContext({
+            client: api.client,
+            path: {
+              tagCategoryId: opts.tagCategoryId,
+              productContextId: opts.productContextId,
+            },
+          }),
+        );
+      },
+    );
 }

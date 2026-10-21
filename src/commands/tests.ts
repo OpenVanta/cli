@@ -7,9 +7,9 @@ import {
   reactivateTestEntity,
 } from "../generated/sdk.gen.js";
 import type {
-  EntityStatus,
-  TestCategory,
-  TestStatus,
+  ListTestsData,
+  GetTestEntitiesData,
+  DeactivateTestEntityData,
 } from "../generated/types.gen.js";
 import {
   addJsonFileOptions,
@@ -21,60 +21,57 @@ import {
   type GetFlags,
 } from "./helpers.js";
 
-export function registerTestsCommand(program: Command, getFlags: GetFlags): void {
+export function registerTestsCommand(
+  program: Command,
+  getFlags: GetFlags,
+): void {
   const tests = program.command("tests").description("Manage tests");
 
   addPaginationOptions(
     tests
       .command("list")
       .description("List tests")
-      .option("--status-filter <status>", "Filter by test status")
-      .option("--framework-filter <id>", "Filter by framework")
-      .option("--integration-filter <id>", "Filter by integration")
-      .option("--control-filter <id>", "Filter by control ID")
-      .option("--owner-filter <id>", "Filter by owner ID")
-      .option("--category-filter <category>", "Filter by category")
-      .option("--is-in-rollout <bool>", "Filter by rollout status (true/false)"),
+      .option(
+        "--status-filter <status>",
+        "Filter tests by test status: OK, DEACTIVATED, NEEDS_ATTENTION, IN_PROGRESS, INVALID, NOT_APPLICABLE",
+      )
+      .option("--framework-filter <id>", "Filter tests by framework")
+      .option("--integration-filter <id>", "Filter tests by integration")
+      .option("--control-filter <id>", "Filter tests by control ID")
+      .option("--owner-filter <id>", "Filter tests by owner ID")
+      .option(
+        "--category-filter <category>",
+        "Filter tests by category: ACCOUNTS_ACCESS, ACCOUNT_SECURITY, ACCOUNT_SETUP, COMPUTERS, CUSTOM, DATA_STORAGE, EMPLOYEES, INFRASTRUCTURE, IT, LOGGING, MONITORING_ALERTS, PEOPLE, POLICIES, RISK_ANALYSIS, SECURITY_ALERT_MANAGEMENT, SOFTWARE_DEVELOPMENT, VENDORS, VULNERABILITY_MANAGEMENT",
+      )
+      .option(
+        "--is-in-rollout <bool>",
+        "Filter tests by rollout status. A test in rollout is an upcoming test that does not have its history tracked yet (true/false)",
+        (value) => parseOptionalBoolString(value, "is-in-rollout"),
+      ),
   ).action(
     async (opts: {
       pageSize?: number;
       pageCursor?: string;
-      statusFilter?: string;
+      statusFilter?: NonNullable<ListTestsData["query"]>["statusFilter"];
       frameworkFilter?: string;
       integrationFilter?: string;
       controlFilter?: string;
       ownerFilter?: string;
-      categoryFilter?: string;
-      isInRollout?: string;
+      categoryFilter?: NonNullable<ListTestsData["query"]>["categoryFilter"];
+      isInRollout?: boolean;
     }) => {
-      const isInRollout = parseOptionalBoolString(
-        opts.isInRollout,
-        "is-in-rollout",
-      );
       await runSdk(getFlags, (api) =>
         listTests({
           client: api.client,
           query: {
             ...paginationQuery(opts),
-            ...(opts.statusFilter?.trim()
-              ? { statusFilter: opts.statusFilter.trim() as TestStatus }
-              : {}),
-            ...(opts.frameworkFilter?.trim()
-              ? { frameworkFilter: opts.frameworkFilter.trim() }
-              : {}),
-            ...(opts.integrationFilter?.trim()
-              ? { integrationFilter: opts.integrationFilter.trim() }
-              : {}),
-            ...(opts.controlFilter?.trim()
-              ? { controlFilter: opts.controlFilter.trim() }
-              : {}),
-            ...(opts.ownerFilter?.trim()
-              ? { ownerFilter: opts.ownerFilter.trim() }
-              : {}),
-            ...(opts.categoryFilter?.trim()
-              ? { categoryFilter: opts.categoryFilter.trim() as TestCategory }
-              : {}),
-            ...(isInRollout !== undefined ? { isInRollout } : {}),
+            statusFilter: opts.statusFilter,
+            frameworkFilter: opts.frameworkFilter,
+            integrationFilter: opts.integrationFilter,
+            controlFilter: opts.controlFilter,
+            ownerFilter: opts.ownerFilter,
+            categoryFilter: opts.categoryFilter,
+            isInRollout: opts.isInRollout,
           },
         }),
       );
@@ -96,24 +93,22 @@ export function registerTestsCommand(program: Command, getFlags: GetFlags): void
       .command("list-entities")
       .description("List entities for a test")
       .requiredOption("--id <id>", "Test ID")
-      .option("--entity-status <status>", "Entity status (FAILING or DEACTIVATED)"),
+      .option(
+        "--entity-status <status>",
+        "The status of the test entities. Defaults to FAILING: FAILING, DEACTIVATED",
+      ),
   ).action(
     async (opts: {
       id: string;
-      entityStatus?: string;
       pageSize?: number;
       pageCursor?: string;
+      entityStatus?: NonNullable<GetTestEntitiesData["query"]>["entityStatus"];
     }) => {
       await runSdk(getFlags, (api) =>
         getTestEntities({
           client: api.client,
           path: { testId: opts.id },
-          query: {
-            ...paginationQuery(opts),
-            ...(opts.entityStatus?.trim()
-              ? { entityStatus: opts.entityStatus.trim() as EntityStatus }
-              : {}),
-          },
+          query: { ...paginationQuery(opts), entityStatus: opts.entityStatus },
         }),
       );
     },
@@ -126,11 +121,16 @@ export function registerTestsCommand(program: Command, getFlags: GetFlags): void
       .requiredOption("--id <id>", "Test ID")
       .requiredOption("--entity-id <id>", "Entity ID"),
   ).action(
-    async (opts: { id: string; entityId: string; json?: string; file?: string }) => {
-      const body = (await readJSONPayload(opts.json, opts.file)) as {
-        deactivateReason: string;
-        deactivateUntilDate?: string;
-      };
+    async (opts: {
+      id: string;
+      entityId: string;
+      json?: string;
+      file?: string;
+    }) => {
+      const body = (await readJSONPayload(
+        opts.json,
+        opts.file,
+      )) as DeactivateTestEntityData["body"];
       await runSdk(getFlags, (api) =>
         deactivateTestEntity({
           client: api.client,

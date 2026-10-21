@@ -1,9 +1,9 @@
 import type { Command } from "commander";
 import {
-  getMonitoredComputer,
   listMonitoredComputers,
+  getMonitoredComputer,
 } from "../generated/sdk.gen.js";
-import type { ComputerStatusFilter } from "../generated/types.gen.js";
+import type { ListMonitoredComputersData } from "../generated/types.gen.js";
 import {
   addPaginationOptions,
   collectString,
@@ -26,7 +26,7 @@ export function registerMonitoredComputersCommand(
       .description("List monitored computers")
       .option(
         "--compliance-status-filter-matches-any <status>",
-        "Compliance statuses to filter by (repeatable): PWM_NOT_INSTALLED, HD_NOT_ENCRYPTED, AV_NOT_INSTALLED, SCREENLOCK_NOT_CONFIGURED, LAST_CHECK_OVER_14_DAYS",
+        "Filters for monitored computers matching any status declared in the filter: PWM_NOT_INSTALLED, HD_NOT_ENCRYPTED, AV_NOT_INSTALLED, SCREENLOCK_NOT_CONFIGURED, LAST_CHECK_OVER_14_DAYS (repeatable)",
         collectString,
         [] as string[],
       ),
@@ -34,20 +34,14 @@ export function registerMonitoredComputersCommand(
     async (opts: {
       pageSize?: number;
       pageCursor?: string;
-      complianceStatusFilterMatchesAny: string[];
+      complianceStatusFilterMatchesAny: NonNullable<NonNullable<ListMonitoredComputersData["query"]>["complianceStatusFilterMatchesAny"]>;
     }) => {
-      const complianceStatusFilterMatchesAny =
-        opts.complianceStatusFilterMatchesAny
-          .map((s) => s.trim())
-          .filter(Boolean) as ComputerStatusFilter[];
       await runSdk(getFlags, (api) =>
         listMonitoredComputers({
           client: api.client,
           query: {
             ...paginationQuery(opts),
-            ...(complianceStatusFilterMatchesAny.length > 0
-              ? { complianceStatusFilterMatchesAny }
-              : {}),
+            complianceStatusFilterMatchesAny: opts.complianceStatusFilterMatchesAny,
           },
         }),
       );

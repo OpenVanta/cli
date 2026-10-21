@@ -1,13 +1,13 @@
 import type { Command } from "commander";
 import {
-  deactivateVulnerabilities,
-  getVulnerability,
   listVulnerabilities,
+  getVulnerability,
+  deactivateVulnerabilities,
   reactivateVulnerabilities,
 } from "../generated/sdk.gen.js";
 import type {
+  ListVulnerabilitiesData,
   DeactivateVulnerabilitiesData,
-  ExternalFindingSeverity,
   ReactivateVulnerabilitiesData,
 } from "../generated/types.gen.js";
 import {
@@ -32,107 +32,85 @@ export function registerVulnerabilitiesCommand(
     vulnerabilities
       .command("list")
       .description("List vulnerabilities")
-      .option("--q <query>", "Filter vulnerabilities by search query")
       .option(
         "--is-deactivated <bool>",
         "Filter vulnerabilities by deactivation status (true/false)",
+        (value) => parseOptionalBoolString(value, "is-deactivated"),
       )
       .option(
         "--external-vulnerability-id <id>",
-        "Filter vulnerabilities by external vulnerability ID",
+        "Filter vulnerabilities based on a specific external ID",
       )
       .option(
         "--is-fix-available <bool>",
-        "Filter vulnerabilities by available fix status (true/false)",
+        "Filter vulnerabilities that have an available fix (true/false)",
+        (value) => parseOptionalBoolString(value, "is-fix-available"),
       )
       .option(
         "--package-identifier <id>",
-        "Filter vulnerabilities by package identifier",
+        "Filter vulnerabilities that are from a specific package",
       )
       .option(
         "--sla-deadline-after-date <timestamp>",
-        "Filter vulnerabilities with SLA deadline after this ISO 8601 timestamp",
+        "Filter vulnerabilities with a fix due after a specific timestamp (ISO 8601 timestamp)",
       )
       .option(
         "--sla-deadline-before-date <timestamp>",
-        "Filter vulnerabilities with SLA deadline before this ISO 8601 timestamp",
+        "Filter vulnerabilities with a fix due before a specific timestamp (ISO 8601 timestamp)",
       )
       .option(
         "--severity <severity>",
-        "Filter vulnerabilities by severity (CRITICAL, HIGH, MEDIUM, LOW)",
+        "Filter vulnerabilities by severity: CRITICAL, HIGH, LOW, MEDIUM",
       )
       .option(
         "--integration-id <id>",
-        "Filter vulnerabilities by vulnerability scanner integration ID",
+        "Filter vulnerabilities by the vulnerability scanner that detected them",
       )
       .option(
         "--include-vulnerabilities-without-slas <bool>",
         "Include vulnerabilities without SLA dates (true/false)",
+        (value) => parseOptionalBoolString(value, "include-vulnerabilities-without-slas"),
       )
       .option(
         "--vulnerable-asset-id <id>",
-        "Filter vulnerabilities by vulnerable asset ID",
+        "Filter vulnerabilities by a specific asset ID",
+      )
+      .option(
+        "--q <query>",
+        "Full-text filter on the vulnerability's name and description",
       ),
   ).action(
     async (opts: {
       pageSize?: number;
       pageCursor?: string;
-      q?: string;
-      isDeactivated?: string;
+      isDeactivated?: boolean;
       externalVulnerabilityId?: string;
-      isFixAvailable?: string;
+      isFixAvailable?: boolean;
       packageIdentifier?: string;
       slaDeadlineAfterDate?: string;
       slaDeadlineBeforeDate?: string;
-      severity?: string;
+      severity?: NonNullable<ListVulnerabilitiesData["query"]>["severity"];
       integrationId?: string;
-      includeVulnerabilitiesWithoutSlas?: string;
+      includeVulnerabilitiesWithoutSlas?: boolean;
       vulnerableAssetId?: string;
+      q?: string;
     }) => {
-      const isDeactivated = parseOptionalBoolString(
-        opts.isDeactivated,
-        "is-deactivated",
-      );
-      const isFixAvailable = parseOptionalBoolString(
-        opts.isFixAvailable,
-        "is-fix-available",
-      );
-      const includeVulnerabilitiesWithoutSlas = parseOptionalBoolString(
-        opts.includeVulnerabilitiesWithoutSlas,
-        "include-vulnerabilities-without-slas",
-      );
       await runSdk(getFlags, (api) =>
         listVulnerabilities({
           client: api.client,
           query: {
             ...paginationQuery(opts),
-            ...(opts.q?.trim() ? { q: opts.q.trim() } : {}),
-            ...(isDeactivated !== undefined ? { isDeactivated } : {}),
-            ...(opts.externalVulnerabilityId?.trim()
-              ? { externalVulnerabilityId: opts.externalVulnerabilityId.trim() }
-              : {}),
-            ...(isFixAvailable !== undefined ? { isFixAvailable } : {}),
-            ...(opts.packageIdentifier?.trim()
-              ? { packageIdentifier: opts.packageIdentifier.trim() }
-              : {}),
-            ...(opts.slaDeadlineAfterDate?.trim()
-              ? { slaDeadlineAfterDate: opts.slaDeadlineAfterDate.trim() }
-              : {}),
-            ...(opts.slaDeadlineBeforeDate?.trim()
-              ? { slaDeadlineBeforeDate: opts.slaDeadlineBeforeDate.trim() }
-              : {}),
-            ...(opts.severity?.trim()
-              ? { severity: opts.severity.trim() as ExternalFindingSeverity }
-              : {}),
-            ...(opts.integrationId?.trim()
-              ? { integrationId: opts.integrationId.trim() }
-              : {}),
-            ...(includeVulnerabilitiesWithoutSlas !== undefined
-              ? { includeVulnerabilitiesWithoutSlas }
-              : {}),
-            ...(opts.vulnerableAssetId?.trim()
-              ? { vulnerableAssetId: opts.vulnerableAssetId.trim() }
-              : {}),
+            isDeactivated: opts.isDeactivated,
+            externalVulnerabilityId: opts.externalVulnerabilityId,
+            isFixAvailable: opts.isFixAvailable,
+            packageIdentifier: opts.packageIdentifier,
+            slaDeadlineAfterDate: opts.slaDeadlineAfterDate,
+            slaDeadlineBeforeDate: opts.slaDeadlineBeforeDate,
+            severity: opts.severity,
+            integrationId: opts.integrationId,
+            includeVulnerabilitiesWithoutSlas: opts.includeVulnerabilitiesWithoutSlas,
+            vulnerableAssetId: opts.vulnerableAssetId,
+            q: opts.q,
           },
         }),
       );

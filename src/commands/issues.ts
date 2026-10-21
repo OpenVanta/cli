@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { list as listIssues, getIssue } from "../generated/sdk.gen.js";
+import { list, getIssue } from "../generated/sdk.gen.js";
 import type { ListData } from "../generated/types.gen.js";
 import {
   addPaginationOptions,
@@ -14,9 +14,7 @@ export function registerIssuesCommand(
   program: Command,
   getFlags: GetFlags,
 ): void {
-  const issues = program
-    .command("issues")
-    .description("Manage issues");
+  const issues = program.command("issues").description("Manage issues");
 
   addPaginationOptions(
     issues
@@ -24,63 +22,63 @@ export function registerIssuesCommand(
       .description("List issues")
       .option(
         "--search <query>",
-        "Search issue titles and descriptions",
+        "Full-text search across issue title and description",
       )
       .option(
         "--readable-issue-id-matches-any <id>",
-        "Filter by readable issue ID (repeatable)",
+        "Filter to issues matching any of the provided readable issue IDs (repeatable)",
         collectString,
         [] as string[],
       )
       .option(
         "--status-matches-any <status>",
-        "Filter by status: NOT_STARTED, IN_PROGRESS, CLOSED (repeatable)",
+        "Filter to issues matching any of the provided statuses: NOT_STARTED, IN_PROGRESS, CLOSED (repeatable)",
         collectString,
         [] as string[],
       )
       .option(
         "--severity-matches-any <severity>",
-        "Filter by severity: CRITICAL, HIGH, MEDIUM, LOW, NO_SEVERITY (repeatable)",
+        "Filter to issues matching any of the provided severities: CRITICAL, HIGH, MEDIUM, LOW, NO_SEVERITY (repeatable)",
         collectString,
         [] as string[],
       )
       .option(
         "--source-matches-any <source>",
-        "Filter by source: AUDIT, AUDIT_EXTERNAL, INCIDENT, EXTERNAL_PARTY, SELF_ASSESSMENT, OTHER (repeatable)",
+        "Filter to issues matching any of the provided sources: AUDIT, AUDIT_EXTERNAL, INCIDENT, EXTERNAL_PARTY, SELF_ASSESSMENT, OTHER (repeatable)",
         collectString,
         [] as string[],
       )
       .option(
         "--type-matches-any <type>",
-        "Filter by issue type: AREA_OF_CONCERN, MAJOR_NONCONFORMITY, MINOR_NONCONFORMITY, OPP_FOR_IMPROVEMENT, EXCEPTION, PROCESS_FOR_IMPROVEMENT (repeatable)",
+        "Filter to issues matching any of the provided types: AREA_OF_CONCERN, MAJOR_NONCONFORMITY, MINOR_NONCONFORMITY, OPP_FOR_IMPROVEMENT, EXCEPTION, PROCESS_FOR_IMPROVEMENT (repeatable)",
         collectString,
         [] as string[],
       )
       .option(
         "--owner-id-matches-any <id>",
-        "Filter by issue owner user ID (repeatable)",
+        "Filter to issues owned by any of the provided owner IDs (repeatable)",
         collectString,
         [] as string[],
       )
       .option(
         "--template-matches-any <template>",
-        "Filter by template: STANDARD_ISSUE, STANDARD_POAM (repeatable)",
+        "Filter to issues matching any of the provided templates: STANDARD_ISSUE, STANDARD_POAM (repeatable)",
         collectString,
         [] as string[],
       )
       .option(
         "--close-reason-matches-any <reason>",
-        "Filter by close reason: RESOLVED, DUPLICATE, ACCEPTED, OTHER (repeatable); applies only to CLOSED issues",
+        "Filter to issues closed for any of the provided reasons. Only applies to issues with a CLOSED status: RESOLVED, DUPLICATE, ACCEPTED, OTHER (repeatable)",
         collectString,
         [] as string[],
       )
       .option(
         "--closed-after-date <timestamp>",
-        "Filter issues closed on or after an ISO 8601 timestamp",
+        "Filter to issues closed on or after this date (ISO 8601 timestamp)",
       )
       .option(
         "--closed-before-date <timestamp>",
-        "Filter issues closed on or before an ISO 8601 timestamp",
+        "Filter to issues closed on or before this date (ISO 8601 timestamp)",
       )
       .option(
         "--include-issues-without-due-date <bool>",
@@ -94,78 +92,109 @@ export function registerIssuesCommand(
       )
       .option(
         "--due-after-date <timestamp>",
-        "Filter issues due on or after an ISO 8601 timestamp",
+        "Filter to issues with a due date on or after this date (ISO 8601 timestamp)",
       )
       .option(
         "--due-before-date <timestamp>",
-        "Filter issues due on or before an ISO 8601 timestamp",
+        "Filter to issues with a due date on or before this date (ISO 8601 timestamp)",
       )
       .option(
         "--detected-after-date <timestamp>",
-        "Filter issues detected on or after an ISO 8601 timestamp",
+        "Filter to issues detected on or after this date (ISO 8601 timestamp)",
       )
       .option(
         "--detected-before-date <timestamp>",
-        "Filter issues detected on or before an ISO 8601 timestamp",
+        "Filter to issues detected on or before this date (ISO 8601 timestamp)",
       )
       .option(
         "--created-after-date <timestamp>",
-        "Filter issues created on or after an ISO 8601 timestamp",
+        "Filter to issues created on or after this date (ISO 8601 timestamp)",
       )
       .option(
         "--created-before-date <timestamp>",
-        "Filter issues created on or before an ISO 8601 timestamp",
+        "Filter to issues created on or before this date (ISO 8601 timestamp)",
       )
       .option(
         "--audit-id-matches-any <id>",
-        "Filter by source audit ID (repeatable)",
+        "Filter to issues sourced from any of the provided audit IDs (repeatable)",
         collectString,
         [] as string[],
       )
       .option(
         "--control-id-matches-any <id>",
-        "Filter by mapped control ID (repeatable)",
+        "Filter to issues mapped to any of the provided control IDs (repeatable)",
         collectString,
         [] as string[],
       )
-      .option("--order-by <field>", "Sort by: dueDate, createdDate, detectedDate, lastModifiedDate, status, severity")
+      .option(
+        "--order-by <field>",
+        "Field to sort the results by: dueDate, createdDate, detectedDate, lastModifiedDate, status, severity",
+      )
       .option(
         "--order-direction <direction>",
-        "Sort direction: asc, desc (default: asc)",
+        "Direction to sort the results in. One of `asc` or `desc`. Defaults to `asc`",
       ),
-  ).action(async (opts: NonNullable<ListData["query"]>) => {
-    await runSdk(getFlags, (api) =>
-      listIssues({
-        client: api.client,
-        query: {
-          ...paginationQuery(opts),
-          search: opts.search,
-          readableIssueIdMatchesAny: opts.readableIssueIdMatchesAny,
-          statusMatchesAny: opts.statusMatchesAny,
-          severityMatchesAny: opts.severityMatchesAny,
-          sourceMatchesAny: opts.sourceMatchesAny,
-          typeMatchesAny: opts.typeMatchesAny,
-          ownerIdMatchesAny: opts.ownerIdMatchesAny,
-          templateMatchesAny: opts.templateMatchesAny,
-          closeReasonMatchesAny: opts.closeReasonMatchesAny,
-          closedAfterDate: opts.closedAfterDate,
-          closedBeforeDate: opts.closedBeforeDate,
-          includeIssuesWithoutDueDate: opts.includeIssuesWithoutDueDate,
-          includeOnlyIssuesWithoutDueDate: opts.includeOnlyIssuesWithoutDueDate,
-          dueAfterDate: opts.dueAfterDate,
-          dueBeforeDate: opts.dueBeforeDate,
-          detectedAfterDate: opts.detectedAfterDate,
-          detectedBeforeDate: opts.detectedBeforeDate,
-          createdAfterDate: opts.createdAfterDate,
-          createdBeforeDate: opts.createdBeforeDate,
-          auditIdMatchesAny: opts.auditIdMatchesAny,
-          controlIdMatchesAny: opts.controlIdMatchesAny,
-          orderBy: opts.orderBy,
-          orderDirection: opts.orderDirection,
-        },
-      }),
-    );
-  });
+  ).action(
+    async (opts: {
+      pageSize?: number;
+      pageCursor?: string;
+      search?: string;
+      readableIssueIdMatchesAny: string[];
+      statusMatchesAny: NonNullable<NonNullable<ListData["query"]>["statusMatchesAny"]>;
+      severityMatchesAny: NonNullable<NonNullable<ListData["query"]>["severityMatchesAny"]>;
+      sourceMatchesAny: NonNullable<NonNullable<ListData["query"]>["sourceMatchesAny"]>;
+      typeMatchesAny: NonNullable<NonNullable<ListData["query"]>["typeMatchesAny"]>;
+      ownerIdMatchesAny: string[];
+      templateMatchesAny: NonNullable<NonNullable<ListData["query"]>["templateMatchesAny"]>;
+      closeReasonMatchesAny: NonNullable<NonNullable<ListData["query"]>["closeReasonMatchesAny"]>;
+      closedAfterDate?: string;
+      closedBeforeDate?: string;
+      includeIssuesWithoutDueDate?: boolean;
+      includeOnlyIssuesWithoutDueDate?: boolean;
+      dueAfterDate?: string;
+      dueBeforeDate?: string;
+      detectedAfterDate?: string;
+      detectedBeforeDate?: string;
+      createdAfterDate?: string;
+      createdBeforeDate?: string;
+      auditIdMatchesAny: string[];
+      controlIdMatchesAny: string[];
+      orderBy?: NonNullable<ListData["query"]>["orderBy"];
+      orderDirection?: NonNullable<ListData["query"]>["orderDirection"];
+    }) => {
+      await runSdk(getFlags, (api) =>
+        list({
+          client: api.client,
+          query: {
+            ...paginationQuery(opts),
+            search: opts.search,
+            readableIssueIdMatchesAny: opts.readableIssueIdMatchesAny,
+            statusMatchesAny: opts.statusMatchesAny,
+            severityMatchesAny: opts.severityMatchesAny,
+            sourceMatchesAny: opts.sourceMatchesAny,
+            typeMatchesAny: opts.typeMatchesAny,
+            ownerIdMatchesAny: opts.ownerIdMatchesAny,
+            templateMatchesAny: opts.templateMatchesAny,
+            closeReasonMatchesAny: opts.closeReasonMatchesAny,
+            closedAfterDate: opts.closedAfterDate,
+            closedBeforeDate: opts.closedBeforeDate,
+            includeIssuesWithoutDueDate: opts.includeIssuesWithoutDueDate,
+            includeOnlyIssuesWithoutDueDate: opts.includeOnlyIssuesWithoutDueDate,
+            dueAfterDate: opts.dueAfterDate,
+            dueBeforeDate: opts.dueBeforeDate,
+            detectedAfterDate: opts.detectedAfterDate,
+            detectedBeforeDate: opts.detectedBeforeDate,
+            createdAfterDate: opts.createdAfterDate,
+            createdBeforeDate: opts.createdBeforeDate,
+            auditIdMatchesAny: opts.auditIdMatchesAny,
+            controlIdMatchesAny: opts.controlIdMatchesAny,
+            orderBy: opts.orderBy,
+            orderDirection: opts.orderDirection,
+          },
+        }),
+      );
+    },
+  );
 
   issues
     .command("get")
@@ -173,10 +202,7 @@ export function registerIssuesCommand(
     .requiredOption("--id <id>", "Issue ID")
     .action(async (opts: { id: string }) => {
       await runSdk(getFlags, (api) =>
-        getIssue({
-          client: api.client,
-          path: { issueId: opts.id },
-        }),
+        getIssue({ client: api.client, path: { issueId: opts.id } }),
       );
     });
 }

@@ -9,11 +9,11 @@ import {
 } from "./helpers.js";
 
 export function registerPersonnelNotificationSettingsCommand(
-  people: Command,
+  program: Command,
   getFlags: GetFlags,
 ): void {
-  const personnelNotificationSettings = people
-    .command("notification-settings")
+  const personnelNotificationSettings = program
+    .command("personnel-notification-settings")
     .description("Manage personnel notification settings");
 
   personnelNotificationSettings
@@ -35,10 +35,7 @@ export function registerPersonnelNotificationSettingsCommand(
       opts.file,
     )) as UpdateSettingsData["body"];
     await runSdk(getFlags, (api) =>
-      updateSettings({
-        client: api.client,
-        body,
-      }),
+      updateSettings({ client: api.client, body }),
     );
   });
 }

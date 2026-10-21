@@ -1,6 +1,5 @@
 import type { Command } from "commander";
 import { listVendorRiskAttributes } from "../generated/sdk.gen.js";
-import type { ListVendorRiskAttributesData } from "../generated/types.gen.js";
 import {
   addPaginationOptions,
   paginationQuery,
@@ -9,22 +8,22 @@ import {
 } from "./helpers.js";
 
 export function registerVendorRiskAttributesCommand(
-  vendors: Command,
+  program: Command,
   getFlags: GetFlags,
 ): void {
-  const vendorRiskAttributes = vendors
-    .command("risk-attributes")
+  const vendorRiskAttributes = program
+    .command("vendor-risk-attributes")
     .description("Manage vendor risk attributes");
 
   addPaginationOptions(
-    vendorRiskAttributes.command("list").description("List vendor risk attributes"),
-  ).action(async (opts: NonNullable<ListVendorRiskAttributesData["query"]>) => {
+    vendorRiskAttributes
+      .command("list")
+      .description("List vendor risk attributes"),
+  ).action(async (opts) => {
     await runSdk(getFlags, (api) =>
       listVendorRiskAttributes({
         client: api.client,
-        query: {
-          ...paginationQuery(opts),
-        },
+        query: paginationQuery(opts),
       }),
     );
   });
