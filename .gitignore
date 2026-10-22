@@ -7,3 +7,4 @@ src/generated/
 vanta
 *.tar.gz
 *.zip
+*.bun-build

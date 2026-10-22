@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "rootDir": "."
+  },
+  "include": ["codegen.config.ts", "scripts/codegen/**/*.ts"]
+}
