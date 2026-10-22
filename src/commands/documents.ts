@@ -303,6 +303,7 @@ export function registerDocumentsCommand(
         await withClient(getFlags, async (api, flags) => {
           const result = await getUploadedfileMedia({
             client: api.client,
+            parseAs: "blob",
             path: { documentId: opts.id, uploadedFileId: opts.uploadedFileId },
           });
           if (result.error) throw result.error;
