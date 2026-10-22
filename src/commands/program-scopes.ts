@@ -1,6 +1,5 @@
 import type { Command } from "commander";
 import { listProgramScopes, getProgramScope } from "../generated/sdk.gen.js";
-import type { ListProgramScopesData } from "../generated/types.gen.js";
 import {
   addPaginationOptions,
   collectString,
@@ -23,28 +22,35 @@ export function registerProgramScopesCommand(
       .description("List program scopes")
       .option(
         "--business-unit-id-matches-any <id>",
-        "Filter by business unit ID from business-units list (repeatable)",
+        "Filter by business unit ID (repeatable)",
         collectString,
         [] as string[],
       )
       .option(
         "--framework-id-matches-any <id>",
-        "Filter by framework ID from frameworks list (repeatable)",
+        "Filter by framework ID (repeatable)",
         collectString,
         [] as string[],
       ),
-  ).action(async (opts: NonNullable<ListProgramScopesData["query"]>) => {
-    await runSdk(getFlags, (api) =>
-      listProgramScopes({
-        client: api.client,
-        query: {
-          ...paginationQuery(opts),
-          businessUnitIdMatchesAny: opts.businessUnitIdMatchesAny,
-          frameworkIdMatchesAny: opts.frameworkIdMatchesAny,
-        },
-      }),
-    );
-  });
+  ).action(
+    async (opts: {
+      pageSize?: number;
+      pageCursor?: string;
+      businessUnitIdMatchesAny: string[];
+      frameworkIdMatchesAny: string[];
+    }) => {
+      await runSdk(getFlags, (api) =>
+        listProgramScopes({
+          client: api.client,
+          query: {
+            ...paginationQuery(opts),
+            businessUnitIdMatchesAny: opts.businessUnitIdMatchesAny,
+            frameworkIdMatchesAny: opts.frameworkIdMatchesAny,
+          },
+        }),
+      );
+    },
+  );
 
   programScopes
     .command("get")

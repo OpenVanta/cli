@@ -1,34 +1,32 @@
 import type { Command } from "commander";
-import { registerVendorRiskAttributesCommand } from "./vendor-risk-attributes.js";
-import { registerVendorAssessmentTypesCommand } from "./vendor-assessment-types.js";
 import {
+  listVendors,
+  getVendor,
+  createVendor,
+  updateVendor,
+  deleteById,
   getAssessmentsByVendorId,
   getAssessmentById,
-  createVendor,
-  createVendorFinding,
-  deleteById,
-  deleteFindingById,
-  deleteSecurityReviewDocumentById,
-  getSecurityReviewDocuments,
-  getSecurityReviewsById,
-  getSecurityReviewsByVendorId,
-  getVendor,
   listVendorDocuments,
-  listVendorFindings,
-  listVendors,
-  setStatusForVendor,
-  updateVendor,
-  updateVendorFinding,
-  uploadDocumentForSecurityReview,
   uploadDocumentToVendor,
+  listVendorFindings,
+  createVendorFinding,
+  updateVendorFinding,
+  deleteFindingById,
+  getSecurityReviewsByVendorId,
+  getSecurityReviewsById,
+  getSecurityReviewDocuments,
+  uploadDocumentForSecurityReview,
+  deleteSecurityReviewDocumentById,
+  setStatusForVendor,
 } from "../generated/sdk.gen.js";
 import type {
+  ListVendorsData,
+  CreateVendorData,
+  UpdateVendorData,
   GetAssessmentsByVendorIdData,
-  CreateFindingInput,
-  CreateVendorInput,
-  UpdateFindingInput,
-  UpdateVendorInput,
-  VendorStatus,
+  CreateVendorFindingData,
+  UpdateVendorFindingData,
 } from "../generated/types.gen.js";
 import {
   addJsonFileOptions,
@@ -47,18 +45,17 @@ export function registerVendorsCommand(
 ): void {
   const vendors = program.command("vendors").description("Manage vendors");
 
-  registerVendorRiskAttributesCommand(vendors, getFlags);
-
-  registerVendorAssessmentTypesCommand(vendors, getFlags);
-
   addPaginationOptions(
     vendors
       .command("list")
       .description("List vendors")
-      .option("--name <name>", "Filter vendors by name (partial match)")
+      .option(
+        "--name <name>",
+        "Filter vendors by name (case-insensitive, partial match)",
+      )
       .option(
         "--status-matches-any <status>",
-        "Vendor statuses to filter by (repeatable)",
+        "Filter vendors by status (can specify multiple): MANAGED, ARCHIVED, IN_PROCUREMENT (repeatable)",
         collectString,
         [] as string[],
       ),
@@ -67,18 +64,15 @@ export function registerVendorsCommand(
       pageSize?: number;
       pageCursor?: string;
       name?: string;
-      statusMatchesAny: string[];
+      statusMatchesAny: NonNullable<NonNullable<ListVendorsData["query"]>["statusMatchesAny"]>;
     }) => {
-      const statusMatchesAny = opts.statusMatchesAny.filter(
-        Boolean,
-      ) as VendorStatus[];
       await runSdk(getFlags, (api) =>
         listVendors({
           client: api.client,
           query: {
             ...paginationQuery(opts),
-            ...(opts.name?.trim() ? { name: opts.name.trim() } : {}),
-            ...(statusMatchesAny.length > 0 ? { statusMatchesAny } : {}),
+            name: opts.name,
+            statusMatchesAny: opts.statusMatchesAny,
           },
         }),
       );
@@ -101,7 +95,7 @@ export function registerVendorsCommand(
     const body = (await readJSONPayload(
       opts.json,
       opts.file,
-    )) as CreateVendorInput;
+    )) as CreateVendorData["body"];
     await runSdk(getFlags, (api) =>
       createVendor({ client: api.client, body }),
     );
@@ -116,13 +110,9 @@ export function registerVendorsCommand(
     const body = (await readJSONPayload(
       opts.json,
       opts.file,
-    )) as UpdateVendorInput;
+    )) as UpdateVendorData["body"];
     await runSdk(getFlags, (api) =>
-      updateVendor({
-        client: api.client,
-        path: { vendorId: opts.id },
-        body,
-      }),
+      updateVendor({ client: api.client, path: { vendorId: opts.id }, body }),
     );
   });
 
@@ -136,17 +126,55 @@ export function registerVendorsCommand(
       );
     });
 
-  vendors
-    .command("set-status")
-    .description("Set vendor status")
-    .requiredOption("--id <id>", "Vendor ID")
-    .requiredOption("--status <status>", "Vendor status")
-    .action(async (opts: { id: string; status: string }) => {
+  addPaginationOptions(
+    vendors
+      .command("list-assessments")
+      .description("List assessments for a vendor")
+      .requiredOption("--id <id>", "Vendor ID")
+      .option(
+        "--type-id-matches-any <id>",
+        "Filter by assessment type ID from vendor-assessment-types list (repeatable)",
+        collectString,
+        [] as string[],
+      )
+      .option(
+        "--status-matches-any <status>",
+        "Filter assessments to any of the given statuses: NOT_STARTED, IN_PROGRESS, COMPLETED (repeatable)",
+        collectString,
+        [] as string[],
+      ),
+  ).action(
+    async (opts: {
+      id: string;
+      pageSize?: number;
+      pageCursor?: string;
+      typeIdMatchesAny: string[];
+      statusMatchesAny: NonNullable<NonNullable<GetAssessmentsByVendorIdData["query"]>["statusMatchesAny"]>;
+    }) => {
       await runSdk(getFlags, (api) =>
-        setStatusForVendor({
+        getAssessmentsByVendorId({
           client: api.client,
           path: { vendorId: opts.id },
-          body: { status: opts.status.trim() },
+          query: {
+            ...paginationQuery(opts),
+            typeIdMatchesAny: opts.typeIdMatchesAny,
+            statusMatchesAny: opts.statusMatchesAny,
+          },
+        }),
+      );
+    },
+  );
+
+  vendors
+    .command("get-assessment")
+    .description("Get a vendor assessment by ID")
+    .requiredOption("--id <id>", "Vendor ID")
+    .requiredOption("--assessment-id <id>", "Assessment ID")
+    .action(async (opts: { id: string; assessmentId: string }) => {
+      await runSdk(getFlags, (api) =>
+        getAssessmentById({
+          client: api.client,
+          path: { vendorId: opts.id, assessmentId: opts.assessmentId },
         }),
       );
     });
@@ -154,10 +182,14 @@ export function registerVendorsCommand(
   addPaginationOptions(
     vendors
       .command("list-documents")
-      .description("List vendor documents")
+      .description("List documents for a vendor")
       .requiredOption("--id <id>", "Vendor ID"),
   ).action(
-    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
+    async (opts: {
+      id: string;
+      pageSize?: number;
+      pageCursor?: string;
+    }) => {
       await runSdk(getFlags, (api) =>
         listVendorDocuments({
           client: api.client,
@@ -173,9 +205,9 @@ export function registerVendorsCommand(
     .description("Upload a document for a vendor")
     .requiredOption("--id <id>", "Vendor ID")
     .requiredOption("--file <path>", "Path to file to upload")
-    .requiredOption("--type <type>", "Vendor document type")
-    .option("--title <title>", "Document title")
-    .option("--description <text>", "Document description")
+    .requiredOption("--type <type>", "Type of the vendor document")
+    .option("--title <title>", "The document's title")
+    .option("--description <text>", "The document's description")
     .action(
       async (opts: {
         id: string;
@@ -184,158 +216,16 @@ export function registerVendorsCommand(
         title?: string;
         description?: string;
       }) => {
-        const filePath = opts.file.trim();
-        if (!filePath) {
-          throw new Error("--file is required");
-        }
-        const type = opts.type.trim();
-        if (!type) {
-          throw new Error("--type is required");
-        }
-        const file = await readBinaryFile(filePath);
+        const file = await readBinaryFile(opts.file);
         await runSdk(getFlags, (api) =>
           uploadDocumentToVendor({
             client: api.client,
             path: { vendorId: opts.id },
             body: {
               file,
-              type,
-              ...(opts.title?.trim() ? { title: opts.title.trim() } : {}),
-              ...(opts.description?.trim()
-                ? { description: opts.description.trim() }
-                : {}),
-            },
-          }),
-        );
-      },
-    );
-
-  addPaginationOptions(
-    vendors
-      .command("list-security-reviews")
-      .description("List vendor security reviews")
-      .requiredOption("--id <id>", "Vendor ID"),
-  ).action(
-    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
-      await runSdk(getFlags, (api) =>
-        getSecurityReviewsByVendorId({
-          client: api.client,
-          path: { vendorId: opts.id },
-          query: paginationQuery(opts),
-        }),
-      );
-    },
-  );
-
-  vendors
-    .command("get-security-review")
-    .description("Get a vendor security review")
-    .requiredOption("--id <id>", "Vendor ID")
-    .requiredOption("--security-review-id <id>", "Security review ID")
-    .action(async (opts: { id: string; securityReviewId: string }) => {
-      await runSdk(getFlags, (api) =>
-        getSecurityReviewsById({
-          client: api.client,
-          path: {
-            vendorId: opts.id,
-            securityReviewId: opts.securityReviewId,
-          },
-        }),
-      );
-    });
-
-  addPaginationOptions(
-    vendors
-      .command("list-security-review-documents")
-      .description("List documents for a vendor security review")
-      .requiredOption("--id <id>", "Vendor ID")
-      .requiredOption("--security-review-id <id>", "Security review ID"),
-  ).action(
-    async (opts: {
-      id: string;
-      securityReviewId: string;
-      pageSize?: number;
-      pageCursor?: string;
-    }) => {
-      await runSdk(getFlags, (api) =>
-        getSecurityReviewDocuments({
-          client: api.client,
-          path: {
-            vendorId: opts.id,
-            securityReviewId: opts.securityReviewId,
-          },
-          query: paginationQuery(opts),
-        }),
-      );
-    },
-  );
-
-  vendors
-    .command("upload-security-review-document")
-    .description("Upload a document for a vendor security review")
-    .requiredOption("--id <id>", "Vendor ID")
-    .requiredOption("--security-review-id <id>", "Security review ID")
-    .requiredOption("--file <path>", "Path to file to upload")
-    .requiredOption("--type <type>", "Vendor document type")
-    .option("--title <title>", "Document title")
-    .option("--description <text>", "Document description")
-    .action(
-      async (opts: {
-        id: string;
-        securityReviewId: string;
-        file: string;
-        type: string;
-        title?: string;
-        description?: string;
-      }) => {
-        const filePath = opts.file.trim();
-        if (!filePath) {
-          throw new Error("--file is required");
-        }
-        const type = opts.type.trim();
-        if (!type) {
-          throw new Error("--type is required");
-        }
-        const file = await readBinaryFile(filePath);
-        await runSdk(getFlags, (api) =>
-          uploadDocumentForSecurityReview({
-            client: api.client,
-            path: {
-              vendorId: opts.id,
-              securityReviewId: opts.securityReviewId,
-            },
-            body: {
-              file,
-              type,
-              ...(opts.title?.trim() ? { title: opts.title.trim() } : {}),
-              ...(opts.description?.trim()
-                ? { description: opts.description.trim() }
-                : {}),
-            },
-          }),
-        );
-      },
-    );
-
-  vendors
-    .command("delete-security-review-document")
-    .description("Delete a document for a vendor security review")
-    .requiredOption("--id <id>", "Vendor ID")
-    .requiredOption("--security-review-id <id>", "Security review ID")
-    .requiredOption("--document-id <id>", "Document ID")
-    .action(
-      async (opts: {
-        id: string;
-        securityReviewId: string;
-        documentId: string;
-      }) => {
-        await runSdk(getFlags, (api) =>
-          deleteSecurityReviewDocumentById({
-            client: api.client,
-            path: {
-              vendorId: opts.id,
-              securityReviewId: opts.securityReviewId,
-              documentId: opts.documentId,
+              type: opts.type,
+              title: opts.title,
+              description: opts.description,
             },
           }),
         );
@@ -345,7 +235,7 @@ export function registerVendorsCommand(
   addPaginationOptions(
     vendors
       .command("list-findings")
-      .description("List vendor findings")
+      .description("List findings for a vendor")
       .requiredOption("--id <id>", "Vendor ID")
       .option(
         "--security-review-id <id>",
@@ -366,12 +256,8 @@ export function registerVendorsCommand(
           path: { vendorId: opts.id },
           query: {
             ...paginationQuery(opts),
-            ...(opts.securityReviewId?.trim()
-              ? { securityReviewId: opts.securityReviewId.trim() }
-              : {}),
-            ...(opts.documentId?.trim()
-              ? { documentId: opts.documentId.trim() }
-              : {}),
+            securityReviewId: opts.securityReviewId,
+            documentId: opts.documentId,
           },
         }),
       );
@@ -387,7 +273,7 @@ export function registerVendorsCommand(
     const body = (await readJSONPayload(
       opts.json,
       opts.file,
-    )) as CreateFindingInput;
+    )) as CreateVendorFindingData["body"];
     await runSdk(getFlags, (api) =>
       createVendorFinding({
         client: api.client,
@@ -413,7 +299,7 @@ export function registerVendorsCommand(
       const body = (await readJSONPayload(
         opts.json,
         opts.file,
-      )) as UpdateFindingInput;
+      )) as UpdateVendorFindingData["body"];
       await runSdk(getFlags, (api) =>
         updateVendorFinding({
           client: api.client,
@@ -440,45 +326,132 @@ export function registerVendorsCommand(
 
   addPaginationOptions(
     vendors
-      .command("list-assessments")
-      .description("List vendor assessments")
-      .requiredOption("--id <id>", "Vendor ID")
-      .option(
-        "--type-id-matches-any <id>",
-        "Filter by assessment type ID from vendors assessment-types list (repeatable)",
-        collectString,
-        [] as string[],
-      )
-      .option(
-        "--status-matches-any <status>",
-        "Filter by assessment status: NOT_STARTED, IN_PROGRESS, COMPLETED (repeatable)",
-        collectString,
-        [] as string[],
-      ),
-  ).action(async (opts: NonNullable<GetAssessmentsByVendorIdData["query"]> & { id: string }) => {
-    await runSdk(getFlags, (api) =>
-      getAssessmentsByVendorId({
-        client: api.client,
-        path: { vendorId: opts.id },
-        query: {
-          ...paginationQuery(opts),
-          typeIdMatchesAny: opts.typeIdMatchesAny,
-          statusMatchesAny: opts.statusMatchesAny,
-        },
-      }),
-    );
-  });
+      .command("list-security-reviews")
+      .description("List security reviews for a vendor")
+      .requiredOption("--id <id>", "Vendor ID"),
+  ).action(
+    async (opts: {
+      id: string;
+      pageSize?: number;
+      pageCursor?: string;
+    }) => {
+      await runSdk(getFlags, (api) =>
+        getSecurityReviewsByVendorId({
+          client: api.client,
+          path: { vendorId: opts.id },
+          query: paginationQuery(opts),
+        }),
+      );
+    },
+  );
 
   vendors
-    .command("get-assessment")
-    .description("Get a vendor assessment")
+    .command("get-security-review")
+    .description("Get a vendor security review by ID")
     .requiredOption("--id <id>", "Vendor ID")
-    .requiredOption("--assessment-id <id>", "Assessment ID")
-    .action(async (opts: { id: string; assessmentId: string }) => {
+    .requiredOption("--security-review-id <id>", "Security review ID")
+    .action(async (opts: { id: string; securityReviewId: string }) => {
       await runSdk(getFlags, (api) =>
-        getAssessmentById({
+        getSecurityReviewsById({
           client: api.client,
-          path: { vendorId: opts.id, assessmentId: opts.assessmentId },
+          path: { vendorId: opts.id, securityReviewId: opts.securityReviewId },
+        }),
+      );
+    });
+
+  addPaginationOptions(
+    vendors
+      .command("list-security-review-documents")
+      .description("List documents for a vendor security review")
+      .requiredOption("--id <id>", "Vendor ID")
+      .requiredOption("--security-review-id <id>", "Security review ID"),
+  ).action(
+    async (opts: {
+      id: string;
+      securityReviewId: string;
+      pageSize?: number;
+      pageCursor?: string;
+    }) => {
+      await runSdk(getFlags, (api) =>
+        getSecurityReviewDocuments({
+          client: api.client,
+          path: { vendorId: opts.id, securityReviewId: opts.securityReviewId },
+          query: paginationQuery(opts),
+        }),
+      );
+    },
+  );
+
+  vendors
+    .command("upload-security-review-document")
+    .description("Upload a document for a vendor security review")
+    .requiredOption("--id <id>", "Vendor ID")
+    .requiredOption("--security-review-id <id>", "Security review ID")
+    .requiredOption("--file <path>", "Path to file to upload")
+    .requiredOption("--type <type>", "Type of the vendor document")
+    .option("--title <title>", "The document's title")
+    .option("--description <text>", "The document's description")
+    .action(
+      async (opts: {
+        id: string;
+        securityReviewId: string;
+        file: string;
+        type: string;
+        title?: string;
+        description?: string;
+      }) => {
+        const file = await readBinaryFile(opts.file);
+        await runSdk(getFlags, (api) =>
+          uploadDocumentForSecurityReview({
+            client: api.client,
+            path: { vendorId: opts.id, securityReviewId: opts.securityReviewId },
+            body: {
+              file,
+              type: opts.type,
+              title: opts.title,
+              description: opts.description,
+            },
+          }),
+        );
+      },
+    );
+
+  vendors
+    .command("delete-security-review-document")
+    .description("Delete a vendor security review document")
+    .requiredOption("--id <id>", "Vendor ID")
+    .requiredOption("--security-review-id <id>", "Security review ID")
+    .requiredOption("--document-id <id>", "Document ID")
+    .action(
+      async (opts: {
+        id: string;
+        securityReviewId: string;
+        documentId: string;
+      }) => {
+        await runSdk(getFlags, (api) =>
+          deleteSecurityReviewDocumentById({
+            client: api.client,
+            path: {
+              vendorId: opts.id,
+              securityReviewId: opts.securityReviewId,
+              documentId: opts.documentId,
+            },
+          }),
+        );
+      },
+    );
+
+  vendors
+    .command("set-status")
+    .description("Set status for a vendor")
+    .requiredOption("--id <id>", "Vendor ID")
+    .requiredOption("--status <status>", "Status of the vendor")
+    .action(async (opts: { id: string; status: string }) => {
+      await runSdk(getFlags, (api) =>
+        setStatusForVendor({
+          client: api.client,
+          path: { vendorId: opts.id },
+          body: { status: opts.status },
         }),
       );
     });

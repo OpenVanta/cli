@@ -7,7 +7,10 @@ import {
   type GetFlags,
 } from "./helpers.js";
 
-export function registerUsersCommand(program: Command, getFlags: GetFlags): void {
+export function registerUsersCommand(
+  program: Command,
+  getFlags: GetFlags,
+): void {
   const users = program.command("users").description("Manage users");
 
   addPaginationOptions(

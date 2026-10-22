@@ -1,10 +1,10 @@
 import type { Command } from "commander";
 import {
-  addDiscoveredVendorToManaged,
-  listDiscoveredVendorAccounts,
   listDiscoveredVendors,
+  listDiscoveredVendorAccounts,
+  addDiscoveredVendorToManaged,
 } from "../generated/sdk.gen.js";
-import type { DiscoveredVendorScope } from "../generated/types.gen.js";
+import type { ListDiscoveredVendorsData } from "../generated/types.gen.js";
 import {
   addPaginationOptions,
   paginationQuery,
@@ -32,17 +32,12 @@ export function registerDiscoveredVendorsCommand(
     async (opts: {
       pageSize?: number;
       pageCursor?: string;
-      scope?: string;
+      scope?: NonNullable<ListDiscoveredVendorsData["query"]>["scope"];
     }) => {
       await runSdk(getFlags, (api) =>
         listDiscoveredVendors({
           client: api.client,
-          query: {
-            ...paginationQuery(opts),
-            ...(opts.scope?.trim()
-              ? { scope: opts.scope.trim() as DiscoveredVendorScope }
-              : {}),
-          },
+          query: { ...paginationQuery(opts), scope: opts.scope },
         }),
       );
     },
@@ -54,7 +49,11 @@ export function registerDiscoveredVendorsCommand(
       .description("List accounts for a discovered vendor")
       .requiredOption("--id <id>", "Discovered vendor ID"),
   ).action(
-    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
+    async (opts: {
+      id: string;
+      pageSize?: number;
+      pageCursor?: string;
+    }) => {
       await runSdk(getFlags, (api) =>
         listDiscoveredVendorAccounts({
           client: api.client,

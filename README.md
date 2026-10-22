@@ -93,10 +93,10 @@ vanta tests list --status-filter NEEDS_ATTENTION
 | People | `vanta people` |
 | Business units | `vanta business-units` |
 | Issues | `vanta issues` |
-| Personnel notification settings | `vanta people notification-settings` |
+| Personnel notification settings | `vanta personnel-notification-settings` |
 | Program scopes | `vanta program-scopes` |
-| Vendor assessment types | `vanta vendors assessment-types` |
-| Vendor risk attributes | `vanta vendors risk-attributes` |
+| Vendor assessment types | `vanta vendor-assessment-types` |
+| Vendor risk attributes | `vanta vendor-risk-attributes` |
 | Groups | `vanta groups` |
 | Frameworks | `vanta frameworks` |
 | Users | `vanta users` |

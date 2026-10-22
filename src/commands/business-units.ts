@@ -1,6 +1,5 @@
 import type { Command } from "commander";
 import { listBusinessUnits, getBusinessUnit } from "../generated/sdk.gen.js";
-import type { ListBusinessUnitsData } from "../generated/types.gen.js";
 import {
   addPaginationOptions,
   paginationQuery,
@@ -18,14 +17,9 @@ export function registerBusinessUnitsCommand(
 
   addPaginationOptions(
     businessUnits.command("list").description("List business units"),
-  ).action(async (opts: NonNullable<ListBusinessUnitsData["query"]>) => {
+  ).action(async (opts) => {
     await runSdk(getFlags, (api) =>
-      listBusinessUnits({
-        client: api.client,
-        query: {
-          ...paginationQuery(opts),
-        },
-      }),
+      listBusinessUnits({ client: api.client, query: paginationQuery(opts) }),
     );
   });
 

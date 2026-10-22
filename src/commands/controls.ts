@@ -1,29 +1,28 @@
 import type { Command } from "commander";
 import {
-  listDeactivatedControls,
   listControls,
   getControl,
   createCustomControl,
-  addControlFromLibrary,
   updateControlMetadata,
   deleteControl,
-  setOwnerForControl,
+  addControlFromLibrary,
   listLibraryControls,
-  listDocumentsForControl,
-  listTestsForControl,
+  listDeactivatedControls,
   addDocumentToControl,
-  deleteDocumentForcontrol,
   addTestToControl,
+  listDocumentsForControl,
+  deleteDocumentForcontrol,
+  setOwnerForControl,
+  listTestsForControl,
   deleteTestForControl,
 } from "../generated/sdk.gen.js";
 import type {
-  ListDeactivatedControlsData,
-  AddControlDocumentMappingInput,
-  AddControlFromLibraryInput,
-  AddControlTestMappingInput,
-  CreateControlInput,
-  EditControlMetadataInput,
-  SetOwnerForControlInput,
+  CreateCustomControlData,
+  UpdateControlMetadataData,
+  AddControlFromLibraryData,
+  AddDocumentToControlData,
+  AddTestToControlData,
+  SetOwnerForControlData,
 } from "../generated/types.gen.js";
 import {
   addJsonFileOptions,
@@ -57,15 +56,12 @@ export function registerControlsCommand(
       pageCursor?: string;
       frameworkMatchesAny: string[];
     }) => {
-      const frameworkMatchesAny = opts.frameworkMatchesAny.filter(Boolean);
       await runSdk(getFlags, (api) =>
         listControls({
           client: api.client,
           query: {
             ...paginationQuery(opts),
-            ...(frameworkMatchesAny.length > 0
-              ? { frameworkMatchesAny }
-              : {}),
+            frameworkMatchesAny: opts.frameworkMatchesAny,
           },
         }),
       );
@@ -88,7 +84,7 @@ export function registerControlsCommand(
     const body = (await readJSONPayload(
       opts.json,
       opts.file,
-    )) as CreateControlInput;
+    )) as CreateCustomControlData["body"];
     await runSdk(getFlags, (api) =>
       createCustomControl({ client: api.client, body }),
     );
@@ -96,28 +92,14 @@ export function registerControlsCommand(
 
   addJsonFileOptions(
     controls
-      .command("add-from-library")
-      .description("Add a control from the Vanta library"),
-  ).action(async (opts: { json?: string; file?: string }) => {
-    const body = (await readJSONPayload(
-      opts.json,
-      opts.file,
-    )) as AddControlFromLibraryInput;
-    await runSdk(getFlags, (api) =>
-      addControlFromLibrary({ client: api.client, body }),
-    );
-  });
-
-  addJsonFileOptions(
-    controls
       .command("update")
-      .description("Update a control's metadata")
+      .description("Update a control")
       .requiredOption("--id <id>", "Control ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
       opts.file,
-    )) as EditControlMetadataInput;
+    )) as UpdateControlMetadataData["body"];
     await runSdk(getFlags, (api) =>
       updateControlMetadata({
         client: api.client,
@@ -139,16 +121,53 @@ export function registerControlsCommand(
 
   addJsonFileOptions(
     controls
-      .command("set-owner")
-      .description("Set or clear a control owner")
+      .command("add-from-library")
+      .description("Add control from Vanta library"),
+  ).action(async (opts: { json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as AddControlFromLibraryData["body"];
+    await runSdk(getFlags, (api) =>
+      addControlFromLibrary({ client: api.client, body }),
+    );
+  });
+
+  addPaginationOptions(
+    controls
+      .command("list-controls-library")
+      .description("List controls from the library"),
+  ).action(async (opts) => {
+    await runSdk(getFlags, (api) =>
+      listLibraryControls({ client: api.client, query: paginationQuery(opts) }),
+    );
+  });
+
+  addPaginationOptions(
+    controls
+      .command("list-deactivated-controls")
+      .description("List deactivated controls"),
+  ).action(async (opts) => {
+    await runSdk(getFlags, (api) =>
+      listDeactivatedControls({
+        client: api.client,
+        query: paginationQuery(opts),
+      }),
+    );
+  });
+
+  addJsonFileOptions(
+    controls
+      .command("add-document-to-control")
+      .description("Add a document to a control")
       .requiredOption("--id <id>", "Control ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
       opts.file,
-    )) as SetOwnerForControlInput;
+    )) as AddDocumentToControlData["body"];
     await runSdk(getFlags, (api) =>
-      setOwnerForControl({
+      addDocumentToControl({
         client: api.client,
         path: { controlId: opts.id },
         body,
@@ -156,13 +175,21 @@ export function registerControlsCommand(
     );
   });
 
-  addPaginationOptions(
-    controls.command("list-library").description("List controls from the library"),
-  ).action(async (opts) => {
+  addJsonFileOptions(
+    controls
+      .command("add-test-to-control")
+      .description("Add a test to a control")
+      .requiredOption("--id <id>", "Control ID"),
+  ).action(async (opts: { id: string; json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as AddTestToControlData["body"];
     await runSdk(getFlags, (api) =>
-      listLibraryControls({
+      addTestToControl({
         client: api.client,
-        query: paginationQuery(opts),
+        path: { controlId: opts.id },
+        body,
       }),
     );
   });
@@ -173,7 +200,11 @@ export function registerControlsCommand(
       .description("List documents for a control")
       .requiredOption("--id <id>", "Control ID"),
   ).action(
-    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
+    async (opts: {
+      id: string;
+      pageSize?: number;
+      pageCursor?: string;
+    }) => {
       await runSdk(getFlags, (api) =>
         listDocumentsForControl({
           client: api.client,
@@ -183,42 +214,6 @@ export function registerControlsCommand(
       );
     },
   );
-
-  addPaginationOptions(
-    controls
-      .command("list-tests")
-      .description("List tests for a control")
-      .requiredOption("--id <id>", "Control ID"),
-  ).action(
-    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
-      await runSdk(getFlags, (api) =>
-        listTestsForControl({
-          client: api.client,
-          path: { controlId: opts.id },
-          query: paginationQuery(opts),
-        }),
-      );
-    },
-  );
-
-  addJsonFileOptions(
-    controls
-      .command("add-document")
-      .description("Add a document to a control")
-      .requiredOption("--id <id>", "Control ID"),
-  ).action(async (opts: { id: string; json?: string; file?: string }) => {
-    const body = (await readJSONPayload(
-      opts.json,
-      opts.file,
-    )) as AddControlDocumentMappingInput;
-    await runSdk(getFlags, (api) =>
-      addDocumentToControl({
-        client: api.client,
-        path: { controlId: opts.id },
-        body,
-      }),
-    );
-  });
 
   controls
     .command("remove-document")
@@ -236,22 +231,43 @@ export function registerControlsCommand(
 
   addJsonFileOptions(
     controls
-      .command("add-test")
-      .description("Add a test to a control")
+      .command("set-owner")
+      .description("Set or clear a control owner")
       .requiredOption("--id <id>", "Control ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
       opts.file,
-    )) as AddControlTestMappingInput;
+    )) as SetOwnerForControlData["body"];
     await runSdk(getFlags, (api) =>
-      addTestToControl({
+      setOwnerForControl({
         client: api.client,
         path: { controlId: opts.id },
         body,
       }),
     );
   });
+
+  addPaginationOptions(
+    controls
+      .command("list-tests")
+      .description("List tests for a control")
+      .requiredOption("--id <id>", "Control ID"),
+  ).action(
+    async (opts: {
+      id: string;
+      pageSize?: number;
+      pageCursor?: string;
+    }) => {
+      await runSdk(getFlags, (api) =>
+        listTestsForControl({
+          client: api.client,
+          path: { controlId: opts.id },
+          query: paginationQuery(opts),
+        }),
+      );
+    },
+  );
 
   controls
     .command("remove-test")
@@ -266,17 +282,4 @@ export function registerControlsCommand(
         }),
       );
     });
-
-  addPaginationOptions(
-    controls.command("list-deactivated").description("List deactivated controls"),
-  ).action(async (opts: NonNullable<ListDeactivatedControlsData["query"]>) => {
-    await runSdk(getFlags, (api) =>
-      listDeactivatedControls({
-        client: api.client,
-        query: {
-          ...paginationQuery(opts),
-        },
-      }),
-    );
-  });
 }

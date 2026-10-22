@@ -4,22 +4,22 @@ import {
   getDocument,
   createDocument,
   deleteDocument,
-  setOwnerForDocument,
   listControlsForDocument,
   listLinksForDocument,
   createLinkForDocument,
   deleteLinkForDocument,
+  setOwnerForDocument,
+  submitDocumentCollection,
   listFilesForDocument,
   uploadFileForDocument,
   deleteFileForDocument,
   getUploadedfileMedia,
-  submitDocumentCollection,
 } from "../generated/sdk.gen.js";
 import type {
-  CreateDocumentInput,
-  CreateLinkForDocumentInput,
-  DocumentStatus,
-  SetOwnerForDocumentInput,
+  ListDocumentsData,
+  CreateDocumentData,
+  CreateLinkForDocumentData,
+  SetOwnerForDocumentData,
 } from "../generated/types.gen.js";
 import { printResponse } from "../output.js";
 import {
@@ -64,21 +64,15 @@ export function registerDocumentsCommand(
       pageSize?: number;
       pageCursor?: string;
       frameworkMatchesAny: string[];
-      statusMatchesAny: string[];
+      statusMatchesAny: NonNullable<NonNullable<ListDocumentsData["query"]>["statusMatchesAny"]>;
     }) => {
-      const frameworkMatchesAny = opts.frameworkMatchesAny.filter(Boolean);
-      const statusMatchesAny = opts.statusMatchesAny.filter(
-        Boolean,
-      ) as DocumentStatus[];
       await runSdk(getFlags, (api) =>
         listDocuments({
           client: api.client,
           query: {
             ...paginationQuery(opts),
-            ...(frameworkMatchesAny.length > 0
-              ? { frameworkMatchesAny }
-              : {}),
-            ...(statusMatchesAny.length > 0 ? { statusMatchesAny } : {}),
+            frameworkMatchesAny: opts.frameworkMatchesAny,
+            statusMatchesAny: opts.statusMatchesAny,
           },
         }),
       );
@@ -101,7 +95,7 @@ export function registerDocumentsCommand(
     const body = (await readJSONPayload(
       opts.json,
       opts.file,
-    )) as CreateDocumentInput;
+    )) as CreateDocumentData["body"];
     await runSdk(getFlags, (api) =>
       createDocument({ client: api.client, body }),
     );
@@ -117,32 +111,17 @@ export function registerDocumentsCommand(
       );
     });
 
-  addJsonFileOptions(
-    documents
-      .command("set-owner")
-      .description("Set or clear a document owner")
-      .requiredOption("--id <id>", "Document ID"),
-  ).action(async (opts: { id: string; json?: string; file?: string }) => {
-    const body = (await readJSONPayload(
-      opts.json,
-      opts.file,
-    )) as SetOwnerForDocumentInput;
-    await runSdk(getFlags, (api) =>
-      setOwnerForDocument({
-        client: api.client,
-        path: { documentId: opts.id },
-        body,
-      }),
-    );
-  });
-
   addPaginationOptions(
     documents
       .command("list-controls")
       .description("List controls for a document")
       .requiredOption("--id <id>", "Document ID"),
   ).action(
-    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
+    async (opts: {
+      id: string;
+      pageSize?: number;
+      pageCursor?: string;
+    }) => {
       await runSdk(getFlags, (api) =>
         listControlsForDocument({
           client: api.client,
@@ -159,7 +138,11 @@ export function registerDocumentsCommand(
       .description("List links for a document")
       .requiredOption("--id <id>", "Document ID"),
   ).action(
-    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
+    async (opts: {
+      id: string;
+      pageSize?: number;
+      pageCursor?: string;
+    }) => {
       await runSdk(getFlags, (api) =>
         listLinksForDocument({
           client: api.client,
@@ -173,13 +156,13 @@ export function registerDocumentsCommand(
   addJsonFileOptions(
     documents
       .command("create-link")
-      .description("Create a link for a document")
+      .description("Create a document link")
       .requiredOption("--id <id>", "Document ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
       opts.file,
-    )) as CreateLinkForDocumentInput;
+    )) as CreateLinkForDocumentData["body"];
     await runSdk(getFlags, (api) =>
       createLinkForDocument({
         client: api.client,
@@ -191,7 +174,7 @@ export function registerDocumentsCommand(
 
   documents
     .command("delete-link")
-    .description("Delete a link for a document")
+    .description("Delete a document link")
     .requiredOption("--id <id>", "Document ID")
     .requiredOption("--link-id <id>", "Link ID")
     .action(async (opts: { id: string; linkId: string }) => {
@@ -203,13 +186,49 @@ export function registerDocumentsCommand(
       );
     });
 
+  addJsonFileOptions(
+    documents
+      .command("set-owner")
+      .description("Set or clear a document owner")
+      .requiredOption("--id <id>", "Document ID"),
+  ).action(async (opts: { id: string; json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as SetOwnerForDocumentData["body"];
+    await runSdk(getFlags, (api) =>
+      setOwnerForDocument({
+        client: api.client,
+        path: { documentId: opts.id },
+        body,
+      }),
+    );
+  });
+
+  documents
+    .command("submit")
+    .description("Submit document collection")
+    .requiredOption("--id <id>", "Document ID")
+    .action(async (opts: { id: string }) => {
+      await runSdk(getFlags, (api) =>
+        submitDocumentCollection({
+          client: api.client,
+          path: { documentId: opts.id },
+        }),
+      );
+    });
+
   addPaginationOptions(
     documents
-      .command("list-uploads")
-      .description("List uploaded files for a document")
+      .command("list-files")
+      .description("List uploads for a document")
       .requiredOption("--id <id>", "Document ID"),
   ).action(
-    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
+    async (opts: {
+      id: string;
+      pageSize?: number;
+      pageCursor?: string;
+    }) => {
       await runSdk(getFlags, (api) =>
         listFilesForDocument({
           client: api.client,
@@ -225,8 +244,11 @@ export function registerDocumentsCommand(
     .description("Upload a file for a document")
     .requiredOption("--id <id>", "Document ID")
     .requiredOption("--file <path>", "Path to file to upload")
-    .option("--effective-at-date <date>", "Effective date for the uploaded file")
-    .option("--description <text>", "Description for the uploaded file")
+    .option(
+      "--effective-at-date <date>",
+      "Date indicating when the document is effective from",
+    )
+    .option("--description <text>", "Description of the uploaded document")
     .action(
       async (opts: {
         id: string;
@@ -234,23 +256,15 @@ export function registerDocumentsCommand(
         effectiveAtDate?: string;
         description?: string;
       }) => {
-        const filePath = opts.file.trim();
-        if (!filePath) {
-          throw new Error("--file is required");
-        }
-        const file = await readBinaryFile(filePath);
+        const file = await readBinaryFile(opts.file);
         await runSdk(getFlags, (api) =>
           uploadFileForDocument({
             client: api.client,
             path: { documentId: opts.id },
             body: {
               file,
-              ...(opts.effectiveAtDate?.trim()
-                ? { effectiveAtDate: opts.effectiveAtDate.trim() }
-                : {}),
-              ...(opts.description?.trim()
-                ? { description: opts.description.trim() }
-                : {}),
+              effectiveAtDate: opts.effectiveAtDate,
+              description: opts.description,
             },
           }),
         );
@@ -259,24 +273,21 @@ export function registerDocumentsCommand(
 
   documents
     .command("delete-file")
-    .description("Delete an uploaded file for a document")
+    .description("Delete a document file")
     .requiredOption("--id <id>", "Document ID")
     .requiredOption("--uploaded-file-id <id>", "Uploaded file ID")
     .action(async (opts: { id: string; uploadedFileId: string }) => {
       await runSdk(getFlags, (api) =>
         deleteFileForDocument({
           client: api.client,
-          path: {
-            documentId: opts.id,
-            uploadedFileId: opts.uploadedFileId,
-          },
+          path: { documentId: opts.id, uploadedFileId: opts.uploadedFileId },
         }),
       );
     });
 
   documents
-    .command("download-file")
-    .description("Download uploaded file media for a document")
+    .command("download-file-media")
+    .description("Download the media for a document upload")
     .requiredOption("--id <id>", "Document ID")
     .requiredOption("--uploaded-file-id <id>", "Uploaded file ID")
     .option(
@@ -292,32 +303,13 @@ export function registerDocumentsCommand(
         await withClient(getFlags, async (api, flags) => {
           const result = await getUploadedfileMedia({
             client: api.client,
-            path: {
-              documentId: opts.id,
-              uploadedFileId: opts.uploadedFileId,
-            },
+            path: { documentId: opts.id, uploadedFileId: opts.uploadedFileId },
           });
           if (result.error) throw result.error;
-          const data = result.data;
           const dest = opts.output?.trim();
-          await writeDownloadedMedia(data, dest);
-          if (dest) {
-            printResponse({ savedTo: dest }, flags);
-          }
+          await writeDownloadedMedia(result.data, dest);
+          if (dest) printResponse({ savedTo: dest }, flags);
         });
       },
     );
-
-  documents
-    .command("submit")
-    .description("Submit document collection")
-    .requiredOption("--id <id>", "Document ID")
-    .action(async (opts: { id: string }) => {
-      await runSdk(getFlags, (api) =>
-        submitDocumentCollection({
-          client: api.client,
-          path: { documentId: opts.id },
-        }),
-      );
-    });
 }

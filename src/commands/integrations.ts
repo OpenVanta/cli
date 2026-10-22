@@ -1,17 +1,17 @@
 import type { Command } from "commander";
 import {
-  getConnectedIntegration,
-  getResource,
-  getResourceKindDetails,
   listConnectedIntegrations,
+  getConnectedIntegration,
   listResourceKindSummaries,
+  getResourceKindDetails,
   listResources,
-  updateResource,
   updateResources,
+  getResource,
+  updateResource,
 } from "../generated/sdk.gen.js";
 import type {
-  UpdateResourceData,
   UpdateResourcesData,
+  UpdateResourceData,
 } from "../generated/types.gen.js";
 import {
   addJsonFileOptions,
@@ -29,11 +29,11 @@ export function registerIntegrationsCommand(
 ): void {
   const integrations = program
     .command("integrations")
-    .description("Manage connected integrations");
+    .description("Manage integrations");
 
   addPaginationOptions(
-    integrations.command("list").description("List connected integrations"),
-  ).action(async (opts: { pageSize?: number; pageCursor?: string }) => {
+    integrations.command("list").description("List integrations"),
+  ).action(async (opts) => {
     await runSdk(getFlags, (api) =>
       listConnectedIntegrations({
         client: api.client,
@@ -44,7 +44,7 @@ export function registerIntegrationsCommand(
 
   integrations
     .command("get")
-    .description("Get a connected integration by ID")
+    .description("Get an integration by ID")
     .requiredOption("--id <id>", "Integration ID")
     .action(async (opts: { id: string }) => {
       await runSdk(getFlags, (api) =>
@@ -57,7 +57,7 @@ export function registerIntegrationsCommand(
 
   integrations
     .command("list-resource-kinds")
-    .description("List resource kind summaries for an integration")
+    .description("List resource kinds for an integration")
     .requiredOption("--id <id>", "Integration ID")
     .action(async (opts: { id: string }) => {
       await runSdk(getFlags, (api) =>
@@ -70,12 +70,12 @@ export function registerIntegrationsCommand(
 
   integrations
     .command("get-resource-kind")
-    .description("Get details for an integration resource kind")
+    .description("Get an integration resource kind by ID")
     .requiredOption("--id <id>", "Integration ID")
     .requiredOption("--resource-kind <kind>", "Integration resource kind")
     .option(
       "--connection-id <id>",
-      "Filter by integration connection ID",
+      "Unique identifier of the integration connection",
     )
     .action(
       async (opts: {
@@ -86,15 +86,8 @@ export function registerIntegrationsCommand(
         await runSdk(getFlags, (api) =>
           getResourceKindDetails({
             client: api.client,
-            path: {
-              integrationId: opts.id,
-              resourceKind: opts.resourceKind,
-            },
-            query: {
-              ...(opts.connectionId?.trim()
-                ? { connectionId: opts.connectionId.trim() }
-                : {}),
-            },
+            path: { integrationId: opts.id, resourceKind: opts.resourceKind },
+            query: { connectionId: opts.connectionId },
           }),
         );
       },
@@ -102,25 +95,28 @@ export function registerIntegrationsCommand(
 
   addPaginationOptions(
     integrations
-      .command("list-resources")
+      .command("list-resource-kind-resources")
       .description("List resources for an integration resource kind")
       .requiredOption("--id <id>", "Integration ID")
       .requiredOption("--resource-kind <kind>", "Integration resource kind")
       .option(
         "--connection-id <id>",
-        "Filter by integration connection ID",
+        "Unique identifier of the integration connection",
       )
       .option(
         "--has-description <bool>",
-        "Filter resources with descriptions (true/false)",
+        "Filter resources that have a description. If omitted, this will return resources both with and without a description (true/false)",
+        (value) => parseOptionalBoolString(value, "has-description"),
       )
       .option(
         "--has-owner <bool>",
-        "Filter resources with owners (true/false)",
+        "Filter resources that have an owner. If omitted, this will return resources both with and without an owner (true/false)",
+        (value) => parseOptionalBoolString(value, "has-owner"),
       )
       .option(
         "--is-in-scope <bool>",
-        "Filter resources by scope status (true/false)",
+        "Filter resources that are in scope. If omitted, this will return resources both in and out of scope (true/false)",
+        (value) => parseOptionalBoolString(value, "is-in-scope"),
       ),
   ).action(
     async (opts: {
@@ -129,40 +125,56 @@ export function registerIntegrationsCommand(
       pageSize?: number;
       pageCursor?: string;
       connectionId?: string;
-      hasDescription?: string;
-      hasOwner?: string;
-      isInScope?: string;
+      hasDescription?: boolean;
+      hasOwner?: boolean;
+      isInScope?: boolean;
     }) => {
-      const hasDescription = parseOptionalBoolString(
-        opts.hasDescription,
-        "has-description",
-      );
-      const hasOwner = parseOptionalBoolString(opts.hasOwner, "has-owner");
-      const isInScope = parseOptionalBoolString(opts.isInScope, "is-in-scope");
       await runSdk(getFlags, (api) =>
         listResources({
           client: api.client,
-          path: {
-            integrationId: opts.id,
-            resourceKind: opts.resourceKind,
-          },
+          path: { integrationId: opts.id, resourceKind: opts.resourceKind },
           query: {
             ...paginationQuery(opts),
-            ...(opts.connectionId?.trim()
-              ? { connectionId: opts.connectionId.trim() }
-              : {}),
-            ...(hasDescription !== undefined ? { hasDescription } : {}),
-            ...(hasOwner !== undefined ? { hasOwner } : {}),
-            ...(isInScope !== undefined ? { isInScope } : {}),
+            connectionId: opts.connectionId,
+            hasDescription: opts.hasDescription,
+            hasOwner: opts.hasOwner,
+            isInScope: opts.isInScope,
           },
         }),
       );
     },
   );
 
+  addJsonFileOptions(
+    integrations
+      .command("update-resource-kind-resources")
+      .description("Update resources for an integration resource kind")
+      .requiredOption("--id <id>", "Integration ID")
+      .requiredOption("--resource-kind <kind>", "Integration resource kind"),
+  ).action(
+    async (opts: {
+      id: string;
+      resourceKind: string;
+      json?: string;
+      file?: string;
+    }) => {
+      const body = (await readJSONPayload(
+        opts.json,
+        opts.file,
+      )) as UpdateResourcesData["body"];
+      await runSdk(getFlags, (api) =>
+        updateResources({
+          client: api.client,
+          path: { integrationId: opts.id, resourceKind: opts.resourceKind },
+          body,
+        }),
+      );
+    },
+  );
+
   integrations
-    .command("get-resource")
-    .description("Get an integration resource by ID")
+    .command("get-resource-kind-resource")
+    .description("Get an integration resource kind resource by ID")
     .requiredOption("--id <id>", "Integration ID")
     .requiredOption("--resource-kind <kind>", "Integration resource kind")
     .requiredOption("--resource-id <id>", "Resource ID")
@@ -187,8 +199,8 @@ export function registerIntegrationsCommand(
 
   addJsonFileOptions(
     integrations
-      .command("update-resource")
-      .description("Update metadata for a single integration resource")
+      .command("update-resource-kind-resource")
+      .description("Update an integration resource kind resource")
       .requiredOption("--id <id>", "Integration ID")
       .requiredOption("--resource-kind <kind>", "Integration resource kind")
       .requiredOption("--resource-id <id>", "Resource ID"),
@@ -211,36 +223,6 @@ export function registerIntegrationsCommand(
             integrationId: opts.id,
             resourceKind: opts.resourceKind,
             resourceId: opts.resourceId,
-          },
-          body,
-        }),
-      );
-    },
-  );
-
-  addJsonFileOptions(
-    integrations
-      .command("update-resources")
-      .description("Update metadata for multiple integration resources")
-      .requiredOption("--id <id>", "Integration ID")
-      .requiredOption("--resource-kind <kind>", "Integration resource kind"),
-  ).action(
-    async (opts: {
-      id: string;
-      resourceKind: string;
-      json?: string;
-      file?: string;
-    }) => {
-      const body = (await readJSONPayload(
-        opts.json,
-        opts.file,
-      )) as UpdateResourcesData["body"];
-      await runSdk(getFlags, (api) =>
-        updateResources({
-          client: api.client,
-          path: {
-            integrationId: opts.id,
-            resourceKind: opts.resourceKind,
           },
           body,
         }),

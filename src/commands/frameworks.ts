@@ -42,13 +42,19 @@ export function registerFrameworksCommand(
       .command("list-controls")
       .description("List controls for a framework")
       .requiredOption("--id <id>", "Framework ID"),
-  ).action(async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
-    await runSdk(getFlags, (api) =>
-      listControlsForFramework({
-        client: api.client,
-        path: { frameworkId: opts.id },
-        query: paginationQuery(opts),
-      }),
-    );
-  });
+  ).action(
+    async (opts: {
+      id: string;
+      pageSize?: number;
+      pageCursor?: string;
+    }) => {
+      await runSdk(getFlags, (api) =>
+        listControlsForFramework({
+          client: api.client,
+          path: { frameworkId: opts.id },
+          query: paginationQuery(opts),
+        }),
+      );
+    },
+  );
 }

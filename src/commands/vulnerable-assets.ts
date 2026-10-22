@@ -1,9 +1,9 @@
 import type { Command } from "commander";
 import {
-  getVulnerableAsset,
   listVulnerableAssets,
+  getVulnerableAsset,
 } from "../generated/sdk.gen.js";
-import type { VulnerableAssetType } from "../generated/types.gen.js";
+import type { ListVulnerableAssetsData } from "../generated/types.gen.js";
 import {
   addPaginationOptions,
   paginationQuery,
@@ -26,11 +26,11 @@ export function registerVulnerableAssetsCommand(
       .option("--q <query>", "Filter vulnerable assets by search query")
       .option(
         "--integration-id <id>",
-        "Filter vulnerable assets by vulnerability scanner integration ID",
+        "Filter vulnerable assets by specific vulnerability scanner",
       )
       .option(
         "--asset-type <type>",
-        "Filter vulnerable assets by asset type (CODE_REPOSITORY, CONTAINER_REPOSITORY, CONTAINER_REPOSITORY_IMAGE, MANIFEST_FILE, SERVER, SERVERLESS_FUNCTION, WORKSTATION)",
+        "Filter vulnerable assets by asset type: SERVER, SERVERLESS_FUNCTION, CONTAINER, CONTAINER_REPOSITORY, CONTAINER_REPOSITORY_IMAGE, CODE_REPOSITORY, MANIFEST_FILE, WORKSTATION, OTHER",
       )
       .option(
         "--asset-external-account-id <id>",
@@ -42,7 +42,7 @@ export function registerVulnerableAssetsCommand(
       pageCursor?: string;
       q?: string;
       integrationId?: string;
-      assetType?: string;
+      assetType?: NonNullable<ListVulnerableAssetsData["query"]>["assetType"];
       assetExternalAccountId?: string;
     }) => {
       await runSdk(getFlags, (api) =>
@@ -50,16 +50,10 @@ export function registerVulnerableAssetsCommand(
           client: api.client,
           query: {
             ...paginationQuery(opts),
-            ...(opts.q?.trim() ? { q: opts.q.trim() } : {}),
-            ...(opts.integrationId?.trim()
-              ? { integrationId: opts.integrationId.trim() }
-              : {}),
-            ...(opts.assetType?.trim()
-              ? { assetType: opts.assetType.trim() as VulnerableAssetType }
-              : {}),
-            ...(opts.assetExternalAccountId?.trim()
-              ? { assetExternalAccountId: opts.assetExternalAccountId.trim() }
-              : {}),
+            q: opts.q,
+            integrationId: opts.integrationId,
+            assetType: opts.assetType,
+            assetExternalAccountId: opts.assetExternalAccountId,
           },
         }),
       );

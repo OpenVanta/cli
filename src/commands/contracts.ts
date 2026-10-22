@@ -1,8 +1,8 @@
 import type { Command } from "commander";
 import {
-  deleteContract,
-  getContract,
   listContracts,
+  getContract,
+  deleteContract,
   uploadContract,
 } from "../generated/sdk.gen.js";
 import {
@@ -52,33 +52,38 @@ export function registerContractsCommand(
   contracts
     .command("upload")
     .description("Upload a contract")
-    .requiredOption("--file <path>", "Path to contract file to upload")
+    .requiredOption(
+      "--file <path>",
+      "Path to file to upload: the contract file to upload. Only PDF files are accepted",
+    )
     .option(
       "--executed-date <date>",
-      "ISO 8601 date when the contract was executed",
+      "ISO 8601 date indicating when the contract was executed",
     )
     .option(
       "--account-id <id>",
-      "Customer trust account ID to associate with the contract",
+      "ID of the customer trust account to associate with this contract",
+    )
+    .option(
+      "--external-id <id>",
+      "Stable source-system identifier used to reject duplicate contract uploads; repeats return 409. Use the upstream document or record ID when available, such as the Microsoft Graph DriveItem ID for SharePoint or the Ironclad record ID for Ironclad. If there is no source system, generate and store a durable idempotency key. Maximum 256 characters",
     )
     .action(
       async (opts: {
         file: string;
         executedDate?: string;
         accountId?: string;
+        externalId?: string;
       }) => {
-        const file = await readBinaryFile(opts.file.trim());
+        const file = await readBinaryFile(opts.file);
         await runSdk(getFlags, (api) =>
           uploadContract({
             client: api.client,
             body: {
               file,
-              ...(opts.executedDate?.trim()
-                ? { executedDate: opts.executedDate.trim() }
-                : {}),
-              ...(opts.accountId?.trim()
-                ? { accountId: opts.accountId.trim() }
-                : {}),
+              executedDate: opts.executedDate,
+              accountId: opts.accountId,
+              externalId: opts.externalId,
             },
           }),
         );
