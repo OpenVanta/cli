@@ -9,6 +9,7 @@
 //   commands.ts   which commands exist and what they're called ("Command structure")
 //   help.ts       what each command's flags and help say ("Help text")
 //   config.ts     the exceptions to those rules
+//   types.ts      the command model and the shape of config.ts entries
 //   generate.ts   this file: builds the groups, renders one TypeScript file
 //                 per group plus index.ts, and formats them with oxfmt
 import { execFileSync } from "node:child_process";
@@ -24,9 +25,7 @@ import { parseArgs } from "node:util";
 import {
   camel,
   checkUniqueNames,
-  type Command,
   commandName,
-  type Group,
   lowerFirst,
   newGroup,
   pascal,
@@ -37,9 +36,9 @@ import {
   applyHelpOverrides,
   buildOptions,
   commandDescription,
-  type Option,
 } from "./help.js";
-import { loadOperations, type Operation } from "./spec.js";
+import { loadOperations } from "./spec.js";
+import type { Command, Group, Operation, Option } from "./types.js";
 
 // ===========================================================================
 // Groups

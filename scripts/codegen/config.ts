@@ -5,37 +5,12 @@
 // api-spec.json using the conventions in AGENTS.md. Everything here is an
 // explicit exception or naming input to those conventions. Prefer extending the
 // conventions over adding per-operation overrides.
-
-export type Noun = {
-  // Display name for one item, e.g. "Trust Center FAQ".
-  singular?: string;
-  // Display name for the collection, e.g. "Trust Center FAQs".
-  plural?: string;
-  // Name used in verb-noun commands when it differs from the singular path
-  // segment, e.g. "file" for `uploads` (`documents upload-file`).
-  commandSingular?: string;
-  // Name used in `list` and bulk commands when it differs from the path
-  // segment, e.g. "files" for `uploads` (`documents list-files`).
-  commandPlural?: string;
-};
-
-export type OptionOverride = {
-  flag?: string;
-  placeholder?: string;
-  description?: string;
-};
-
-export type OperationOverride = {
-  // Command name, replacing the derived verb or verb-noun.
-  name?: string;
-  // Keyed by API parameter or multipart field name.
-  options?: Record<string, OptionOverride>;
-};
-
-export type GroupOverride = {
-  // Overrides the group's own `--id <id>` flag.
-  id?: OptionOverride;
-};
+import type {
+  GroupOverride,
+  Noun,
+  OperationOverride,
+  OptionOverride,
+} from "./types.js";
 
 // Top-level command order in `vanta --help`. Groups not listed are appended
 // alphabetically.

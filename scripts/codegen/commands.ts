@@ -4,8 +4,7 @@
 import { camelCase, kebabCase, noCase, pascalCase } from "change-case";
 import pluralize from "pluralize";
 import * as config from "./config.js";
-import type { Option } from "./help.js";
-import type { Operation, Segment } from "./spec.js";
+import type { Group, Operation, Placement, Segment } from "./types.js";
 
 // ===========================================================================
 // Words
@@ -43,24 +42,6 @@ export const displayPlural = (segment: string, group?: string) =>
 // Groups and commands
 // ===========================================================================
 
-export type Command = {
-  name: string;
-  description: string;
-  op: Operation;
-  options: Option[];
-  paginated: boolean;
-  download: boolean;
-};
-
-// A group is named after its path segment, which also names its file.
-export type Group = {
-  name: string;
-  description: string;
-  singular: string;
-  plural: string;
-  commands: Command[];
-};
-
 export function newGroup(name: string): Group {
   const noun = config.nouns[name];
   const plural = noun?.plural ?? displayPlural(name);
@@ -72,15 +53,6 @@ export function newGroup(name: string): Group {
     commands: [],
   };
 }
-
-// Where an operation sits in the CLI and what its path is made of.
-export type Placement = {
-  // The path's first segment, which names the group.
-  groupSegment: Segment;
-  // Segments after the group, minus a trailing action: they form the noun.
-  resources: Segment[];
-  action?: string;
-};
 
 export function place(op: Operation): Placement {
   const [groupSegment, ...rest] = op.segments as [Segment, ...Segment[]];

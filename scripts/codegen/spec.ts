@@ -1,9 +1,8 @@
 // Reads api-spec.json into one `Operation` per API endpoint and method.
 import { readFileSync } from "node:fs";
+import type { Input, Method, Operation, Schema, Segment } from "./types.js";
 
 // The parts of the OpenAPI spec the generator reads.
-type Method = "get" | "post" | "put" | "patch" | "delete";
-
 type Spec = {
   paths: Record<string, Partial<Record<Method, SpecOperation>>>;
 };
@@ -22,41 +21,6 @@ type SpecParameter = {
   required?: boolean;
   description?: string;
   schema?: Schema;
-};
-
-export type Schema = {
-  type?: string;
-  format?: string;
-  enum?: string[];
-  items?: Schema;
-  description?: string;
-  properties?: Record<string, Schema>;
-  required?: string[];
-};
-
-// One API input: a path or query parameter, or a multipart form field.
-export type Input = {
-  name: string;
-  required: boolean;
-  description: string;
-  schema: Schema;
-};
-
-// A literal path segment and the ID parameter that follows it, if any:
-// `/vendors/{vendorId}` is `{ name: "vendors", param: "vendorId" }`.
-export type Segment = { name: string; param?: string };
-
-export type Operation = {
-  id: string;
-  method: Method;
-  path: string;
-  summary: string;
-  segments: Segment[];
-  pathParams: Input[];
-  queryParams: Input[];
-  body: "none" | "json" | "multipart";
-  formFields: Input[];
-  returnsFile: boolean;
 };
 
 // The schema of one value: an array's items, else the schema itself.

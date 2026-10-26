@@ -6,43 +6,30 @@ import {
   a,
   displayPlural,
   displaySingular,
-  type Group,
   humanize,
   isPlural,
   kebab,
   lowerFirst,
   nounFor,
-  type Placement,
   singular,
   upperFirst,
 } from "./commands.js";
 import * as config from "./config.js";
-import {
-  type Input,
-  type Operation,
-  type Schema,
-  type Segment,
-  valueSchema,
-} from "./spec.js";
+import { valueSchema } from "./spec.js";
+import type {
+  Group,
+  Input,
+  Operation,
+  Option,
+  OptionOverride,
+  Placement,
+  Schema,
+  Segment,
+} from "./types.js";
 
 // ===========================================================================
 // Flags
 // ===========================================================================
-
-export type Option = {
-  flag: string;
-  placeholder: string;
-  description: string;
-  required: boolean;
-  repeatable: boolean;
-  // Parse "true"/"false" into a boolean.
-  parseBool: boolean;
-  // The SDK types the value more narrowly than `string`, e.g. as an enum.
-  sdkTyped: boolean;
-  // Where the value goes in the SDK call, under `key`.
-  target: "path" | "query" | "form" | "file";
-  key: string;
-};
 
 // The noun a parameter refers to: `statusMatchesAny` → `status`.
 function paramNoun(name: string): string {
@@ -156,7 +143,7 @@ function isSdkTyped(schema: Schema): boolean {
 function withOverrides(
   option: Option,
   opId: string,
-  extra?: config.OptionOverride,
+  extra?: OptionOverride,
 ): Option {
   const overrides = [
     extra,
