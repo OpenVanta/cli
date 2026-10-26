@@ -14,6 +14,10 @@ We map from the REST api path to a command structure for CLI with the following 
 - Use the same placeholder for common inputs: `<id>` for IDs, `<timestamp>` for date-times, `<date>` for date-only values, `<bool>` for true/false, `<query>` for search terms, `<json>` for inline JSON, `<path>` for local files, and `<text>` for other free text.
 - Mark repeatable flags `(repeatable)`. Describe timestamps as “ISO 8601 timestamp”; avoid repeated format examples.
 
+# Formatting
+
+- Run `pnpm format` (oxfmt) before committing; CI runs `pnpm format:check`. Markdown is not formatted.
+
 # Testing
 
 - Test changes end to end when modifying the CLI. Build the binary and test the commands.
