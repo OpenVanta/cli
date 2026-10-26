@@ -20,7 +20,10 @@ describe("credential store selection", () => {
     if (process.platform === "darwin") {
       assert.equal(credentialStorageDescription(), "macOS Keychain");
     } else if (process.platform === "win32") {
-      assert.equal(credentialStorageDescription(), "Windows Credential Manager");
+      assert.equal(
+        credentialStorageDescription(),
+        "Windows Credential Manager",
+      );
     } else {
       assert.equal(credentialStorageDescription(), "config file");
     }

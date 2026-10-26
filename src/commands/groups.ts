@@ -61,9 +61,7 @@ export function registerGroupsCommand(
       opts.json,
       opts.file,
     )) as CreateGroupData["body"];
-    await runSdk(getFlags, (api) =>
-      createGroup({ client: api.client, body }),
-    );
+    await runSdk(getFlags, (api) => createGroup({ client: api.client, body }));
   });
 
   addJsonFileOptions(
@@ -135,7 +133,11 @@ export function registerGroupsCommand(
       opts.file,
     )) as AddPeopleToGroupData["body"];
     await runSdk(getFlags, (api) =>
-      addPeopleToGroup({ client: api.client, path: { groupId: opts.id }, body }),
+      addPeopleToGroup({
+        client: api.client,
+        path: { groupId: opts.id },
+        body,
+      }),
     );
   });
 
@@ -160,7 +162,11 @@ export function registerGroupsCommand(
       opts.file,
     )) as AddPersonToGroupData["body"];
     await runSdk(getFlags, (api) =>
-      addPersonToGroup({ client: api.client, path: { groupId: opts.id }, body }),
+      addPersonToGroup({
+        client: api.client,
+        path: { groupId: opts.id },
+        body,
+      }),
     );
   });
 

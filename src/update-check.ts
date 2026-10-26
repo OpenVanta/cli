@@ -2,7 +2,12 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { agentModeEnabled } from "./agent-mode.js";
-import { Version, displayVersion, normalizeVersion, userAgent } from "./version.js";
+import {
+  Version,
+  displayVersion,
+  normalizeVersion,
+  userAgent,
+} from "./version.js";
 
 const updateCheckRepo = "OpenVanta/cli";
 const updateCheckIntervalMs = 24 * 60 * 60 * 1000;

@@ -64,7 +64,9 @@ export function registerVendorsCommand(
       pageSize?: number;
       pageCursor?: string;
       name?: string;
-      statusMatchesAny: NonNullable<NonNullable<ListVendorsData["query"]>["statusMatchesAny"]>;
+      statusMatchesAny: NonNullable<
+        NonNullable<ListVendorsData["query"]>["statusMatchesAny"]
+      >;
     }) => {
       await runSdk(getFlags, (api) =>
         listVendors({
@@ -96,9 +98,7 @@ export function registerVendorsCommand(
       opts.json,
       opts.file,
     )) as CreateVendorData["body"];
-    await runSdk(getFlags, (api) =>
-      createVendor({ client: api.client, body }),
-    );
+    await runSdk(getFlags, (api) => createVendor({ client: api.client, body }));
   });
 
   addJsonFileOptions(
@@ -149,7 +149,9 @@ export function registerVendorsCommand(
       pageSize?: number;
       pageCursor?: string;
       typeIdMatchesAny: string[];
-      statusMatchesAny: NonNullable<NonNullable<GetAssessmentsByVendorIdData["query"]>["statusMatchesAny"]>;
+      statusMatchesAny: NonNullable<
+        NonNullable<GetAssessmentsByVendorIdData["query"]>["statusMatchesAny"]
+      >;
     }) => {
       await runSdk(getFlags, (api) =>
         getAssessmentsByVendorId({
@@ -185,11 +187,7 @@ export function registerVendorsCommand(
       .description("List documents for a vendor")
       .requiredOption("--id <id>", "Vendor ID"),
   ).action(
-    async (opts: {
-      id: string;
-      pageSize?: number;
-      pageCursor?: string;
-    }) => {
+    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
       await runSdk(getFlags, (api) =>
         listVendorDocuments({
           client: api.client,
@@ -330,11 +328,7 @@ export function registerVendorsCommand(
       .description("List security reviews for a vendor")
       .requiredOption("--id <id>", "Vendor ID"),
   ).action(
-    async (opts: {
-      id: string;
-      pageSize?: number;
-      pageCursor?: string;
-    }) => {
+    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
       await runSdk(getFlags, (api) =>
         getSecurityReviewsByVendorId({
           client: api.client,
@@ -404,7 +398,10 @@ export function registerVendorsCommand(
         await runSdk(getFlags, (api) =>
           uploadDocumentForSecurityReview({
             client: api.client,
-            path: { vendorId: opts.id, securityReviewId: opts.securityReviewId },
+            path: {
+              vendorId: opts.id,
+              securityReviewId: opts.securityReviewId,
+            },
             body: {
               file,
               type: opts.type,

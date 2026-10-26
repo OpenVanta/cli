@@ -20,9 +20,7 @@ export function registerPersonnelNotificationSettingsCommand(
     .command("get")
     .description("Get personnel notification settings")
     .action(async () => {
-      await runSdk(getFlags, (api) =>
-        getSettings({ client: api.client }),
-      );
+      await runSdk(getFlags, (api) => getSettings({ client: api.client }));
     });
 
   addJsonFileOptions(

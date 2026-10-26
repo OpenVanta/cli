@@ -73,12 +73,20 @@ export function registerPeopleCommand(
     async (opts: {
       pageSize?: number;
       pageCursor?: string;
-      tasksSummaryStatusMatchesAny: NonNullable<NonNullable<ListPeopleData["query"]>["tasksSummaryStatusMatchesAny"]>;
-      taskTypeMatchesAny: NonNullable<NonNullable<ListPeopleData["query"]>["taskTypeMatchesAny"]>;
-      taskStatusMatchesAny: NonNullable<NonNullable<ListPeopleData["query"]>["taskStatusMatchesAny"]>;
+      tasksSummaryStatusMatchesAny: NonNullable<
+        NonNullable<ListPeopleData["query"]>["tasksSummaryStatusMatchesAny"]
+      >;
+      taskTypeMatchesAny: NonNullable<
+        NonNullable<ListPeopleData["query"]>["taskTypeMatchesAny"]
+      >;
+      taskStatusMatchesAny: NonNullable<
+        NonNullable<ListPeopleData["query"]>["taskStatusMatchesAny"]
+      >;
       emailAndNameFilter?: string;
       groupIdsMatchesAny: string[];
-      employmentStatus?: NonNullable<ListPeopleData["query"]>["employmentStatus"];
+      employmentStatus?: NonNullable<
+        ListPeopleData["query"]
+      >["employmentStatus"];
     }) => {
       await runSdk(getFlags, (api) =>
         listPeople({
@@ -143,9 +151,7 @@ export function registerPeopleCommand(
       opts.json,
       opts.file,
     )) as MarkAsPeopleData["body"];
-    await runSdk(getFlags, (api) =>
-      markAsPeople({ client: api.client, body }),
-    );
+    await runSdk(getFlags, (api) => markAsPeople({ client: api.client, body }));
   });
 
   addJsonFileOptions(
@@ -166,7 +172,10 @@ export function registerPeopleCommand(
     .requiredOption("--id <id>", "Person ID")
     .action(async (opts: { id: string }) => {
       await runSdk(getFlags, (api) =>
-        clearLeaveForPerson({ client: api.client, path: { personId: opts.id } }),
+        clearLeaveForPerson({
+          client: api.client,
+          path: { personId: opts.id },
+        }),
       );
     });
 

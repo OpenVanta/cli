@@ -13,13 +13,13 @@ export function registerUsersCommand(
 ): void {
   const users = program.command("users").description("Manage users");
 
-  addPaginationOptions(
-    users.command("list").description("List users"),
-  ).action(async (opts) => {
-    await runSdk(getFlags, (api) =>
-      listUsers({ client: api.client, query: paginationQuery(opts) }),
-    );
-  });
+  addPaginationOptions(users.command("list").description("List users")).action(
+    async (opts) => {
+      await runSdk(getFlags, (api) =>
+        listUsers({ client: api.client, query: paginationQuery(opts) }),
+      );
+    },
+  );
 
   users
     .command("get")

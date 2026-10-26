@@ -284,7 +284,11 @@ export function registerTrustCentersCommand(
       slugId: string;
       pageSize?: number;
       pageCursor?: string;
-      eventTypesMatchesAny: NonNullable<NonNullable<ListTrustCenterActivityEventsData["query"]>["eventTypesMatchesAny"]>;
+      eventTypesMatchesAny: NonNullable<
+        NonNullable<
+          ListTrustCenterActivityEventsData["query"]
+        >["eventTypesMatchesAny"]
+      >;
       afterDate?: string;
       beforeDate?: string;
     }) => {
@@ -423,11 +427,7 @@ export function registerTrustCentersCommand(
     .requiredOption("--framework-id <id>", "Framework ID")
     .requiredOption("--file <path>", "Path to file to upload")
     .action(
-      async (opts: {
-        slugId: string;
-        frameworkId: string;
-        file: string;
-      }) => {
+      async (opts: { slugId: string; frameworkId: string; file: string }) => {
         const file = await readBinaryFile(opts.file);
         await runSdk(getFlags, (api) =>
           uploadComplianceFrameworkBadge({
@@ -1139,11 +1139,7 @@ export function registerTrustCentersCommand(
       "Write downloaded bytes to file path (default stdout)",
     )
     .action(
-      async (opts: {
-        slugId: string;
-        resourceId: string;
-        output?: string;
-      }) => {
+      async (opts: { slugId: string; resourceId: string; output?: string }) => {
         await withClient(getFlags, async (api, flags) => {
           const result = await getTrustCenterResourceMedia({
             client: api.client,
@@ -1321,7 +1317,10 @@ export function registerTrustCentersCommand(
       await runSdk(getFlags, (api) =>
         updateTrustCenterSubscriberGroup({
           client: api.client,
-          path: { slugId: opts.slugId, subscriberGroupId: opts.subscriberGroupId },
+          path: {
+            slugId: opts.slugId,
+            subscriberGroupId: opts.subscriberGroupId,
+          },
           body,
         }),
       );
@@ -1624,7 +1623,10 @@ export function registerTrustCentersCommand(
         listTrustCenterViewers({
           client: api.client,
           path: { slugId: opts.slugId },
-          query: { ...paginationQuery(opts), includeRemoved: opts.includeRemoved },
+          query: {
+            ...paginationQuery(opts),
+            includeRemoved: opts.includeRemoved,
+          },
         }),
       );
     },

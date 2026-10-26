@@ -128,19 +128,21 @@ export function registerCustomerTrustCommand(
       .command("update-account")
       .description("Update a Customer Trust account")
       .requiredOption("--account-id <id>", "Customer Trust account ID"),
-  ).action(async (opts: { accountId: string; json?: string; file?: string }) => {
-    const body = (await readJSONPayload(
-      opts.json,
-      opts.file,
-    )) as UpdateCustomerTrustAccountData["body"];
-    await runSdk(getFlags, (api) =>
-      updateCustomerTrustAccount({
-        client: api.client,
-        path: { accountId: opts.accountId },
-        body,
-      }),
-    );
-  });
+  ).action(
+    async (opts: { accountId: string; json?: string; file?: string }) => {
+      const body = (await readJSONPayload(
+        opts.json,
+        opts.file,
+      )) as UpdateCustomerTrustAccountData["body"];
+      await runSdk(getFlags, (api) =>
+        updateCustomerTrustAccount({
+          client: api.client,
+          path: { accountId: opts.accountId },
+          body,
+        }),
+      );
+    },
+  );
 
   customerTrust
     .command("delete-account")
@@ -214,8 +216,12 @@ export function registerCustomerTrustCommand(
       pageSize?: number;
       pageCursor?: string;
       q?: string;
-      statusMatchesAny: NonNullable<NonNullable<ListQuestionnairesData["query"]>["statusMatchesAny"]>;
-      typeMatchesAny: NonNullable<NonNullable<ListQuestionnairesData["query"]>["typeMatchesAny"]>;
+      statusMatchesAny: NonNullable<
+        NonNullable<ListQuestionnairesData["query"]>["statusMatchesAny"]
+      >;
+      typeMatchesAny: NonNullable<
+        NonNullable<ListQuestionnairesData["query"]>["typeMatchesAny"]
+      >;
       createdAfter?: string;
       createdBefore?: string;
       ownerIdMatchesAny: string[];
@@ -242,7 +248,7 @@ export function registerCustomerTrustCommand(
   customerTrust
     .command("list-questionnaire-assignable-users")
     .description("List users who can be assigned to questionnaires")
-    .option("--role <role>", "Filter by role: \"owner\" or \"approver\"")
+    .option("--role <role>", 'Filter by role: "owner" or "approver"')
     .option(
       "--q <query>",
       "Optional search string to filter users by name or email",
@@ -298,11 +304,11 @@ export function registerCustomerTrustCommand(
     )
     .option(
       "--owner-assignment <json>",
-      "Owner to assign, as a JSON string: {\"type\": \"User\" | \"Team\", \"id\": \"<id>\"}",
+      'Owner to assign, as a JSON string: {"type": "User" | "Team", "id": "<id>"}',
     )
     .option(
       "--approver-assignment <json>",
-      "Approver to assign, as a JSON string: {\"type\": \"User\" | \"Team\", \"id\": \"<id>\"}",
+      'Approver to assign, as a JSON string: {"type": "User" | "Team", "id": "<id>"}',
     )
     .option("--description <text>", "Description of the questionnaire")
     .option(
@@ -323,11 +329,11 @@ export function registerCustomerTrustCommand(
     )
     .option(
       "--metadata <json>",
-      "Custom key-value pairs, as a JSON string array: [{\"key\": \"<key>\", \"value\": \"<value>\"}]. Keys and values may contain alphanumeric characters, hyphens, underscores, and periods",
+      'Custom key-value pairs, as a JSON string array: [{"key": "<key>", "value": "<value>"}]. Keys and values may contain alphanumeric characters, hyphens, underscores, and periods',
     )
     .option(
       "--tag-and-category-ids <json>",
-      "Tags to assign, as a JSON string array: [{\"categoryId\": \"<id>\", \"tagId\": \"<id>\"}]. Replaces all existing tags",
+      'Tags to assign, as a JSON string array: [{"categoryId": "<id>", "tagId": "<id>"}]. Replaces all existing tags',
     )
     .action(
       async (opts: {
@@ -356,7 +362,8 @@ export function registerCustomerTrustCommand(
               companyUrl: opts.companyUrl,
               dueDate: opts.dueDate,
               customerTrustAccountId: opts.customerTrustAccountId,
-              includeUntaggedEntitiesForCategoryIds: opts.includeUntaggedEntitiesForCategoryIds,
+              includeUntaggedEntitiesForCategoryIds:
+                opts.includeUntaggedEntitiesForCategoryIds,
               metadata: opts.metadata,
               tagAndCategoryIds: opts.tagAndCategoryIds,
             },
@@ -398,11 +405,7 @@ export function registerCustomerTrustCommand(
       .description("Update a questionnaire")
       .requiredOption("--questionnaire-id <id>", "Questionnaire ID"),
   ).action(
-    async (opts: {
-      questionnaireId: string;
-      json?: string;
-      file?: string;
-    }) => {
+    async (opts: { questionnaireId: string; json?: string; file?: string }) => {
       const body = (await readJSONPayload(
         opts.json,
         opts.file,
@@ -436,11 +439,7 @@ export function registerCustomerTrustCommand(
       .description("Approve a questionnaire")
       .requiredOption("--questionnaire-id <id>", "Questionnaire ID"),
   ).action(
-    async (opts: {
-      questionnaireId: string;
-      json?: string;
-      file?: string;
-    }) => {
+    async (opts: { questionnaireId: string; json?: string; file?: string }) => {
       const body = (await readJSONPayload(
         opts.json,
         opts.file,
@@ -461,11 +460,7 @@ export function registerCustomerTrustCommand(
       .description("Complete a questionnaire")
       .requiredOption("--questionnaire-id <id>", "Questionnaire ID"),
   ).action(
-    async (opts: {
-      questionnaireId: string;
-      json?: string;
-      file?: string;
-    }) => {
+    async (opts: { questionnaireId: string; json?: string; file?: string }) => {
       const body = (await readJSONPayload(
         opts.json,
         opts.file,
@@ -594,7 +589,11 @@ export function registerCustomerTrustCommand(
     )
     .action(
       async (opts: {
-        productContextIdsMatchesAny: NonNullable<NonNullable<ListTagCategoriesData["query"]>["productContextIdsMatchesAny"]>;
+        productContextIdsMatchesAny: NonNullable<
+          NonNullable<
+            ListTagCategoriesData["query"]
+          >["productContextIdsMatchesAny"]
+        >;
       }) => {
         await runSdk(getFlags, (api) =>
           listTagCategories({
@@ -626,11 +625,7 @@ export function registerCustomerTrustCommand(
       .description("Enable a tag category for a product context")
       .requiredOption("--tag-category-id <id>", "Tag category ID"),
   ).action(
-    async (opts: {
-      tagCategoryId: string;
-      json?: string;
-      file?: string;
-    }) => {
+    async (opts: { tagCategoryId: string; json?: string; file?: string }) => {
       const body = (await readJSONPayload(
         opts.json,
         opts.file,

@@ -23,10 +23,7 @@ describe("readBinaryFile", () => {
     const file = await readBinaryFile(filePath);
     assert.ok(file instanceof File);
     assert.equal(file.name, "questions.csv");
-    assert.equal(
-      await file.text(),
-      "Question\nDo you encrypt data at rest?\n",
-    );
+    assert.equal(await file.text(), "Question\nDo you encrypt data at rest?\n");
   });
 
   it("serializes as a multipart file part with a non-empty filename", async () => {

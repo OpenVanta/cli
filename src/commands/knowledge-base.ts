@@ -194,7 +194,7 @@ export function registerKnowledgeBaseCommand(
       )
       .option(
         "--matches-tags <json>",
-        "JSON-encoded array of `{categoryId, tagId}` pairs. Tags within the same category are OR'd together; tags across different categories are AND'd. For example, passing two tags from \"Framework\" and one tag from \"Region\" matches resources that have either of the two frameworks AND the given region. Find category IDs with `vanta customer-trust list-tag-categories` and tag IDs with `vanta customer-trust get-tag-category --tag-category-id <id>`.",
+        'JSON-encoded array of `{categoryId, tagId}` pairs. Tags within the same category are OR\'d together; tags across different categories are AND\'d. For example, passing two tags from "Framework" and one tag from "Region" matches resources that have either of the two frameworks AND the given region. Find category IDs with `vanta customer-trust list-tag-categories` and tag IDs with `vanta customer-trust get-tag-category --tag-category-id <id>`.',
       )
       .option(
         "--expires-before <timestamp>",
@@ -209,7 +209,9 @@ export function registerKnowledgeBaseCommand(
       pageSize?: number;
       pageCursor?: string;
       q?: string;
-      typeMatchesAny: NonNullable<NonNullable<ListKnowledgeBaseResourcesData["query"]>["typeMatchesAny"]>;
+      typeMatchesAny: NonNullable<
+        NonNullable<ListKnowledgeBaseResourcesData["query"]>["typeMatchesAny"]
+      >;
       lastUpdatedAfter?: string;
       lastUpdatedBefore?: string;
       matchesTags?: string;
@@ -242,7 +244,7 @@ export function registerKnowledgeBaseCommand(
     .option("--description <text>", "Description of the document resource")
     .option(
       "--owner-assignment <json>",
-      "Owner to assign as a JSON string: {\"type\":\"User\",\"id\":\"<id>\"}",
+      'Owner to assign as a JSON string: {"type":"User","id":"<id>"}',
     )
     .option(
       "--customer-visibility <visibility>",
@@ -262,7 +264,7 @@ export function registerKnowledgeBaseCommand(
     )
     .option(
       "--tags <json>",
-      "Tags as a JSON array: [{\"categoryId\":\"<id>\",\"tagId\":\"<id>\"}]",
+      'Tags as a JSON array: [{"categoryId":"<id>","tagId":"<id>"}]',
     )
     .option(
       "--category-id <id>",
@@ -365,7 +367,11 @@ export function registerKnowledgeBaseCommand(
       opts.file,
     )) as UpdateWebpageResourceData["body"];
     await runSdk(getFlags, (api) =>
-      updateWebpageResource({ client: api.client, path: { id: opts.id }, body }),
+      updateWebpageResource({
+        client: api.client,
+        path: { id: opts.id },
+        body,
+      }),
     );
   });
 

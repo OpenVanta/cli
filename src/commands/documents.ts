@@ -64,7 +64,9 @@ export function registerDocumentsCommand(
       pageSize?: number;
       pageCursor?: string;
       frameworkMatchesAny: string[];
-      statusMatchesAny: NonNullable<NonNullable<ListDocumentsData["query"]>["statusMatchesAny"]>;
+      statusMatchesAny: NonNullable<
+        NonNullable<ListDocumentsData["query"]>["statusMatchesAny"]
+      >;
     }) => {
       await runSdk(getFlags, (api) =>
         listDocuments({
@@ -117,11 +119,7 @@ export function registerDocumentsCommand(
       .description("List controls for a document")
       .requiredOption("--id <id>", "Document ID"),
   ).action(
-    async (opts: {
-      id: string;
-      pageSize?: number;
-      pageCursor?: string;
-    }) => {
+    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
       await runSdk(getFlags, (api) =>
         listControlsForDocument({
           client: api.client,
@@ -138,11 +136,7 @@ export function registerDocumentsCommand(
       .description("List links for a document")
       .requiredOption("--id <id>", "Document ID"),
   ).action(
-    async (opts: {
-      id: string;
-      pageSize?: number;
-      pageCursor?: string;
-    }) => {
+    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
       await runSdk(getFlags, (api) =>
         listLinksForDocument({
           client: api.client,
@@ -224,11 +218,7 @@ export function registerDocumentsCommand(
       .description("List uploads for a document")
       .requiredOption("--id <id>", "Document ID"),
   ).action(
-    async (opts: {
-      id: string;
-      pageSize?: number;
-      pageCursor?: string;
-    }) => {
+    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
       await runSdk(getFlags, (api) =>
         listFilesForDocument({
           client: api.client,
@@ -295,11 +285,7 @@ export function registerDocumentsCommand(
       "Write downloaded bytes to file path (default stdout)",
     )
     .action(
-      async (opts: {
-        id: string;
-        uploadedFileId: string;
-        output?: string;
-      }) => {
+      async (opts: { id: string; uploadedFileId: string; output?: string }) => {
         await withClient(getFlags, async (api, flags) => {
           const result = await getUploadedfileMedia({
             client: api.client,

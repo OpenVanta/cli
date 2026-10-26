@@ -31,7 +31,9 @@ const targets = [
 function run(cmd: string, args: string[]): void {
   const result = spawnSync(cmd, args, { stdio: "inherit" });
   if (result.status !== 0) {
-    throw new Error(`${cmd} ${args.join(" ")} failed with code ${result.status}`);
+    throw new Error(
+      `${cmd} ${args.join(" ")} failed with code ${result.status}`,
+    );
   }
 }
 

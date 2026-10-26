@@ -200,11 +200,7 @@ export function registerControlsCommand(
       .description("List documents for a control")
       .requiredOption("--id <id>", "Control ID"),
   ).action(
-    async (opts: {
-      id: string;
-      pageSize?: number;
-      pageCursor?: string;
-    }) => {
+    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
       await runSdk(getFlags, (api) =>
         listDocumentsForControl({
           client: api.client,
@@ -254,11 +250,7 @@ export function registerControlsCommand(
       .description("List tests for a control")
       .requiredOption("--id <id>", "Control ID"),
   ).action(
-    async (opts: {
-      id: string;
-      pageSize?: number;
-      pageCursor?: string;
-    }) => {
+    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
       await runSdk(getFlags, (api) =>
         listTestsForControl({
           client: api.client,
