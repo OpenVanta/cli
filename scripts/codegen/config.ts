@@ -117,9 +117,9 @@ export const placeholderNouns = [
   "visibility",
 ];
 
-// Plural-looking nouns that stay as written when singularized, e.g.
-// `/trust-centers/{slugId}/data-collected` is about data, not one datum.
-export const uncountableNouns = ["data"];
+// Plurals the singular rules (-ies → -y, -sses → -ss, -s → "") get wrong,
+// keyed by plural.
+export const irregularNouns: Record<string, string> = { people: "person" };
 
 // A trailing path segment whose first word is one of these is an action, and
 // names the command (`/vendors/{vendorId}/set-status` → `vendors set-status`).

@@ -1,8 +1,6 @@
 // Which commands exist and what they're called: each operation is placed in
 // a group and named `<verb>-<noun>` (`vendors list-findings`). See AGENTS.md
 // "Command structure".
-import { camelCase, kebabCase, noCase, pascalCase } from "change-case";
-import pluralize from "pluralize";
 import * as config from "./config.js";
 import type { Group, Operation, Placement, Segment } from "./types.js";
 
@@ -10,23 +8,37 @@ import type { Group, Operation, Placement, Segment } from "./types.js";
 // Words
 // ===========================================================================
 
-for (const noun of config.uncountableNouns) pluralize.addUncountableRule(noun);
-
-export { camelCase as camel, kebabCase as kebab, pascalCase as pascal };
-
-// `faqCategories` and `faq-categories` → "faq categories".
-export const humanize = noCase;
 export const lowerFirst = (s: string) =>
   s.replace(/^./, (c) => c.toLowerCase());
 export const upperFirst = (s: string) =>
   s.replace(/^./, (c) => c.toUpperCase());
+// `statusMatchesAny` → `status-matches-any`, and back with `camel`.
+export const kebab = (s: string) =>
+  s.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+export const camel = (s: string) =>
+  s.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase());
+export const pascal = (s: string) => upperFirst(camel(s));
+// `faqCategories` and `faq-categories` → "faq categories".
+export const humanize = (s: string) => kebab(s).replace(/-/g, " ");
 
 // "a vendor", "an integration", "a user".
 export const a = (noun: string) =>
   `${/^[aeiou]/i.test(noun) && !/^(us|uni|eu)/i.test(noun) ? "an" : "a"} ${noun}`;
 
 // Singularizes the last word of a kebab-case segment: `security-reviews`.
-export const singular = (segment: string) => pluralize.singular(segment);
+export function singular(segment: string): string {
+  const word = segment.split("-").at(-1)!;
+  const one =
+    config.irregularNouns[word] ??
+    (word.endsWith("ies")
+      ? `${word.slice(0, -3)}y`
+      : word.endsWith("sses")
+        ? word.slice(0, -2)
+        : word.endsWith("s") && !/(ss|us)$/.test(word)
+          ? word.slice(0, -1)
+          : word);
+  return segment.slice(0, -word.length) + one;
+}
 export const isPlural = (segment: string) => singular(segment) !== segment;
 
 // Display names from `config.nouns`, keyed by "<group> <segment>" or by
