@@ -1,7 +1,7 @@
 // Structural decisions the command generator cannot derive from the OpenAPI
 // spec, plus help text that replaces generated descriptions.
 //
-// The generator (main.ts) derives the command tree from
+// The generator (generate.ts) derives the command tree from
 // api-spec.json using the conventions in AGENTS.md. Everything here is an
 // explicit exception or naming input to those conventions. Prefer extending the
 // conventions over adding per-operation overrides.

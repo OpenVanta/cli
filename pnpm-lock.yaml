@@ -191,9 +191,6 @@ importers:
       change-case:
         specifier: 5.4.4
         version: 5.4.4
-      indefinite:
-        specifier: 2.5.1
-        version: 2.5.1
       oxfmt:
         specifier: 0.72.0
         version: 0.72.0
@@ -1152,10 +1149,6 @@ packages:
     engines: {node: '>=0.4.7'}
     hasBin: true
 
-  indefinite@2.5.1:
-    resolution: {integrity: sha512-Ul0hCdnSjuFDEloYWeozTaEfljbz+0q+u4HsHns2dOk2DlhGlbRMGFtNcIL+Ve7sZYeIOTOAKA0usAXBGHpNDg==}
-    engines: {node: '>=6.0.0'}
-
   is-docker@3.0.0:
     resolution: {integrity: sha512-eljcgEDlEns/7AXFosB5K/2nCM4P7FQPkGc/DWLy5rmFEWvZayGrik1d9/QIY5nJ4f9YsVvBkA6kJpHn9rISdQ==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
@@ -2035,8 +2028,6 @@ snapshots:
       wordwrap: 1.0.0
     optionalDependencies:
       uglify-js: 3.19.3
-
-  indefinite@2.5.1: {}
 
   is-docker@3.0.0: {}
 

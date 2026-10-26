@@ -17,7 +17,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test 'src/**/*.test.ts'",
     "build:binaries": "tsx scripts/build-binaries.ts",
-    "generate:commands": "tsx scripts/codegen/main.ts",
+    "generate:commands": "tsx scripts/codegen/generate.ts",
     "format": "oxfmt",
     "format:check": "oxfmt --check"
   },
@@ -32,7 +32,6 @@
     "@types/pluralize": "0.0.33",
     "bun": "^1.3.14",
     "change-case": "5.4.4",
-    "indefinite": "2.5.1",
     "oxfmt": "0.72.0",
     "pluralize": "8.0.0",
     "tsup": "^8.5.0",
