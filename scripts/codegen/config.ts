@@ -111,7 +111,40 @@ export const params: Record<string, OptionOverride> = {
   // Product contexts are a fixed set of names, not IDs.
   productContextId: { placeholder: "product" },
   productContextIdsMatchesAny: { placeholder: "product" },
+  // Search terms.
+  q: { placeholder: "query" },
+  search: { placeholder: "query" },
+  searchString: { placeholder: "query" },
+  orderBy: { placeholder: "field" },
 };
+
+// Parameter nouns that are their own placeholder (`--status <status>`). Other
+// free-text parameters use `<text>`; see AGENTS.md "Help text".
+export const placeholderNouns = [
+  "category",
+  "direction",
+  "group",
+  "kind",
+  "name",
+  "owner",
+  "permission",
+  "reason",
+  "role",
+  "scope",
+  "severity",
+  "slug",
+  "source",
+  "status",
+  "template",
+  "title",
+  "type",
+  "url",
+  "visibility",
+];
+
+// Plural-looking nouns that stay as written when singularized, e.g.
+// `/trust-centers/{slugId}/data-collected` is about data, not one datum.
+export const uncountableNouns = ["data"];
 
 // A trailing path segment whose first word is one of these is an action, and
 // names the command (`/vendors/{vendorId}/set-status` → `vendors set-status`).

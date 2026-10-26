@@ -44,29 +44,6 @@ export type Option = {
   key: string;
 };
 
-const searchParams = new Set(["q", "search", "searchString"]);
-const placeholderWords = new Set([
-  "category",
-  "direction",
-  "group",
-  "kind",
-  "name",
-  "owner",
-  "permission",
-  "reason",
-  "role",
-  "scope",
-  "severity",
-  "slug",
-  "source",
-  "status",
-  "template",
-  "title",
-  "type",
-  "url",
-  "visibility",
-]);
-
 // The noun a parameter refers to: `statusMatchesAny` → `status`.
 function paramNoun(name: string): string {
   const base = name.replace(/MatchesAny$/, "").replace(/Filter$/, "");
@@ -84,8 +61,6 @@ function placeholderFor(input: Input, groupNames: Set<string>): string {
   ) {
     return /ISO 8601 date\b/.test(description) ? "date" : "timestamp";
   }
-  if (searchParams.has(name)) return "query";
-  if (name === "orderBy") return "field";
   if (item.enum) return paramNoun(name);
   if (/\bJSON\b/.test(description)) return "json";
   if (
@@ -98,7 +73,7 @@ function placeholderFor(input: Input, groupNames: Set<string>): string {
   if (item.type === "integer" || item.type === "number") return "n";
   const noun = paramNoun(name);
   if (groupNames.has(`${noun}s`)) return "id";
-  return placeholderWords.has(noun) ? noun : "text";
+  return config.placeholderNouns.includes(noun) ? noun : "text";
 }
 
 // First paragraph of a spec description, without "Possible values" lists.

@@ -11,8 +11,7 @@ import type { Operation, Segment } from "./spec.js";
 // Words
 // ===========================================================================
 
-// `/trust-centers/{slugId}/data-collected` is about data, not one datum.
-pluralize.addUncountableRule("data");
+for (const noun of config.uncountableNouns) pluralize.addUncountableRule(noun);
 
 export { camelCase as camel, kebabCase as kebab, pascalCase as pascal };
 
