@@ -49,26 +49,26 @@ export function registerRiskScenariosCommand(
       )
       .option(
         "--owner-matches-any <owner>",
-        "Use \"No owner\" to filter scenarios without owner assigned (repeatable)",
+        'Use "No owner" to filter scenarios without owner assigned (repeatable)',
         collectString,
         [] as string[],
       )
       .option("--search-string <query>", "Search risk scenarios")
       .option(
         "--category-matches-any <category>",
-        "Use \"Uncategorized\" to filter scenarios without any category (repeatable)",
+        'Use "Uncategorized" to filter scenarios without any category (repeatable)',
         collectString,
         [] as string[],
       )
       .option(
         "--cia-category-matches-any <category>",
-        "Use \"Uncategorized\" to filter scenarios with none of Confidentiality, Integrity or Availability assigned (repeatable)",
+        'Use "Uncategorized" to filter scenarios with none of Confidentiality, Integrity or Availability assigned (repeatable)',
         collectString,
         [] as string[],
       )
       .option(
         "--treatment-type-matches-any <type>",
-        "Use \"No treatment type\" to filter scenarios without treatment specified (repeatable)",
+        'Use "No treatment type" to filter scenarios without treatment specified (repeatable)',
         collectString,
         [] as string[],
       )
@@ -92,9 +92,12 @@ export function registerRiskScenariosCommand(
       )
       .option(
         "--type <type>",
-        "Filter by risk scenario type. Defaults to \"Risk Scenario\". Only returns enterprise risks when explicitly set to \"Enterprise Risk\"",
+        'Filter by risk scenario type. Defaults to "Risk Scenario". Only returns enterprise risks when explicitly set to "Enterprise Risk"',
       )
-      .option("--order-by <field>", "Order by field (description or createdAt)"),
+      .option(
+        "--order-by <field>",
+        "Order by field (description or createdAt)",
+      ),
   ).action(
     async (opts: {
       pageSize?: number;
@@ -103,11 +106,25 @@ export function registerRiskScenariosCommand(
       ownerMatchesAny: string[];
       searchString?: string;
       categoryMatchesAny: string[];
-      ciaCategoryMatchesAny: NonNullable<NonNullable<ListRiskScenarioData["query"]>["ciaCategoryMatchesAny"]>;
-      treatmentTypeMatchesAny: NonNullable<NonNullable<ListRiskScenarioData["query"]>["treatmentTypeMatchesAny"]>;
-      inherentScoreGroupMatchesAny: NonNullable<NonNullable<ListRiskScenarioData["query"]>["inherentScoreGroupMatchesAny"]>;
-      residualScoreGroupMatchesAny: NonNullable<NonNullable<ListRiskScenarioData["query"]>["residualScoreGroupMatchesAny"]>;
-      reviewStatusMatchesAny: NonNullable<NonNullable<ListRiskScenarioData["query"]>["reviewStatusMatchesAny"]>;
+      ciaCategoryMatchesAny: NonNullable<
+        NonNullable<ListRiskScenarioData["query"]>["ciaCategoryMatchesAny"]
+      >;
+      treatmentTypeMatchesAny: NonNullable<
+        NonNullable<ListRiskScenarioData["query"]>["treatmentTypeMatchesAny"]
+      >;
+      inherentScoreGroupMatchesAny: NonNullable<
+        NonNullable<
+          ListRiskScenarioData["query"]
+        >["inherentScoreGroupMatchesAny"]
+      >;
+      residualScoreGroupMatchesAny: NonNullable<
+        NonNullable<
+          ListRiskScenarioData["query"]
+        >["residualScoreGroupMatchesAny"]
+      >;
+      reviewStatusMatchesAny: NonNullable<
+        NonNullable<ListRiskScenarioData["query"]>["reviewStatusMatchesAny"]
+      >;
       type?: NonNullable<ListRiskScenarioData["query"]>["type"];
       orderBy?: NonNullable<ListRiskScenarioData["query"]>["orderBy"];
     }) => {
@@ -196,11 +213,7 @@ export function registerRiskScenariosCommand(
       .description("List controls for a risk scenario")
       .requiredOption("--id <id>", "Risk scenario ID"),
   ).action(
-    async (opts: {
-      id: string;
-      pageSize?: number;
-      pageCursor?: string;
-    }) => {
+    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
       await runSdk(getFlags, (api) =>
         listRiskScenarioControls({
           client: api.client,

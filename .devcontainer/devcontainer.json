@@ -1,18 +1,18 @@
 {
-    "name": "Ona",
-    "image": "mcr.microsoft.com/devcontainers/base:2.0.4-noble",
-    "containerEnv": {
-        "DO_NOT_TRACK": "1",
-        "NO_UPDATE_NOTIFIER": "1",
-        "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"
+  "name": "Ona",
+  "image": "mcr.microsoft.com/devcontainers/base:2.0.4-noble",
+  "containerEnv": {
+    "DO_NOT_TRACK": "1",
+    "NO_UPDATE_NOTIFIER": "1",
+    "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"
+  },
+  "postCreateCommand": ".devcontainer/lifecycle/post-create.sh",
+  "remoteUser": "vscode",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22",
+      "pnpmVersion": "none"
     },
-    "postCreateCommand": ".devcontainer/lifecycle/post-create.sh",
-    "remoteUser": "vscode",
-    "features": {
-        "ghcr.io/devcontainers/features/node:1": {
-            "version": "22",
-            "pnpmVersion": "none"
-        },
-        "ghcr.io/devcontainers/features/github-cli:1": {}
-    }
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  }
 }

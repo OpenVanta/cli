@@ -69,7 +69,11 @@ export function registerVulnerabilitiesCommand(
       .option(
         "--include-vulnerabilities-without-slas <bool>",
         "Include vulnerabilities without SLA dates (true/false)",
-        (value) => parseOptionalBoolString(value, "include-vulnerabilities-without-slas"),
+        (value) =>
+          parseOptionalBoolString(
+            value,
+            "include-vulnerabilities-without-slas",
+          ),
       )
       .option(
         "--vulnerable-asset-id <id>",
@@ -108,7 +112,8 @@ export function registerVulnerabilitiesCommand(
             slaDeadlineBeforeDate: opts.slaDeadlineBeforeDate,
             severity: opts.severity,
             integrationId: opts.integrationId,
-            includeVulnerabilitiesWithoutSlas: opts.includeVulnerabilitiesWithoutSlas,
+            includeVulnerabilitiesWithoutSlas:
+              opts.includeVulnerabilitiesWithoutSlas,
             vulnerableAssetId: opts.vulnerableAssetId,
             q: opts.q,
           },

@@ -49,11 +49,7 @@ export function registerDiscoveredVendorsCommand(
       .description("List accounts for a discovered vendor")
       .requiredOption("--id <id>", "Discovered vendor ID"),
   ).action(
-    async (opts: {
-      id: string;
-      pageSize?: number;
-      pageCursor?: string;
-    }) => {
+    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
       await runSdk(getFlags, (api) =>
         listDiscoveredVendorAccounts({
           client: api.client,

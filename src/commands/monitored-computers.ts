@@ -34,14 +34,19 @@ export function registerMonitoredComputersCommand(
     async (opts: {
       pageSize?: number;
       pageCursor?: string;
-      complianceStatusFilterMatchesAny: NonNullable<NonNullable<ListMonitoredComputersData["query"]>["complianceStatusFilterMatchesAny"]>;
+      complianceStatusFilterMatchesAny: NonNullable<
+        NonNullable<
+          ListMonitoredComputersData["query"]
+        >["complianceStatusFilterMatchesAny"]
+      >;
     }) => {
       await runSdk(getFlags, (api) =>
         listMonitoredComputers({
           client: api.client,
           query: {
             ...paginationQuery(opts),
-            complianceStatusFilterMatchesAny: opts.complianceStatusFilterMatchesAny,
+            complianceStatusFilterMatchesAny:
+              opts.complianceStatusFilterMatchesAny,
           },
         }),
       );

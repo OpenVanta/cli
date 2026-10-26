@@ -3,7 +3,11 @@ import { basename, extname } from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import type { Command } from "commander";
-import { newAPIClient, type ApiClient, type GlobalFlags } from "../api-client.js";
+import {
+  newAPIClient,
+  type ApiClient,
+  type GlobalFlags,
+} from "../api-client.js";
 import { printResponse } from "../output.js";
 
 export type GetFlags = () => GlobalFlags;
@@ -32,9 +36,7 @@ export function paginationQuery(opts: {
 }): { pageSize?: number; pageCursor?: string } {
   return {
     ...(opts.pageSize && opts.pageSize > 0 ? { pageSize: opts.pageSize } : {}),
-    ...(opts.pageCursor?.trim()
-      ? { pageCursor: opts.pageCursor.trim() }
-      : {}),
+    ...(opts.pageCursor?.trim() ? { pageCursor: opts.pageCursor.trim() } : {}),
   };
 }
 

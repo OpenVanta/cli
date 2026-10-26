@@ -29,8 +29,7 @@ export type ApiClient = {
 function createInstrumentedFetch(flags: GlobalFlags): typeof fetch {
   return async (input, init) => {
     const method =
-      init?.method ??
-      (input instanceof Request ? input.method : "GET");
+      init?.method ?? (input instanceof Request ? input.method : "GET");
     const url =
       typeof input === "string"
         ? input
@@ -50,7 +49,8 @@ function createInstrumentedFetch(flags: GlobalFlags): typeof fetch {
         process.stdout.write("<multipart/form-data omitted>\n");
       } else {
         const body =
-          init?.body ?? (input instanceof Request ? await input.clone().text() : undefined);
+          init?.body ??
+          (input instanceof Request ? await input.clone().text() : undefined);
         if (typeof body === "string" && body) {
           try {
             process.stdout.write(

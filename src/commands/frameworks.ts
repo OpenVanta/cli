@@ -43,11 +43,7 @@ export function registerFrameworksCommand(
       .description("List controls for a framework")
       .requiredOption("--id <id>", "Framework ID"),
   ).action(
-    async (opts: {
-      id: string;
-      pageSize?: number;
-      pageCursor?: string;
-    }) => {
+    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
       await runSdk(getFlags, (api) =>
         listControlsForFramework({
           client: api.client,

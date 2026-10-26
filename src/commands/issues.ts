@@ -83,12 +83,17 @@ export function registerIssuesCommand(
       .option(
         "--include-issues-without-due-date <bool>",
         "Include undated issues with --due-before-date or --due-after-date (true/false)",
-        (value) => parseOptionalBoolString(value, "include-issues-without-due-date"),
+        (value) =>
+          parseOptionalBoolString(value, "include-issues-without-due-date"),
       )
       .option(
         "--include-only-issues-without-due-date <bool>",
         "Include only undated issues (true/false); cannot combine with --due-before-date or --due-after-date",
-        (value) => parseOptionalBoolString(value, "include-only-issues-without-due-date"),
+        (value) =>
+          parseOptionalBoolString(
+            value,
+            "include-only-issues-without-due-date",
+          ),
       )
       .option(
         "--due-after-date <timestamp>",
@@ -140,13 +145,25 @@ export function registerIssuesCommand(
       pageCursor?: string;
       search?: string;
       readableIssueIdMatchesAny: string[];
-      statusMatchesAny: NonNullable<NonNullable<ListData["query"]>["statusMatchesAny"]>;
-      severityMatchesAny: NonNullable<NonNullable<ListData["query"]>["severityMatchesAny"]>;
-      sourceMatchesAny: NonNullable<NonNullable<ListData["query"]>["sourceMatchesAny"]>;
-      typeMatchesAny: NonNullable<NonNullable<ListData["query"]>["typeMatchesAny"]>;
+      statusMatchesAny: NonNullable<
+        NonNullable<ListData["query"]>["statusMatchesAny"]
+      >;
+      severityMatchesAny: NonNullable<
+        NonNullable<ListData["query"]>["severityMatchesAny"]
+      >;
+      sourceMatchesAny: NonNullable<
+        NonNullable<ListData["query"]>["sourceMatchesAny"]
+      >;
+      typeMatchesAny: NonNullable<
+        NonNullable<ListData["query"]>["typeMatchesAny"]
+      >;
       ownerIdMatchesAny: string[];
-      templateMatchesAny: NonNullable<NonNullable<ListData["query"]>["templateMatchesAny"]>;
-      closeReasonMatchesAny: NonNullable<NonNullable<ListData["query"]>["closeReasonMatchesAny"]>;
+      templateMatchesAny: NonNullable<
+        NonNullable<ListData["query"]>["templateMatchesAny"]
+      >;
+      closeReasonMatchesAny: NonNullable<
+        NonNullable<ListData["query"]>["closeReasonMatchesAny"]
+      >;
       closedAfterDate?: string;
       closedBeforeDate?: string;
       includeIssuesWithoutDueDate?: boolean;
@@ -179,7 +196,8 @@ export function registerIssuesCommand(
             closedAfterDate: opts.closedAfterDate,
             closedBeforeDate: opts.closedBeforeDate,
             includeIssuesWithoutDueDate: opts.includeIssuesWithoutDueDate,
-            includeOnlyIssuesWithoutDueDate: opts.includeOnlyIssuesWithoutDueDate,
+            includeOnlyIssuesWithoutDueDate:
+              opts.includeOnlyIssuesWithoutDueDate,
             dueAfterDate: opts.dueAfterDate,
             dueBeforeDate: opts.dueBeforeDate,
             detectedAfterDate: opts.detectedAfterDate,

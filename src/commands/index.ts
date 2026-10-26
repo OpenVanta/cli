@@ -28,7 +28,10 @@ import { registerKnowledgeBaseCommand } from "./knowledge-base.js";
 import { registerTrustCentersCommand } from "./trust-centers.js";
 import type { GetFlags } from "./helpers.js";
 
-export function registerApiCommands(program: Command, getFlags: GetFlags): void {
+export function registerApiCommands(
+  program: Command,
+  getFlags: GetFlags,
+): void {
   registerControlsCommand(program, getFlags);
   registerPoliciesCommand(program, getFlags);
   registerDocumentsCommand(program, getFlags);
