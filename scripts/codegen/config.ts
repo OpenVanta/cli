@@ -1,7 +1,7 @@
 // Structural decisions the command generator cannot derive from the OpenAPI
 // spec, plus help text that replaces generated descriptions.
 //
-// scripts/codegen/generate-commands.ts derives the command tree from
+// The generator (main.ts) derives the command tree from
 // api-spec.json using the conventions in AGENTS.md. Everything here is an
 // explicit exception or naming input to those conventions. Prefer extending the
 // conventions over adding per-operation overrides.
@@ -104,7 +104,10 @@ export const groups: Record<string, GroupOverride> = {
 // Applied wherever the parameter appears, before per-operation overrides.
 export const params: Record<string, OptionOverride> = {
   slugId: { placeholder: "slug", description: "Trust Center slug ID" },
-  resourceKind: { placeholder: "kind", description: "Integration resource kind" },
+  resourceKind: {
+    placeholder: "kind",
+    description: "Integration resource kind",
+  },
   // Product contexts are a fixed set of names, not IDs.
   productContextId: { placeholder: "product" },
   productContextIdsMatchesAny: { placeholder: "product" },
@@ -178,25 +181,37 @@ export const commandHelp: Record<string, string> = {
   "controls list-controls-library": "List controls from the library",
   "controls set-owner": "Set or clear a control owner",
   "customer-trust": "Manage Customer Trust accounts, questionnaires, and tags",
-  "customer-trust add-tag-category-product-context": "Enable a tag category for a product context",
-  "customer-trust remove-tag-category-product-context": "Disable a tag category for a product context",
-  "customer-trust get-questionnaire-export": "Get a questionnaire export's status by ID",
+  "customer-trust add-tag-category-product-context":
+    "Enable a tag category for a product context",
+  "customer-trust remove-tag-category-product-context":
+    "Disable a tag category for a product context",
+  "customer-trust get-questionnaire-export":
+    "Get a questionnaire export's status by ID",
   "customer-trust get-tag-category": "Get the tags in a tag category by ID",
-  "customer-trust list-questionnaire-assignable-users": "List users who can be assigned to questionnaires",
-  "customer-trust upload-questionnaire-file": "Upload a file to create a questionnaire",
-  "discovered-vendors add-to-managed": "Add a discovered vendor to managed vendors",
+  "customer-trust list-questionnaire-assignable-users":
+    "List users who can be assigned to questionnaires",
+  "customer-trust upload-questionnaire-file":
+    "Upload a file to create a questionnaire",
+  "discovered-vendors add-to-managed":
+    "Add a discovered vendor to managed vendors",
   "documents set-owner": "Set or clear a document owner",
   "documents submit": "Submit document collection",
-  "groups list-importable-idp-groups": "List importable identity provider groups",
+  "groups list-importable-idp-groups":
+    "List importable identity provider groups",
   "knowledge-base": "Manage Knowledge Base answers and resources",
-  "knowledge-base replace-resource-document-file": "Replace the file for a document resource",
+  "knowledge-base replace-resource-document-file":
+    "Replace the file for a document resource",
   "people mark-as-not-people": "Mark accounts as not people",
   "people mark-as-people": "Mark accounts as people",
   "trust-centers get": "Get a Trust Center by slug ID",
-  "trust-centers get-chatbot-conversation": "Get messages for a Trust Center chatbot conversation",
-  "trust-centers list-chatbot-conversations": "List Trust Center chatbot conversations",
-  "trust-centers update-control-category-controls": "Add or remove controls in a Trust Center control category",
-  "vulnerability-remediations acknowledge-sla-miss": "Acknowledge SLA miss for vulnerability remediations",
+  "trust-centers get-chatbot-conversation":
+    "Get messages for a Trust Center chatbot conversation",
+  "trust-centers list-chatbot-conversations":
+    "List Trust Center chatbot conversations",
+  "trust-centers update-control-category-controls":
+    "Add or remove controls in a Trust Center control category",
+  "vulnerability-remediations acknowledge-sla-miss":
+    "Acknowledge SLA miss for vulnerability remediations",
 };
 
 // Keyed by command path, then by flag (without the placeholder).
@@ -205,17 +220,21 @@ export const optionHelp: Record<string, Record<string, string>> = {
     "--framework-matches-any": "Framework IDs to filter by (repeatable)",
   },
   "customer-trust remove-tag-category-product-context": {
-    "--product-context-id": "Product context: EXTERNAL_TRUST_CENTER, DOCUMENT_SHARING, CONTROL_SHARING",
+    "--product-context-id":
+      "Product context: EXTERNAL_TRUST_CENTER, DOCUMENT_SHARING, CONTROL_SHARING",
   },
   "customer-trust get-questionnaire-export": {
-    "--id": "Export job ID returned by `customer-trust create-questionnaire-export`",
+    "--id":
+      "Export job ID returned by `customer-trust create-questionnaire-export`",
   },
   "customer-trust list-accounts": {
     "--custom-fields-filter": "Filter by custom field values",
-    "--is-auto-approval-enabled": "Filter by whether access requests are auto-approved (true/false)",
+    "--is-auto-approval-enabled":
+      "Filter by whether access requests are auto-approved (true/false)",
   },
   "discovered-vendors list": {
-    "--scope": "Discovered vendor scope (defaults to NEEDS_REVIEW in the API): NEEDS_REVIEW, IGNORED, REJECTED",
+    "--scope":
+      "Discovered vendor scope (defaults to NEEDS_REVIEW in the API): NEEDS_REVIEW, IGNORED, REJECTED",
   },
   "documents list": {
     "--framework-matches-any": "Framework IDs to filter by (repeatable)",
@@ -225,14 +244,18 @@ export const optionHelp: Record<string, Record<string, string>> = {
     "--search": "Search importable identity provider groups",
   },
   "issues list": {
-    "--include-issues-without-due-date": "Include undated issues with --due-before-date or --due-after-date (true/false)",
-    "--include-only-issues-without-due-date": "Include only undated issues (true/false); cannot combine with --due-before-date or --due-after-date",
+    "--include-issues-without-due-date":
+      "Include undated issues with --due-before-date or --due-after-date (true/false)",
+    "--include-only-issues-without-due-date":
+      "Include only undated issues (true/false); cannot combine with --due-before-date or --due-after-date",
   },
   "knowledge-base list-answer-library": {
-    "--matches-tags": "JSON-encoded array of `{categoryId, tagId}` pairs. Entries matching any of the given tags are returned (OR filter). Find category IDs with `vanta customer-trust list-tag-categories` and tag IDs with `vanta customer-trust get-tag-category --tag-category-id <id>`.",
+    "--matches-tags":
+      "JSON-encoded array of `{categoryId, tagId}` pairs. Entries matching any of the given tags are returned (OR filter). Find category IDs with `vanta customer-trust list-tag-categories` and tag IDs with `vanta customer-trust get-tag-category --tag-category-id <id>`.",
   },
   "knowledge-base list-resources": {
-    "--matches-tags": "JSON-encoded array of `{categoryId, tagId}` pairs. Tags within the same category are OR'd together; tags across different categories are AND'd. For example, passing two tags from \"Framework\" and one tag from \"Region\" matches resources that have either of the two frameworks AND the given region. Find category IDs with `vanta customer-trust list-tag-categories` and tag IDs with `vanta customer-trust get-tag-category --tag-category-id <id>`.",
+    "--matches-tags":
+      'JSON-encoded array of `{categoryId, tagId}` pairs. Tags within the same category are OR\'d together; tags across different categories are AND\'d. For example, passing two tags from "Framework" and one tag from "Region" matches resources that have either of the two frameworks AND the given region. Find category IDs with `vanta customer-trust list-tag-categories` and tag IDs with `vanta customer-trust get-tag-category --tag-category-id <id>`.',
   },
   "knowledge-base replace-resource-document-file": {
     "--id": "Knowledge Base resource ID",
@@ -244,7 +267,8 @@ export const optionHelp: Record<string, Record<string, string>> = {
     "--id": "Knowledge Base resource ID",
   },
   "knowledge-base upload-resource-document": {
-    "--category-id": "Trust Center category id to associate this resource with. Only applied when --customer-visibility is REQUEST_ACCESS or PUBLIC; otherwise ignored. Unknown IDs leave the resource uncategorized.",
+    "--category-id":
+      "Trust Center category id to associate this resource with. Only applied when --customer-visibility is REQUEST_ACCESS or PUBLIC; otherwise ignored. Unknown IDs leave the resource uncategorized.",
   },
   "people list": {
     "--task-status-matches-any": "Task statuses to filter by (repeatable)",
@@ -258,12 +282,15 @@ export const optionHelp: Record<string, Record<string, string>> = {
     "--include-removed": "Include removed viewers (true/false; default: true)",
   },
   "vendors list-assessments": {
-    "--type-id-matches-any": "Filter by assessment type ID from vendor-assessment-types list (repeatable)",
+    "--type-id-matches-any":
+      "Filter by assessment type ID from vendor-assessment-types list (repeatable)",
   },
   "vulnerabilities list": {
-    "--include-vulnerabilities-without-slas": "Include vulnerabilities without SLA dates (true/false)",
+    "--include-vulnerabilities-without-slas":
+      "Include vulnerabilities without SLA dates (true/false)",
   },
   "vulnerable-assets list": {
-    "--asset-external-account-id": "Filter vulnerable assets by external account ID",
+    "--asset-external-account-id":
+      "Filter vulnerable assets by external account ID",
   },
 };
