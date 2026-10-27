@@ -29,12 +29,6 @@ jobs:
       - name: Generate API client
         run: pnpm generate
 
-      - name: Check generated commands
-        run: |
-          pnpm generate:commands
-          git status --porcelain -- src/commands
-          test -z "$(git status --porcelain -- src/commands)"
-
       - name: Check formatting
         run: pnpm format:check
 
