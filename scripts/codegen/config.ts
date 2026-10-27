@@ -90,6 +90,7 @@ export const params: Record<string, OptionOverride> = {
   q: { placeholder: "query" },
   search: { placeholder: "query" },
   searchString: { placeholder: "query" },
+  emailAndNameFilter: { placeholder: "query" },
   orderBy: { placeholder: "field" },
 };
 
@@ -140,6 +141,7 @@ export const actionVerbs = [
   "remove",
   "send",
   "set",
+  "snooze",
   "submit",
   "upload",
   "verify",
@@ -162,12 +164,29 @@ export const links = [
   "BulkRemoveTagsFromControls",
   "AddTagCategoryProductContext",
   "RemoveTagCategoryProductContext",
+  "AddAccountMappings",
+  "RemoveAccountMappings",
+  "AddCustomAssetMappings",
+  "RemoveCustomAssetMappings",
+  "AddIntegrationMappings",
+  "RemoveIntegrationMappings",
+  "AddIssueMappings",
+  "RemoveIssueMappings",
+  "AddVendorFindingMappings",
+  "RemoveVendorFindingMappings",
 ];
 
 // Command names that differ from the naming rules, keyed by operationId.
 export const operations: Record<string, OperationOverride> = {
   // A single settings object, not a collection.
   GetSettings: { name: "get" },
+  GetOrganization: { name: "get" },
+  // These operations attach several existing resources in one request.
+  AddAccountMappings: { name: "add-mapping-accounts" },
+  AddCustomAssetMappings: { name: "add-mapping-custom-assets" },
+  AddIntegrationMappings: { name: "add-mapping-integrations" },
+  AddIssueMappings: { name: "add-mapping-issues" },
+  AddVendorFindingMappings: { name: "add-mapping-vendor-findings" },
   // Replaces the file on an existing resource; `upload-resource-document`
   // creates one.
   ReplaceDocumentResourceFile: { name: "replace-resource-document-file" },
@@ -204,6 +223,10 @@ export const commandHelp: Record<string, string> = {
     "Add a discovered vendor to managed vendors",
   "documents set-owner": "Set or clear a document owner",
   "documents submit": "Submit document collection",
+  "frameworks create-export": "Create a framework controls export",
+  "frameworks get-export": "Get a framework controls export status by ID",
+  "frameworks delete": "Delete a custom framework",
+  "frameworks reactivate": "Reactivate a snoozed framework",
   "groups list-importable-idp-groups":
     "List importable identity provider groups",
   "knowledge-base": "Manage Knowledge Base answers and resources",
@@ -211,6 +234,35 @@ export const commandHelp: Record<string, string> = {
     "Replace the file for a document resource",
   "people mark-as-not-people": "Mark accounts as not people",
   "people mark-as-people": "Mark accounts as people",
+  "organization get": "Get the connected organization",
+  "risk-scenarios list-mapping-accounts":
+    "List accounts mapped to a risk scenario",
+  "risk-scenarios add-mapping-accounts": "Add accounts to a risk scenario",
+  "risk-scenarios remove-mapping-accounts":
+    "Remove accounts from a risk scenario",
+  "risk-scenarios list-mapping-custom-assets":
+    "List custom assets mapped to a risk scenario",
+  "risk-scenarios add-mapping-custom-assets":
+    "Add custom assets to a risk scenario",
+  "risk-scenarios remove-mapping-custom-assets":
+    "Remove custom assets from a risk scenario",
+  "risk-scenarios list-mapping-integrations":
+    "List integrations mapped to a risk scenario",
+  "risk-scenarios add-mapping-integrations":
+    "Add integrations to a risk scenario",
+  "risk-scenarios remove-mapping-integrations":
+    "Remove integrations from a risk scenario",
+  "risk-scenarios list-mapping-issues": "List issues mapped to a risk scenario",
+  "risk-scenarios add-mapping-issues": "Add issues to a risk scenario",
+  "risk-scenarios remove-mapping-issues": "Remove issues from a risk scenario",
+  "risk-scenarios list-mapping-vendor-findings":
+    "List vendor findings mapped to a risk scenario",
+  "risk-scenarios add-mapping-vendor-findings":
+    "Add vendor findings to a risk scenario",
+  "risk-scenarios remove-mapping-vendor-findings":
+    "Remove vendor findings from a risk scenario",
+  "risk-scenarios list-mapping-enterprise-risk":
+    "List the enterprise risk mapped to a risk scenario",
   "trust-centers get": "Get a Trust Center by slug ID",
   "trust-centers get-chatbot-conversation":
     "Get messages for a Trust Center chatbot conversation",
