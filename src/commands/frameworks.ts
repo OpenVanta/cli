@@ -155,10 +155,7 @@ export function registerFrameworksCommand(
   frameworks
     .command("get-export")
     .description("Get a framework controls export's status by ID")
-    .requiredOption(
-      "--export-id <id>",
-      "Export job ID returned by `frameworks create-export`",
-    )
+    .requiredOption("--export-id <id>", "Export ID")
     .action(async (opts: { exportId: string }) => {
       await runSdk(getFlags, (api) =>
         getFrameworkControlsExport({
@@ -220,7 +217,7 @@ export function registerFrameworksCommand(
   addJsonFileOptions(
     frameworks
       .command("set-variants")
-      .description("Set variants for a framework")
+      .description("Set a framework's active variants")
       .requiredOption("--id <id>", "Framework ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
