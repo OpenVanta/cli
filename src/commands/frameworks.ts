@@ -141,7 +141,11 @@ export function registerFrameworksCommand(
   addJsonFileOptions(
     frameworks
       .command("create-export")
-      .description("Create a framework controls export"),
+      .description("Create a framework controls CSV export")
+      .addHelpText(
+        "after",
+        '\nJSON body: {"frameworkId":"<framework-id>","includeEvidenceStatus":false} (includeEvidenceStatus is optional)\n',
+      ),
   ).action(async (opts: { json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -155,10 +159,7 @@ export function registerFrameworksCommand(
   frameworks
     .command("get-export")
     .description("Get a framework controls export's status by ID")
-    .requiredOption(
-      "--export-id <id>",
-      "Export job ID returned by `frameworks create-export`",
-    )
+    .requiredOption("--export-id <id>", "Export ID")
     .action(async (opts: { exportId: string }) => {
       await runSdk(getFlags, (api) =>
         getFrameworkControlsExport({
@@ -202,6 +203,10 @@ export function registerFrameworksCommand(
     frameworks
       .command("snooze")
       .description("Snooze a framework")
+      .addHelpText(
+        "after",
+        '\nJSON body: {"snoozedUntilDate":"YYYY-MM-DD"} (tomorrow or later; reactivates at 00:00 UTC)\n',
+      )
       .requiredOption("--id <id>", "Framework ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
@@ -221,6 +226,10 @@ export function registerFrameworksCommand(
     frameworks
       .command("set-variants")
       .description("Set variants for a framework")
+      .addHelpText(
+        "after",
+        '\nJSON body: {"variantIds":["<variant-id>"]} (complete desired selection; must not be empty)\n',
+      )
       .requiredOption("--id <id>", "Framework ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(

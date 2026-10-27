@@ -87,6 +87,10 @@ export function registerVendorCategoriesCommand(
     vendorCategories
       .command("delete")
       .description("Delete a vendor category")
+      .addHelpText(
+        "after",
+        '\nJSON body: {"replacementCategoryId":"<category-id>"} (use null to leave vendors uncategorized)\n',
+      )
       .requiredOption("--id <id>", "Vendor category ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(

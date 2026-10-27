@@ -12,7 +12,7 @@ export function registerOrganizationCommand(
 
   organization
     .command("get")
-    .description("Get organization")
+    .description("Get the connected organization")
     .action(async () => {
       await runSdk(getFlags, (api) => getOrganization({ client: api.client }));
     });

@@ -314,7 +314,10 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("list-mapping-accounts")
       .description("List accounts mapped to a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID"),
+      .requiredOption(
+        "--id <id>",
+        "Risk scenario object ID (display Risk IDs such as R-123 are not accepted)",
+      ),
   ).action(
     async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
       await runSdk(getFlags, (api) =>
@@ -331,7 +334,14 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("add-mapping-accounts")
       .description("Add account mappings to a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID"),
+      .addHelpText(
+        "after",
+        '\nJSON body: {"accountsToLink":[{"serviceId":"<service-id>","accountId":"<account-id>"}]} (optional subunitId per account)\n',
+      )
+      .requiredOption(
+        "--id <id>",
+        "Risk scenario object ID (display Risk IDs such as R-123 are not accepted)",
+      ),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -350,7 +360,14 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("remove-mapping-accounts")
       .description("Remove account mappings from a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID"),
+      .addHelpText(
+        "after",
+        '\nJSON body: {"accountsToUnlink":[{"serviceId":"<service-id>","accountId":"<account-id>"}]} (optional subunitId per account)\n',
+      )
+      .requiredOption(
+        "--id <id>",
+        "Risk scenario object ID (display Risk IDs such as R-123 are not accepted)",
+      ),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -369,7 +386,10 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("list-mapping-custom-assets")
       .description("List custom assets mapped to a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID"),
+      .requiredOption(
+        "--id <id>",
+        "Risk scenario object ID (display Risk IDs such as R-123 are not accepted)",
+      ),
   ).action(
     async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
       await runSdk(getFlags, (api) =>
@@ -386,7 +406,11 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("add-mapping-custom-assets")
       .description("Add custom asset mappings to a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID"),
+      .addHelpText("after", '\nJSON body: {"customAssetIdsToLink":["<id>"]}\n')
+      .requiredOption(
+        "--id <id>",
+        "Risk scenario object ID (display Risk IDs such as R-123 are not accepted)",
+      ),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -405,7 +429,14 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("remove-mapping-custom-assets")
       .description("Remove custom asset mappings from a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID"),
+      .addHelpText(
+        "after",
+        '\nJSON body: {"customAssetIdsToUnlink":["<id>"]}\n',
+      )
+      .requiredOption(
+        "--id <id>",
+        "Risk scenario object ID (display Risk IDs such as R-123 are not accepted)",
+      ),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -423,7 +454,10 @@ export function registerRiskScenariosCommand(
   riskScenarios
     .command("list-mapping-enterprise-risk")
     .description("List the enterprise risk mapped to a risk scenario")
-    .requiredOption("--id <id>", "Risk scenario ID")
+    .requiredOption(
+      "--id <id>",
+      "Risk scenario object ID (display Risk IDs such as R-123 are not accepted)",
+    )
     .action(async (opts: { id: string }) => {
       await runSdk(getFlags, (api) =>
         listEnterpriseRiskMappings({
@@ -437,7 +471,10 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("list-mapping-integrations")
       .description("List integrations mapped to a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID"),
+      .requiredOption(
+        "--id <id>",
+        "Risk scenario object ID (display Risk IDs such as R-123 are not accepted)",
+      ),
   ).action(
     async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
       await runSdk(getFlags, (api) =>
@@ -454,7 +491,11 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("add-mapping-integrations")
       .description("Add integration mappings to a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID"),
+      .addHelpText("after", '\nJSON body: {"integrationIdsToAdd":["<id>"]}\n')
+      .requiredOption(
+        "--id <id>",
+        "Risk scenario object ID (display Risk IDs such as R-123 are not accepted)",
+      ),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -473,7 +514,14 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("remove-mapping-integrations")
       .description("Remove integration mappings from a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID"),
+      .addHelpText(
+        "after",
+        '\nJSON body: {"integrationIdsToRemove":["<id>"]}\n',
+      )
+      .requiredOption(
+        "--id <id>",
+        "Risk scenario object ID (display Risk IDs such as R-123 are not accepted)",
+      ),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -492,7 +540,10 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("list-mapping-issues")
       .description("List issues mapped to a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID"),
+      .requiredOption(
+        "--id <id>",
+        "Risk scenario object ID (display Risk IDs such as R-123 are not accepted)",
+      ),
   ).action(
     async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
       await runSdk(getFlags, (api) =>
@@ -509,7 +560,11 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("add-mapping-issues")
       .description("Add issue mappings to a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID"),
+      .addHelpText("after", '\nJSON body: {"issueIdsToLink":["<id>"]}\n')
+      .requiredOption(
+        "--id <id>",
+        "Risk scenario object ID (display Risk IDs such as R-123 are not accepted)",
+      ),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -528,7 +583,11 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("remove-mapping-issues")
       .description("Remove issue mappings from a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID"),
+      .addHelpText("after", '\nJSON body: {"issueIdsToUnlink":["<id>"]}\n')
+      .requiredOption(
+        "--id <id>",
+        "Risk scenario object ID (display Risk IDs such as R-123 are not accepted)",
+      ),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -547,7 +606,10 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("list-mapping-vendor-findings")
       .description("List vendor findings mapped to a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID"),
+      .requiredOption(
+        "--id <id>",
+        "Risk scenario object ID (display Risk IDs such as R-123 are not accepted)",
+      ),
   ).action(
     async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
       await runSdk(getFlags, (api) =>
@@ -564,7 +626,14 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("add-mapping-vendor-findings")
       .description("Add vendor finding mappings to a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID"),
+      .addHelpText(
+        "after",
+        '\nJSON body: {"vendorFindingIdsToLink":["<id>"]}\n',
+      )
+      .requiredOption(
+        "--id <id>",
+        "Risk scenario object ID (display Risk IDs such as R-123 are not accepted)",
+      ),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -583,7 +652,14 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("remove-mapping-vendor-findings")
       .description("Remove vendor finding mappings from a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID"),
+      .addHelpText(
+        "after",
+        '\nJSON body: {"vendorFindingIdsToUnlink":["<id>"]}\n',
+      )
+      .requiredOption(
+        "--id <id>",
+        "Risk scenario object ID (display Risk IDs such as R-123 are not accepted)",
+      ),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
