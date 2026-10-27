@@ -70,6 +70,31 @@ function toSegments(path: string): Segment[] {
   return segments;
 }
 
+// Spec names become identifiers in the generated code; path segments may also
+// contain `-`.
+function checkNames(op: Operation) {
+  const identifier = /^[A-Za-z_$][\w$]*$/;
+  const segment = /^[A-Za-z_$][\w$-]*$/;
+  const matches = (re: RegExp, name: unknown) =>
+    typeof name === "string" && re.test(name);
+  const identifiers = [
+    op.id,
+    ...op.segments.flatMap((s) => (s.param ? [s.param] : [])),
+    ...[...op.pathParams, ...op.queryParams, ...op.formFields].map(
+      (i) => i.name,
+    ),
+  ];
+  const bad = [
+    ...identifiers.filter((name) => !matches(identifier, name)),
+    ...op.segments.map((s) => s.name).filter((name) => !matches(segment, name)),
+  ];
+  if (bad.length) {
+    throw new Error(
+      `${op.method.toUpperCase()} ${op.path}: unsupported names ${bad.map((n) => JSON.stringify(n) ?? String(n)).join(", ")}`,
+    );
+  }
+}
+
 const toInput = (param: SpecParameter): Input => ({
   name: param.name,
   required: Boolean(param.required),
@@ -114,5 +139,6 @@ export function loadOperations(specPath: string): Operation[] {
       });
     }
   }
+  ops.forEach(checkNames);
   return ops;
 }
