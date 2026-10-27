@@ -1,0 +1,25 @@
+import type { Command } from "commander";
+import { listCustomAssets } from "../generated/sdk.gen.js";
+import {
+  addPaginationOptions,
+  paginationQuery,
+  runSdk,
+  type GetFlags,
+} from "./helpers.js";
+
+export function registerCustomAssetsCommand(
+  program: Command,
+  getFlags: GetFlags,
+): void {
+  const customAssets = program
+    .command("custom-assets")
+    .description("Manage custom assets");
+
+  addPaginationOptions(
+    customAssets.command("list").description("List custom assets"),
+  ).action(async (opts) => {
+    await runSdk(getFlags, (api) =>
+      listCustomAssets({ client: api.client, query: paginationQuery(opts) }),
+    );
+  });
+}

@@ -22,13 +22,13 @@ export function registerProgramScopesCommand(
       .description("List program scopes")
       .option(
         "--business-unit-id-matches-any <id>",
-        "Filter by business unit ID (repeatable)",
+        "Filter program scopes to those whose business unit ID matches any of the provided IDs (repeatable)",
         collectString,
         [] as string[],
       )
       .option(
         "--framework-id-matches-any <id>",
-        "Filter by framework ID (repeatable)",
+        "Filter program scopes to those whose framework ID matches any of the provided IDs (repeatable)",
         collectString,
         [] as string[],
       ),
