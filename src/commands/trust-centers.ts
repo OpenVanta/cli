@@ -1143,6 +1143,7 @@ export function registerTrustCentersCommand(
         await withClient(getFlags, async (api, flags) => {
           const result = await getTrustCenterResourceMedia({
             client: api.client,
+            parseAs: "blob",
             path: { slugId: opts.slugId, resourceId: opts.resourceId },
           });
           if (result.error) throw result.error;

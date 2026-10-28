@@ -68,6 +68,24 @@ export function registerPeopleCommand(
       .option(
         "--employment-status <status>",
         "Filter people matching the given employment status: UPCOMING, CURRENT, ON_LEAVE, INACTIVE, FORMER",
+      )
+      .option(
+        "--framework-id-matches-any <id>",
+        "Filter people in scope for any of the given framework IDs. Framework IDs are built-in framework identifiers or custom framework ObjectIds. Blank IDs match nothing (repeatable)",
+        collectString,
+        [] as string[],
+      )
+      .option(
+        "--program-scope-id-matches-any <id>",
+        "Filter people in scope for any of the given program scope IDs. Program scopes you cannot view are ignored. Blank IDs match nothing (repeatable)",
+        collectString,
+        [] as string[],
+      )
+      .option(
+        "--business-unit-id-matches-any <id>",
+        "Filter people in scope for any of the given business unit IDs. Blank IDs match nothing (repeatable)",
+        collectString,
+        [] as string[],
       ),
   ).action(
     async (opts: {
@@ -87,6 +105,9 @@ export function registerPeopleCommand(
       employmentStatus?: NonNullable<
         ListPeopleData["query"]
       >["employmentStatus"];
+      frameworkIdMatchesAny: string[];
+      programScopeIdMatchesAny: string[];
+      businessUnitIdMatchesAny: string[];
     }) => {
       await runSdk(getFlags, (api) =>
         listPeople({
@@ -99,6 +120,9 @@ export function registerPeopleCommand(
             emailAndNameFilter: opts.emailAndNameFilter,
             groupIdsMatchesAny: opts.groupIdsMatchesAny,
             employmentStatus: opts.employmentStatus,
+            frameworkIdMatchesAny: opts.frameworkIdMatchesAny,
+            programScopeIdMatchesAny: opts.programScopeIdMatchesAny,
+            businessUnitIdMatchesAny: opts.businessUnitIdMatchesAny,
           },
         }),
       );
