@@ -4,6 +4,7 @@ import {
   getGroup,
   createGroup,
   updateGroup,
+  deleteGroup,
   importIdpGroups,
   listImportableIdpGroups,
   addPeopleToGroup,
@@ -78,6 +79,16 @@ export function registerGroupsCommand(
       updateGroup({ client: api.client, path: { groupId: opts.id }, body }),
     );
   });
+
+  groups
+    .command("delete")
+    .description("Delete a group")
+    .requiredOption("--id <id>", "Group ID")
+    .action(async (opts: { id: string }) => {
+      await runSdk(getFlags, (api) =>
+        deleteGroup({ client: api.client, path: { groupId: opts.id } }),
+      );
+    });
 
   addJsonFileOptions(
     groups.command("import-from-idp").description("Import IdP groups"),
