@@ -53,13 +53,7 @@ export function registerVendorCategoriesCommand(
     });
 
   addJsonFileOptions(
-    vendorCategories
-      .command("create")
-      .description("Create a vendor category")
-      .addHelpText(
-        "after",
-        '\nJSON payload (--json or --file):\n{"label":"<text>","description":"<text>"}\nRequired label: unique ignoring case, at most 100 characters. Optional description: at most 500 characters, or null.\n',
-      ),
+    vendorCategories.command("create").description("Create a vendor category"),
   ).action(async (opts: { json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -74,11 +68,7 @@ export function registerVendorCategoriesCommand(
     vendorCategories
       .command("update")
       .description("Update a vendor category")
-      .requiredOption("--id <id>", "Vendor category ID")
-      .addHelpText(
-        "after",
-        '\nJSON payload (--json or --file):\n{"label":"<text>","description":null}\nOptional label and description; omit either to keep its current value. Pass null to clear description.\n',
-      ),
+      .requiredOption("--id <id>", "Vendor category ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -97,11 +87,7 @@ export function registerVendorCategoriesCommand(
     vendorCategories
       .command("delete")
       .description("Delete a vendor category")
-      .requiredOption("--id <id>", "Vendor category ID")
-      .addHelpText(
-        "after",
-        '\nJSON payload (--json or --file):\n{"replacementCategoryId":null}\nRequired replacementCategoryId: another category ID from vendor-categories list to move vendors to, or null to leave them uncategorized.\n',
-      ),
+      .requiredOption("--id <id>", "Vendor category ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,

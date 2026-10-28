@@ -331,11 +331,7 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("add-mapping-accounts")
       .description("Add account mappings to a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID")
-      .addHelpText(
-        "after",
-        '\nJSON payload (--json or --file):\n{"accountsToLink":[{"serviceId":"<integration-id>","accountId":"<connection-id>"}]}\nRequired serviceId and accountId come from integrations list: integrationId and connections[].connectionId. Optional subunitId identifies an organization connection subunit. Find IDs with integrations list.\n',
-      ),
+      .requiredOption("--id <id>", "Risk scenario ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -354,11 +350,7 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("remove-mapping-accounts")
       .description("Remove account mappings from a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID")
-      .addHelpText(
-        "after",
-        '\nJSON payload (--json or --file):\n{"accountsToUnlink":[{"serviceId":"<integration-id>","accountId":"<connection-id>"}]}\nRequired serviceId and accountId come from integrations list: integrationId and connections[].connectionId. Optional subunitId identifies an organization connection subunit. Only mappings are removed; the existing resources are kept.\n',
-      ),
+      .requiredOption("--id <id>", "Risk scenario ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -394,11 +386,7 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("add-mapping-custom-assets")
       .description("Add custom asset mappings to a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID")
-      .addHelpText(
-        "after",
-        '\nJSON payload (--json or --file):\n{"customAssetIdsToLink":["<id>"]}\nRequired array of existing custom asset IDs. Find IDs with custom-assets list.\n',
-      ),
+      .requiredOption("--id <id>", "Risk scenario ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -417,11 +405,7 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("remove-mapping-custom-assets")
       .description("Remove custom asset mappings from a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID")
-      .addHelpText(
-        "after",
-        '\nJSON payload (--json or --file):\n{"customAssetIdsToUnlink":["<id>"]}\nRequired array of existing custom asset IDs. Only mappings are removed; the existing resources are kept.\n',
-      ),
+      .requiredOption("--id <id>", "Risk scenario ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -470,11 +454,7 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("add-mapping-integrations")
       .description("Add integration mappings to a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID")
-      .addHelpText(
-        "after",
-        '\nJSON payload (--json or --file):\n{"integrationIdsToAdd":["<id>"]}\nRequired array of existing integration IDs. Find IDs with integrations list.\n',
-      ),
+      .requiredOption("--id <id>", "Risk scenario ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -493,11 +473,7 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("remove-mapping-integrations")
       .description("Remove integration mappings from a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID")
-      .addHelpText(
-        "after",
-        '\nJSON payload (--json or --file):\n{"integrationIdsToRemove":["<id>"]}\nRequired array of existing integration IDs. Only mappings are removed; the existing resources are kept.\n',
-      ),
+      .requiredOption("--id <id>", "Risk scenario ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -533,11 +509,7 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("add-mapping-issues")
       .description("Add issue mappings to a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID")
-      .addHelpText(
-        "after",
-        '\nJSON payload (--json or --file):\n{"issueIdsToLink":["<id>"]}\nRequired array of existing issue IDs. Find IDs with issues list.\n',
-      ),
+      .requiredOption("--id <id>", "Risk scenario ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -556,11 +528,7 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("remove-mapping-issues")
       .description("Remove issue mappings from a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID")
-      .addHelpText(
-        "after",
-        '\nJSON payload (--json or --file):\n{"issueIdsToUnlink":["<id>"]}\nRequired array of existing issue IDs. Only mappings are removed; the existing resources are kept.\n',
-      ),
+      .requiredOption("--id <id>", "Risk scenario ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -596,11 +564,7 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("add-mapping-vendor-findings")
       .description("Add vendor finding mappings to a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID")
-      .addHelpText(
-        "after",
-        '\nJSON payload (--json or --file):\n{"vendorFindingIdsToLink":["<id>"]}\nRequired array of existing vendor finding IDs. Find IDs with vendors list-findings --id <vendor-id>.\n',
-      ),
+      .requiredOption("--id <id>", "Risk scenario ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -619,11 +583,7 @@ export function registerRiskScenariosCommand(
     riskScenarios
       .command("remove-mapping-vendor-findings")
       .description("Remove vendor finding mappings from a risk scenario")
-      .requiredOption("--id <id>", "Risk scenario ID")
-      .addHelpText(
-        "after",
-        '\nJSON payload (--json or --file):\n{"vendorFindingIdsToUnlink":["<id>"]}\nRequired array of existing vendor finding IDs. Only mappings are removed; the existing resources are kept.\n',
-      ),
+      .requiredOption("--id <id>", "Risk scenario ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,

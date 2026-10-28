@@ -141,11 +141,7 @@ export function registerFrameworksCommand(
   addJsonFileOptions(
     frameworks
       .command("create-export")
-      .description("Create a framework controls export")
-      .addHelpText(
-        "after",
-        '\nJSON payload (--json or --file):\n{"frameworkId":"<id>","includeEvidenceStatus":false}\nRequired frameworkId: an enabled framework ID from frameworks list. Optional includeEvidenceStatus includes tests and documents with PASS/FAIL outcomes (default false).\n',
-      ),
+      .description("Create a framework controls export"),
   ).action(async (opts: { json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -203,11 +199,7 @@ export function registerFrameworksCommand(
     frameworks
       .command("snooze")
       .description("Snooze a framework")
-      .requiredOption("--id <id>", "Framework ID")
-      .addHelpText(
-        "after",
-        '\nJSON payload (--json or --file):\n{"snoozedUntilDate":"YYYY-MM-DD"}\nRequired snoozedUntilDate: date the framework becomes active again at 00:00 UTC. Must be tomorrow or later. Use frameworks reactivate to restore it sooner.\n',
-      ),
+      .requiredOption("--id <id>", "Framework ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
@@ -226,11 +218,7 @@ export function registerFrameworksCommand(
     frameworks
       .command("set-variants")
       .description("Set variants for a framework")
-      .requiredOption("--id <id>", "Framework ID")
-      .addHelpText(
-        "after",
-        '\nJSON payload (--json or --file):\n{"variantIds":["<id>"]}\nRequired variantIds: array of catalog variant IDs. Find current variant IDs in activeVariants from frameworks get --id <id>.\n',
-      ),
+      .requiredOption("--id <id>", "Framework ID"),
   ).action(async (opts: { id: string; json?: string; file?: string }) => {
     const body = (await readJSONPayload(
       opts.json,
