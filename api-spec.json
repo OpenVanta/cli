@@ -14900,6 +14900,74 @@
         "type": "object",
         "additionalProperties": false
       },
+      "PendingDocumentEvaluation": {
+        "title": "PendingDocumentEvaluation",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "FailedDocumentEvaluation": {
+        "title": "FailedDocumentEvaluation",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "FAILED"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "CompletedDocumentEvaluation": {
+        "title": "CompletedDocumentEvaluation",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "COMPLETED"
+            ],
+            "nullable": false
+          },
+          "summary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "summary"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "DocumentEvaluation": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/PendingDocumentEvaluation"
+          },
+          {
+            "$ref": "#/components/schemas/FailedDocumentEvaluation"
+          },
+          {
+            "$ref": "#/components/schemas/CompletedDocumentEvaluation"
+          }
+        ]
+      },
       "PaginatedResponse_Document_": {
         "properties": {
           "results": {
@@ -23323,6 +23391,51 @@
         },
         "description": "Submit document collection.",
         "summary": "Submit document collection",
+        "tags": [
+          "Documents"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/documents/{documentId}/evaluate": {
+      "post": {
+        "operationId": "EvaluateDocument",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentEvaluation"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "status": "COMPLETED",
+                      "summary": "The evidence demonstrates an implemented CI/CD workflow."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Evaluate all files and URLs in the document's current draft. Returns a cached summary when available, otherwise queues the same evaluation used in the app. Repeat this request while the status is PENDING. COMPLETED includes the assessment summary; FAILED means the evaluation job failed. Each request evaluates the current draft contents, including changes since the last call.\n\nEvaluations that cannot process the evidence return a standard API error.",
+        "summary": "Evaluate document evidence",
         "tags": [
           "Documents"
         ],
