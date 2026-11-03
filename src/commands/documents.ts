@@ -207,10 +207,15 @@ export function registerDocumentsCommand(
     .requiredOption("--id <id>", "Document ID")
     .addHelpText(
       "after",
-      "\nUse Vanta AI to evaluate the evidence attached to a document.\n\n" +
-        "Evaluations poll the document's current state, so wait for an evaluation\n" +
-        "to complete before changing the evidence or starting another evaluation\n" +
-        "for the same document.",
+      "\nUse Vanta AI to review all files and links attached to a document\n" +
+        "and suggest improvements to the evidence. This evaluation provides\n" +
+        "optional guidance while preparing evidence and does not submit the\n" +
+        "document.\n\n" +
+        "Waits for evaluation to complete, then returns a summary of findings.\n" +
+        "The status field describes the evaluation job, not the quality or\n" +
+        "completeness of the evidence.\n\n" +
+        "Wait for this command to finish before changing the document's evidence\n" +
+        "or starting another evaluation for the same document.",
     )
     .action(async (opts: { id: string }) => {
       await withClient(getFlags, async (api, flags) => {
