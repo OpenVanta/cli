@@ -15,12 +15,16 @@ function buildProgram(): Command {
   program
     .name("vanta")
     .description(
-      'Vanta CLI for querying and updating resources through the Vanta API.\n\nStart by running "vanta login" to save your OAuth client credentials and default API base.',
+      'Vanta CLI for querying and updating resources through the Vanta API.\n\nStart by running "vanta login" to sign in with your browser, or to save OAuth client credentials, and to set the default API base.',
     )
     .version(displayVersion(Version), "-V, --version", "Print the CLI version")
     .option(
       "--api-base <url>",
       "Base API URL (overrides saved config; default https://api.vanta.com/v1)",
+    )
+    .option(
+      "--web-base <url>",
+      "Vanta web app URL for browser sign-in (default https://app.vanta.com, or http://127.0.0.1:8080 for a 127.0.0.1 API base)",
     )
     .option("--dry-run", "Print request details without sending", false)
     .option("--pretty", "Pretty-print JSON responses", true)
@@ -43,6 +47,7 @@ function buildProgram(): Command {
   const getFlags = (): GlobalFlags => {
     const opts = program.opts<{
       apiBase?: string;
+      webBase?: string;
       dryRun?: boolean;
       pretty?: boolean;
       verbose?: boolean;
@@ -54,6 +59,7 @@ function buildProgram(): Command {
 
     return {
       apiBase: opts.apiBase,
+      webBase: opts.webBase,
       dryRun: Boolean(opts.dryRun),
       pretty: opts.pretty !== false,
       verbose: Boolean(opts.verbose),

@@ -157,6 +157,14 @@ function repairDarwinAcl(service: string, account: string, raw: string): void {
   }
 }
 
+/**
+ * Drops the in-process copy so the next read goes to the OS store. Used before
+ * a token refresh, since another CLI process may have rotated the grant.
+ */
+export function invalidateKeychainCache(): void {
+  cachedPassword = undefined;
+}
+
 export async function getKeychainPassword(
   service = credentialStoreService,
   account = credentialStoreAccount,
