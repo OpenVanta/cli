@@ -18,9 +18,13 @@ export function collectString(value: string, previous: string[]): string[] {
 
 export function addPaginationOptions(cmd: Command): Command {
   return cmd
-    .option("--page-size <n>", "Number of results to return", (v) =>
-      Number.parseInt(v, 10),
-    )
+    .option("--page-size <n>", "Number of results to return", (v) => {
+      const size = Number(v);
+      if (!/^[+-]?\d+$/.test(v) || !Number.isSafeInteger(size)) {
+        throw new Error("invalid --page-size: expected an integer");
+      }
+      return size;
+    })
     .option("--page-cursor <cursor>", "Pagination cursor");
 }
 
@@ -35,7 +39,7 @@ export function paginationQuery(opts: {
   pageCursor?: string;
 }): { pageSize?: number; pageCursor?: string } {
   return {
-    ...(opts.pageSize && opts.pageSize > 0 ? { pageSize: opts.pageSize } : {}),
+    ...(opts.pageSize !== undefined ? { pageSize: opts.pageSize } : {}),
     ...(opts.pageCursor?.trim() ? { pageCursor: opts.pageCursor.trim() } : {}),
   };
 }

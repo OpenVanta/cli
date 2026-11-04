@@ -5,6 +5,8 @@ import {
   createVendor,
   updateVendor,
   deleteById,
+  setEngagement,
+  removeEngagement,
   getAssessmentsByVendorId,
   getAssessmentById,
   listVendorDocuments,
@@ -123,6 +125,42 @@ export function registerVendorsCommand(
     .action(async (opts: { id: string }) => {
       await runSdk(getFlags, (api) =>
         deleteById({ client: api.client, path: { vendorId: opts.id } }),
+      );
+    });
+
+  vendors
+    .command("set-engagement-relationship")
+    .description("Set an existing vendor as an engagement of a parent vendor")
+    .requiredOption("--id <id>", "Parent vendor ID")
+    .requiredOption("--engagement-vendor-id <id>", "Engagement vendor ID")
+    .action(async (opts: { id: string; engagementVendorId: string }) => {
+      await runSdk(getFlags, (api) =>
+        setEngagement({
+          client: api.client,
+          path: {
+            parentVendorId: opts.id,
+            engagementVendorId: opts.engagementVendorId,
+          },
+        }),
+      );
+    });
+
+  vendors
+    .command("remove-engagement-relationship")
+    .description(
+      "Remove a vendor engagement relationship without deleting either vendor",
+    )
+    .requiredOption("--id <id>", "Parent vendor ID")
+    .requiredOption("--engagement-vendor-id <id>", "Engagement vendor ID")
+    .action(async (opts: { id: string; engagementVendorId: string }) => {
+      await runSdk(getFlags, (api) =>
+        removeEngagement({
+          client: api.client,
+          path: {
+            parentVendorId: opts.id,
+            engagementVendorId: opts.engagementVendorId,
+          },
+        }),
       );
     });
 

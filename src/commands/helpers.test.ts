@@ -3,7 +3,43 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, describe, it } from "node:test";
-import { readBinaryFile } from "./helpers.js";
+import { Command } from "commander";
+import {
+  addPaginationOptions,
+  paginationQuery,
+  readBinaryFile,
+} from "./helpers.js";
+
+describe("pagination options", () => {
+  it("rejects malformed page sizes instead of truncating or silently omitting them", () => {
+    for (const value of [
+      "no",
+      "1abc",
+      "1.5",
+      "",
+      " ",
+      "Infinity",
+      "9007199254740992",
+    ]) {
+      const command = addPaginationOptions(new Command());
+      assert.throws(
+        () => command.parse(["--page-size", value], { from: "user" }),
+        /invalid --page-size: expected an integer/,
+      );
+    }
+  });
+
+  it("parses integers and preserves their values for API validation", () => {
+    for (const value of ["1", "25", "0", "-1"]) {
+      const command = addPaginationOptions(new Command());
+      command.parse(["--page-size", value], { from: "user" });
+      assert.deepEqual(paginationQuery(command.opts()), {
+        pageSize: Number(value),
+      });
+    }
+    assert.deepEqual(paginationQuery({}), {});
+  });
+});
 
 describe("readBinaryFile", () => {
   let dir: string;
