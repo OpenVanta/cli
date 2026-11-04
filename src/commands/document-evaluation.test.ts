@@ -22,152 +22,336 @@ function mockClient(responses: Response[]) {
 }
 
 describe("pollDocumentEvaluation", () => {
-  it("returns an immediate result from a bodyless POST with the document ID", async () => {
-    const result = {
-      status: "COMPLETED",
-      summary: "Attach deployment evidence.",
-    };
-    const { client, requests } = mockClient([Response.json(result)]);
-    let pending = false;
-    assert.deepEqual(
-      await pollDocumentEvaluation(client, "ci-cd-implemented", () => {
-        pending = true;
-      }),
-      result,
-    );
-    assert.equal(pending, false);
-    assert.equal(requests.length, 1);
-    assert.equal(requests[0].method, "POST");
-    assert.equal(
-      requests[0].url,
-      "https://example.invalid/v1/documents/ci-cd-implemented/evaluate",
-    );
-    assert.equal(requests[0].headers.get("Authorization"), "Bearer test-token");
-    assert.equal(await requests[0].text(), "");
-  });
-
-  it("waits five seconds after each PENDING response and notifies once", async (t) => {
-    t.mock.timers.enable({ apis: ["setTimeout"] });
-    const result = { status: "COMPLETED", summary: "Evidence is complete." };
-    const { client, requests } = mockClient([
-      Response.json({ status: "PENDING" }),
-      Response.json({ status: "PENDING" }),
-      Response.json(result),
-    ]);
-    let notifications = 0;
-    const evaluation = pollDocumentEvaluation(
-      client,
-      "ci-cd-implemented",
-      () => {
-        notifications++;
+  for (const status of [202, 204]) {
+    it(
+      "accepts an empty POST " +
+        status +
+        " and immediately retrieves the summary",
+      async (t) => {
+        t.mock.timers.enable({ apis: ["setTimeout"] });
+        const result = { summary: "Attach deployment evidence." };
+        const { client, requests } = mockClient([
+          // Empty 202 responses must work even with a JSON content type and no
+          // Content-Length header: there is no JSON body to parse.
+          new Response(null, {
+            status,
+            headers: { "Content-Type": "application/json" },
+          }),
+          Response.json(result),
+        ]);
+        let notifications = 0;
+        assert.deepEqual(
+          await pollDocumentEvaluation(client, "ci-cd-implemented", () => {
+            notifications++;
+          }),
+          result,
+        );
+        assert.equal(notifications, 0);
+        assert.deepEqual(
+          requests.map((request) => [request.method, request.url]),
+          [
+            [
+              "POST",
+              "https://example.invalid/v1/documents/ci-cd-implemented/evaluate",
+            ],
+            [
+              "GET",
+              "https://example.invalid/v1/documents/ci-cd-implemented/evaluation",
+            ],
+          ],
+        );
+        for (const request of requests) {
+          assert.equal(
+            request.headers.get("Authorization"),
+            "Bearer test-token",
+          );
+          assert.equal(await request.text(), "");
+        }
+        // Completion clears the deadline and cannot trigger another request.
+        t.mock.timers.tick(300_000);
+        await setImmediate();
+        assert.equal(requests.length, 2);
+        assert.ok(requests.every((request) => !request.signal.aborted));
       },
     );
-    await setImmediate();
-    assert.equal(requests.length, 1);
-    assert.equal(notifications, 1);
-    for (const expectedCalls of [2, 3]) {
-      t.mock.timers.tick(4_999);
-      await setImmediate();
-      assert.equal(requests.length, expectedCalls - 1);
-      t.mock.timers.tick(1);
-      await setImmediate();
-      assert.equal(requests.length, expectedCalls);
-    }
-    assert.deepEqual(await evaluation, result);
-    assert.equal(notifications, 1);
-    assert.ok(requests.every((request) => request.method === "POST"));
-    assert.ok(requests.every((request) => request.url === requests[0].url));
-    t.mock.timers.tick(10_000);
-    await setImmediate();
-    assert.equal(requests.length, 3);
-  });
 
-  it("does not overlap requests while an evaluation call is in flight", async (t) => {
+    it(
+      "polls GET every five seconds after POST " +
+        status +
+        ", retrying only 404s",
+      async (t) => {
+        t.mock.timers.enable({ apis: ["setTimeout"] });
+        const result = { summary: "Evidence is complete." };
+        const { client, requests } = mockClient([
+          new Response(null, { status }),
+          new Response("No saved result", { status: 404 }),
+          Response.json({ message: "Still unavailable" }, { status: 404 }),
+          Response.json(result),
+        ]);
+        let notifications = 0;
+        const evaluation = pollDocumentEvaluation(client, "doc", () => {
+          notifications++;
+        });
+        await setImmediate();
+        assert.equal(requests.length, 2);
+        assert.equal(notifications, 1);
+        for (const expectedCalls of [3, 4]) {
+          t.mock.timers.tick(4_999);
+          await setImmediate();
+          assert.equal(requests.length, expectedCalls - 1);
+          t.mock.timers.tick(1);
+          await setImmediate();
+          assert.equal(requests.length, expectedCalls);
+        }
+        assert.deepEqual(await evaluation, result);
+        assert.equal(notifications, 1);
+        assert.deepEqual(
+          requests.map((request) => request.method),
+          ["POST", "GET", "GET", "GET"],
+        );
+        t.mock.timers.tick(300_000);
+        await setImmediate();
+        assert.equal(requests.length, 4);
+        assert.ok(requests.every((request) => !request.signal.aborted));
+      },
+    );
+  }
+
+  it("does not overlap GETs and waits five seconds after a response arrives", async (t) => {
     t.mock.timers.enable({ apis: ["setTimeout"] });
     let respond!: (response: Response) => void;
-    let calls = 0;
+    const methods: string[] = [];
     const client = createClient({
       baseUrl: "https://example.invalid/v1",
-      fetch: async () => {
-        calls++;
+      fetch: async (input) => {
+        assert.ok(input instanceof Request);
+        methods.push(input.method);
+        if (input.method === "POST") return new Response(null, { status: 202 });
         return new Promise<Response>((resolve) => {
           respond = resolve;
         });
       },
     });
-    const evaluation = pollDocumentEvaluation(client, "ci-cd-implemented");
+    const evaluation = pollDocumentEvaluation(client, "doc");
     await setImmediate();
     t.mock.timers.tick(20_000);
     await setImmediate();
-    assert.equal(calls, 1);
-    respond(Response.json({ status: "PENDING" }));
+    assert.deepEqual(methods, ["POST", "GET"]);
+    respond(Response.json({ message: "Unavailable" }, { status: 404 }));
     await setImmediate();
     t.mock.timers.tick(4_999);
     await setImmediate();
-    assert.equal(calls, 1);
+    assert.equal(methods.length, 2);
     t.mock.timers.tick(1);
     await setImmediate();
-    assert.equal(calls, 2);
-    respond(Response.json({ status: "FAILED" }));
-    assert.deepEqual(await evaluation, { status: "FAILED" });
+    assert.deepEqual(methods, ["POST", "GET", "GET"]);
+    respond(Response.json({ summary: "Findings" }));
+    assert.deepEqual(await evaluation, { summary: "Findings" });
   });
 
-  it("stops on FAILED without retrying the evaluation", async () => {
+  it("stops persistent 404s at five minutes without enqueueing again", async (t) => {
+    t.mock.timers.enable({ apis: ["setTimeout"] });
     const { client, requests } = mockClient([
-      Response.json({ status: "FAILED" }),
+      new Response(null, { status: 202 }),
+      new Response(null, { status: 404 }),
+      new Response(null, { status: 404 }),
     ]);
-    assert.deepEqual(await pollDocumentEvaluation(client, "doc"), {
-      status: "FAILED",
-    });
-    assert.equal(requests.length, 1);
+    let settled = false;
+    const failure = assert
+      .rejects(
+        pollDocumentEvaluation(client, "doc"),
+        /Evaluation results were not available within 5 minutes/,
+      )
+      .then(() => {
+        settled = true;
+      });
+    await setImmediate();
+    t.mock.timers.tick(299_999);
+    await setImmediate();
+    assert.equal(settled, false);
+    t.mock.timers.tick(1);
+    await failure;
+    const callCount = requests.length;
+    t.mock.timers.tick(10_000);
+    await setImmediate();
+    assert.equal(requests.length, callCount);
+    assert.equal(
+      requests.filter((request) => request.method === "POST").length,
+      1,
+    );
+    assert.ok(requests.every((request) => request.signal.aborted));
   });
 
-  for (const status of [401, 403, 422, 429, 500]) {
-    it(`propagates HTTP ${status} errors without retrying`, async () => {
-      const error = { message: "Evaluation unavailable" };
-      const { client, requests } = mockClient([
-        Response.json(error, { status }),
-      ]);
-      await assert.rejects(pollDocumentEvaluation(client, "doc"), (err) => {
-        assert.deepEqual(err, error);
-        return true;
-      });
-      assert.equal(requests.length, 1);
-    });
-  }
-
-  for (const error of [new TypeError("fetch failed"), new DryRunError()]) {
-    it(`propagates ${error.message} immediately for existing error handling`, async () => {
-      let calls = 0;
+  for (const stage of ["POST", "GET", "GET body"]) {
+    it("aborts a stalled " + stage + " at the overall deadline", async (t) => {
+      t.mock.timers.enable({ apis: ["setTimeout"] });
+      const requests: Request[] = [];
       const client = createClient({
         baseUrl: "https://example.invalid/v1",
-        fetch: async () => {
-          calls++;
-          throw error;
+        fetch: async (input) => {
+          assert.ok(input instanceof Request);
+          requests.push(input);
+          if (input.method === "POST" && stage !== "POST") {
+            return new Response(null, { status: 202 });
+          }
+          if (stage === "GET body") {
+            const body = new ReadableStream({
+              start(controller) {
+                input.signal.addEventListener(
+                  "abort",
+                  () => controller.error(input.signal.reason),
+                  { once: true },
+                );
+              },
+            });
+            return new Response(body, {
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+          return new Promise<Response>((_resolve, reject) => {
+            input.signal.addEventListener(
+              "abort",
+              () => reject(input.signal.reason),
+              { once: true },
+            );
+          });
         },
       });
-      await assert.rejects(
+      const failure = assert.rejects(
         pollDocumentEvaluation(client, "doc"),
-        (err) => err === error,
+        /Evaluation results were not available within 5 minutes/,
       );
-      assert.equal(calls, 1);
+      await setImmediate();
+      assert.equal(requests.length, stage === "POST" ? 1 : 2);
+      t.mock.timers.tick(300_000);
+      await failure;
+      assert.ok(requests.every((request) => request.signal.aborted));
     });
   }
+
+  for (const stage of ["POST", "GET"]) {
+    const statuses =
+      stage === "POST"
+        ? [401, 403, 404, 422, 429, 500]
+        : [401, 403, 422, 429, 500];
+    for (const status of statuses) {
+      it(
+        "propagates " + stage + " HTTP " + status + " without retrying",
+        async (t) => {
+          t.mock.timers.enable({ apis: ["setTimeout"] });
+          const error = { message: "Evaluation unavailable" };
+          const { client, requests } = mockClient([
+            ...(stage === "GET" ? [new Response(null, { status: 202 })] : []),
+            Response.json(error, { status }),
+          ]);
+          await assert.rejects(pollDocumentEvaluation(client, "doc"), (err) => {
+            assert.deepEqual(err, error);
+            return true;
+          });
+          assert.equal(requests.length, stage === "POST" ? 1 : 2);
+          t.mock.timers.tick(300_000);
+          await setImmediate();
+          assert.ok(requests.every((request) => !request.signal.aborted));
+        },
+      );
+    }
+
+    it(
+      "propagates a " + stage + " network failure without retrying",
+      async () => {
+        const error = new TypeError("fetch failed");
+        const methods: string[] = [];
+        const client = createClient({
+          baseUrl: "https://example.invalid/v1",
+          fetch: async (input) => {
+            assert.ok(input instanceof Request);
+            methods.push(input.method);
+            if (input.method !== stage)
+              return new Response(null, { status: 202 });
+            throw error;
+          },
+        });
+        await assert.rejects(
+          pollDocumentEvaluation(client, "doc"),
+          (err) => err === error,
+        );
+        assert.deepEqual(
+          methods,
+          stage === "POST" ? ["POST"] : ["POST", "GET"],
+        );
+      },
+    );
+  }
+
+  it("propagates dry-run immediately without a GET or waiting notification", async () => {
+    const error = new DryRunError();
+    const methods: string[] = [];
+    let notified = false;
+    const client = createClient({
+      baseUrl: "https://example.invalid/v1",
+      fetch: async (input) => {
+        assert.ok(input instanceof Request);
+        methods.push(input.method);
+        throw error;
+      },
+    });
+    await assert.rejects(
+      pollDocumentEvaluation(client, "doc", () => {
+        notified = true;
+      }),
+      (err) => err === error,
+    );
+    assert.deepEqual(methods, ["POST"]);
+    assert.equal(notified, false);
+  });
+
+  it("rejects unexpected POST success codes instead of entering polling", async () => {
+    const { client, requests } = mockClient([
+      Response.json({ status: "COMPLETED", summary: "Old API response" }),
+    ]);
+    await assert.rejects(
+      pollDocumentEvaluation(client, "doc"),
+      /expected 202 or 204/,
+    );
+    assert.equal(requests.length, 1);
+  });
 
   for (const body of [
     null,
     {},
-    { status: "UNKNOWN" },
+    { summary: null },
+    { summary: 42 },
     { status: "COMPLETED" },
-    { status: "COMPLETED", summary: null },
   ]) {
-    it(`rejects an unexpected response ${JSON.stringify(body)}`, async () => {
-      const { client, requests } = mockClient([Response.json(body)]);
+    it("rejects a malformed GET result " + JSON.stringify(body), async () => {
+      const { client, requests } = mockClient([
+        new Response(null, { status: 204 }),
+        Response.json(body),
+      ]);
       await assert.rejects(
         pollDocumentEvaluation(client, "doc"),
-        /Unexpected document evaluation response/,
+        /expected a summary/,
       );
-      assert.equal(requests.length, 1);
+      assert.equal(requests.length, 2);
     });
+  }
+
+  for (const status of [202, 204]) {
+    it(
+      "rejects an unexpected GET HTTP " +
+        status +
+        " instead of treating it as pending",
+      async () => {
+        const { client, requests } = mockClient([
+          new Response(null, { status: 202 }),
+          new Response(null, { status }),
+        ]);
+        await assert.rejects(
+          pollDocumentEvaluation(client, "doc"),
+          /expected a summary/,
+        );
+        assert.equal(requests.length, 2);
+      },
+    );
   }
 });

@@ -212,8 +212,7 @@ export function registerDocumentsCommand(
         "optional guidance while preparing evidence and does not submit the\n" +
         "document.\n\n" +
         "Waits for evaluation to complete, then returns a summary of findings.\n" +
-        "The status field describes the evaluation job, not the quality or\n" +
-        "completeness of the evidence.\n\n" +
+        "Waits up to 5 minutes for results before reporting a timeout.\n\n" +
         "Wait for this command to finish before changing the document's evidence\n" +
         "or starting another evaluation for the same document.",
     )
@@ -225,7 +224,6 @@ export function registerDocumentsCommand(
           }
         });
         printResponse(result, flags);
-        if (result.status === "FAILED") process.exitCode = 1;
       });
     });
 
