@@ -16,7 +16,7 @@
     "build": "pnpm run generate && tsup",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test 'src/**/*.test.ts'",
-    "build:binaries": "tsx scripts/build-binaries.ts",
+    "build:binaries": "pnpm run generate && tsx scripts/build-binaries.ts",
     "format": "oxfmt",
     "format:check": "oxfmt --check"
   },
