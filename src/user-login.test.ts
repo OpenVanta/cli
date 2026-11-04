@@ -65,19 +65,30 @@ describe("buildAuthorizeUrl", () => {
     assert.equal([...p.keys()].length, 7);
   });
 
-  it("ignores a trailing slash or path on the web base", () => {
-    const url = new URL(
-      buildAuthorizeUrl({
-        webBase: "http://127.0.0.1:8080/",
-        redirectUri: "http://127.0.0.1:1/callback",
-        state: "s",
-        scope: "x",
-        challenge: "c",
-      }),
+  const authorizePrefix = (webBase: string) =>
+    buildAuthorizeUrl({
+      webBase,
+      redirectUri: "http://127.0.0.1:1/callback",
+      state: "s",
+      scope: "x",
+      challenge: "c",
+    }).split("?")[0];
+
+  it("tolerates a trailing slash on the web base", () => {
+    assert.equal(
+      authorizePrefix("http://127.0.0.1:8080/"),
+      "http://127.0.0.1:8080/oauth/authorize",
+    );
+  });
+
+  it("keeps a path prefix on the web base (dev /c/<domain> routing)", () => {
+    assert.equal(
+      authorizePrefix("http://127.0.0.1:8080/c/showzeb-2.something/"),
+      "http://127.0.0.1:8080/c/showzeb-2.something/oauth/authorize",
     );
     assert.equal(
-      url.toString().startsWith("http://127.0.0.1:8080/oauth/authorize?"),
-      true,
+      authorizePrefix("http://127.0.0.1:8080/c/acme"),
+      "http://127.0.0.1:8080/c/acme/oauth/authorize",
     );
   });
 });

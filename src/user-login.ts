@@ -51,7 +51,11 @@ export function buildAuthorizeUrl(args: {
   scope: string;
   challenge: string;
 }): string {
-  const url = new URL("/oauth/authorize", args.webBase);
+  // Append rather than replace the path, so a web base like
+  // http://127.0.0.1:8080/c/<domain> (dev workspace routing) keeps its prefix.
+  const url = new URL(args.webBase);
+  url.pathname = `${url.pathname.replace(/\/+$/, "")}/oauth/authorize`;
+  url.hash = "";
   url.search = new URLSearchParams({
     response_type: "code",
     client_id: FIRST_PARTY_CLI_CLIENT_ID,
