@@ -36,6 +36,7 @@ function base64url(buf: Buffer): string {
 /** RFC 7636: 32 random bytes as the verifier, S256 challenge. */
 export function createPkcePair(): { verifier: string; challenge: string } {
   const verifier = base64url(randomBytes(32));
+  // nosemgrep: VantaInc.crypto-usage -- SHA-256 is the RFC 7636 S256 PKCE code challenge the server requires. It is not a password hash or signature.
   const challenge = base64url(createHash("sha256").update(verifier).digest());
   return { verifier, challenge };
 }
