@@ -12,6 +12,7 @@ import {
   addPersonToGroup,
   removePersonFromGroup,
   removePeopleFromGroup,
+  getGroupTaskRequirementSet,
 } from "../generated/sdk.gen.js";
 import type {
   CreateGroupData,
@@ -213,4 +214,19 @@ export function registerGroupsCommand(
       }),
     );
   });
+
+  groups
+    .command("get-task-requirement-set")
+    .description(
+      "Get the task requirement set applied to a group (no content if none)",
+    )
+    .requiredOption("--id <id>", "Group ID")
+    .action(async (opts: { id: string }) => {
+      await runSdk(getFlags, (api) =>
+        getGroupTaskRequirementSet({
+          client: api.client,
+          path: { groupId: opts.id },
+        }),
+      );
+    });
 }

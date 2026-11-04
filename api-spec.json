@@ -366,6 +366,7 @@
         "type": "string"
       },
       "SuccessResponse": {
+        "title": "SuccessResponse",
         "properties": {
           "id": {
             "type": "string",
@@ -394,6 +395,7 @@
         "description": "Exclude from T those types that are assignable to U"
       },
       "NonSuccessResponse": {
+        "title": "NonSuccessResponse",
         "properties": {
           "id": {
             "type": "string",
@@ -1517,7 +1519,13 @@
           },
           "category": {
             "type": "string",
-            "description": "The vendor's category."
+            "description": "The vendor's category. Cannot be combined with `categoryId`.",
+            "deprecated": true
+          },
+          "categoryId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The ID of the vendor's category. Pass null for no category, or omit to let Vanta pick one. Cannot be combined with `category`."
           },
           "inherentRiskLevel": {
             "$ref": "#/components/schemas/VendorRiskLevel",
@@ -1685,7 +1693,13 @@
           },
           "category": {
             "type": "string",
-            "description": "The vendor's category."
+            "description": "The vendor's category. Cannot be combined with `categoryId`.",
+            "deprecated": true
+          },
+          "categoryId": {
+            "type": "string",
+            "nullable": true,
+            "description": "The ID of the vendor's category. Pass null to clear it, or omit to keep it. Cannot be combined with `category`."
           },
           "inherentRiskLevel": {
             "allOf": [
@@ -2373,6 +2387,20 @@
         "type": "object",
         "additionalProperties": false
       },
+      "StartVendorAssessmentInput": {
+        "properties": {
+          "assessmentTypeId": {
+            "type": "string",
+            "description": "ID of the assessment type to start for this vendor.",
+            "pattern": "^[0-9a-fA-F]{24}$"
+          }
+        },
+        "required": [
+          "assessmentTypeId"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "FindingRiskStatus": {
         "description": "The status of the finding:\n- ACCEPT: The finding and its risk has been accepted and no follow up is required.\n- REMEDIATE: The finding needs to be remediated in some way.\n- NONE: The finding is not related to an observed risk that needs to be accepted or remediated.",
         "enum": [
@@ -2543,6 +2571,747 @@
             "description": "Remediation information about the finding. Will only be populated if riskStatus is set to \"REMEDIATE\"."
           }
         },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorExternalFindingCveMetadata": {
+        "properties": {
+          "cvssScore": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "epssScore": {
+            "type": "string",
+            "nullable": true
+          },
+          "publishedDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "nvdUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "cvssScore",
+          "epssScore",
+          "publishedDate",
+          "nvdUrl"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorExternalFinding": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the external finding."
+          },
+          "vendorId": {
+            "type": "string",
+            "description": "Unique identifier of the vendor in your organization."
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "CRITICAL",
+              "HIGH",
+              "MEDIUM",
+              "LOW",
+              "INFO"
+            ]
+          },
+          "severityReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "RESOLVED"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "description": "Security category, such as Vulnerabilities or Exposed services."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "GENERAL",
+              "CVE",
+              "LEAKED_CREDENTIALS"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "firstSeenDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time the finding was first seen, in ISO 8601 format."
+          },
+          "lastSeenDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time the finding was last seen, in ISO 8601 format."
+          },
+          "appearances": {
+            "type": "number",
+            "format": "double"
+          },
+          "remediationGuidance": {
+            "type": "string",
+            "nullable": true
+          },
+          "riskContext": {
+            "type": "string",
+            "nullable": true
+          },
+          "cveMetadata": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorExternalFindingCveMetadata"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "vendorId",
+          "title",
+          "description",
+          "severity",
+          "severityReason",
+          "status",
+          "category",
+          "type",
+          "source",
+          "firstSeenDate",
+          "lastSeenDate",
+          "appearances",
+          "remediationGuidance",
+          "riskContext",
+          "cveMetadata"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedResponse_VendorExternalFinding_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/VendorExternalFinding"
+                },
+                "type": "array"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            },
+            "required": [
+              "data",
+              "pageInfo"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "ListVendorExternalFindingsQuery": {
+        "properties": {
+          "pageSize": {
+            "$ref": "#/components/schemas/PageSize"
+          },
+          "pageCursor": {
+            "$ref": "#/components/schemas/PageCursor"
+          },
+          "q": {
+            "type": "string",
+            "description": "Search finding titles and descriptions."
+          },
+          "severityMatchesAny": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "CRITICAL",
+                "HIGH",
+                "MEDIUM",
+                "LOW",
+                "INFO"
+              ]
+            },
+            "type": "array",
+            "description": "Match any specified severity. Omitted: all except INFO.",
+            "minItems": 1
+          },
+          "statusMatchesAny": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "RESOLVED"
+              ]
+            },
+            "type": "array",
+            "description": "Match any specified status. Omitted: both statuses.",
+            "minItems": 1
+          },
+          "categoryMatchesAny": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "Application security",
+                "Exposed application user interfaces",
+                "Exposed services",
+                "Exposed & leaked sensitive information",
+                "End of life & outdated applications",
+                "Sensitive interfaces exposure",
+                "Threat intelligence",
+                "Trust",
+                "Vulnerabilities",
+                "Vulnerable misconfigurations"
+              ]
+            },
+            "type": "array",
+            "description": "Match any specified monitoring category, exactly and case-sensitively. Omitted: all categories.",
+            "minItems": 1
+          },
+          "firstSeenStartDate": {
+            "type": "string",
+            "description": "Inclusive ISO 8601 first-seen lower bound. Supply both date bounds with start no later than end."
+          },
+          "firstSeenEndDate": {
+            "type": "string",
+            "description": "Inclusive ISO 8601 first-seen upper bound. Supply both date bounds with start no later than end."
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "firstSeenDate",
+              "severity",
+              "title"
+            ],
+            "default": "firstSeenDate"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "Ascending means oldest first, highest severity first (CRITICAL to INFO), or title A to Z.\nDescending reverses each order, matching security incident alerts' severity convention.",
+            "default": "desc"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorSecurityIncidentAlertResolutionState": {
+        "type": "string",
+        "enum": [
+          "OPEN",
+          "RESOLVED"
+        ]
+      },
+      "VendorSecurityIncidentAlertStatus": {
+        "type": "string",
+        "enum": [
+          "POTENTIAL",
+          "CONFIRMED",
+          "SUSPECTED"
+        ]
+      },
+      "VendorSecurityIncidentAlertRootCause": {
+        "type": "string",
+        "enum": [
+          "UNSPECIFIED",
+          "PHISHING",
+          "COMPROMISED_CREDENTIALS",
+          "VENDOR_PARTNER_COMPROMISE",
+          "ZERO_DAY_VULNERABILITY",
+          "KNOWN_VULNERABILITY",
+          "MISCONFIGURATION",
+          "INSIDER_THREAT",
+          "DDOS_ATTACK",
+          "PHYSICAL_ACCESS",
+          "PUBLICLY_EXPOSED_SENSITIVE_INTERFACE",
+          "NOT_DISCLOSED"
+        ]
+      },
+      "VendorSecurityIncidentAlertThreatActor": {
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorSecurityIncidentAlertEvidenceContentCategory": {
+        "type": "string",
+        "enum": [
+          "SEC",
+          "LEGAL",
+          "DATA_BREACH",
+          "GENERAL",
+          "EVIDENCE_OF_COMPROMISE",
+          "CLAIM_POST",
+          "PACKAGE_REGISTRY_PAGE",
+          "REGULATORY_FILING",
+          "VENDOR_NOTES",
+          "PUBLIC_NEWS_DISCUSSION"
+        ]
+      },
+      "VendorSecurityIncidentAlertPublicUrlEvidence": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "PUBLIC_URL_EVIDENCE"
+            ],
+            "nullable": false
+          },
+          "contentCategory": {
+            "$ref": "#/components/schemas/VendorSecurityIncidentAlertEvidenceContentCategory"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "contentCategory",
+          "url"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorSecurityIncidentAlertImpactSeverity": {
+        "type": "string",
+        "enum": [
+          "UNSPECIFIED",
+          "CRITICAL",
+          "HIGH",
+          "MEDIUM",
+          "LOW"
+        ]
+      },
+      "VendorSecurityIncidentAlertAffectedParty": {
+        "type": "string",
+        "enum": [
+          "CUSTOMERS",
+          "EMPLOYEES",
+          "THIRD_PARTIES",
+          "MIXED",
+          "UNKNOWN"
+        ]
+      },
+      "VendorSecurityIncidentAlertDataLeakStatus": {
+        "type": "string",
+        "enum": [
+          "UNSPECIFIED",
+          "UNKNOWN",
+          "OBSERVED",
+          "CONFIRMED"
+        ]
+      },
+      "VendorSecurityIncidentAlertDenialOfServiceConsequence": {
+        "title": "VendorSecurityIncidentAlertDenialOfServiceConsequence",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "DENIAL_OF_SERVICE"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorSecurityIncidentAlertUnauthorizedAccessConsequence": {
+        "title": "VendorSecurityIncidentAlertUnauthorizedAccessConsequence",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "UNAUTHORIZED_ACCESS"
+            ],
+            "nullable": false
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorSecurityIncidentAlertDataCategory": {
+        "type": "string",
+        "enum": [
+          "PII",
+          "PHI",
+          "FINANCIAL",
+          "CREDENTIALS",
+          "INTELLECTUAL_PROPERTY"
+        ]
+      },
+      "VendorSecurityIncidentAlertDataLeakSeverity": {
+        "type": "string",
+        "enum": [
+          "UNSPECIFIED",
+          "CRITICAL",
+          "HIGH",
+          "MEDIUM",
+          "LOW"
+        ]
+      },
+      "VendorSecurityIncidentAlertDataLeakConsequence": {
+        "title": "VendorSecurityIncidentAlertDataLeakConsequence",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "DATA_LEAK"
+            ],
+            "nullable": false
+          },
+          "dataCategories": {
+            "items": {
+              "$ref": "#/components/schemas/VendorSecurityIncidentAlertDataCategory"
+            },
+            "type": "array"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/VendorSecurityIncidentAlertDataLeakSeverity"
+          }
+        },
+        "required": [
+          "type",
+          "dataCategories",
+          "severity"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorSecurityIncidentAlertConsequence": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/VendorSecurityIncidentAlertDenialOfServiceConsequence"
+          },
+          {
+            "$ref": "#/components/schemas/VendorSecurityIncidentAlertUnauthorizedAccessConsequence"
+          },
+          {
+            "$ref": "#/components/schemas/VendorSecurityIncidentAlertDataLeakConsequence"
+          }
+        ]
+      },
+      "VendorSecurityIncidentAlertImpact": {
+        "properties": {
+          "severity": {
+            "$ref": "#/components/schemas/VendorSecurityIncidentAlertImpactSeverity"
+          },
+          "context": {
+            "type": "string"
+          },
+          "affectedParties": {
+            "items": {
+              "$ref": "#/components/schemas/VendorSecurityIncidentAlertAffectedParty"
+            },
+            "type": "array"
+          },
+          "dataLeakStatus": {
+            "$ref": "#/components/schemas/VendorSecurityIncidentAlertDataLeakStatus"
+          },
+          "consequences": {
+            "items": {
+              "$ref": "#/components/schemas/VendorSecurityIncidentAlertConsequence"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "severity",
+          "context",
+          "affectedParties",
+          "dataLeakStatus",
+          "consequences"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorSecurityIncidentAlertTimelineEventType": {
+        "type": "string",
+        "enum": [
+          "INITIAL_ACCESS",
+          "HACKER_DISCLOSURE",
+          "INCIDENT_DETECTION",
+          "DATA_BREACH_NOTIFICATION",
+          "SEC_FILING",
+          "LAWSUIT_FILING"
+        ]
+      },
+      "VendorSecurityIncidentAlertTimelineEvent": {
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/VendorSecurityIncidentAlertTimelineEventType"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "type",
+          "occurredAt"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorSecurityIncidentAlert": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Organization-specific alert ID."
+          },
+          "resolutionState": {
+            "$ref": "#/components/schemas/VendorSecurityIncidentAlertResolutionState"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "affectedVendorIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "relatedVendorIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/VendorSecurityIncidentAlertStatus"
+          },
+          "title": {
+            "type": "string"
+          },
+          "rootCause": {
+            "$ref": "#/components/schemas/VendorSecurityIncidentAlertRootCause"
+          },
+          "threatActor": {
+            "$ref": "#/components/schemas/VendorSecurityIncidentAlertThreatActor"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/VendorSecurityIncidentAlertPublicUrlEvidence"
+            },
+            "type": "array"
+          },
+          "impact": {
+            "$ref": "#/components/schemas/VendorSecurityIncidentAlertImpact"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/VendorSecurityIncidentAlertTimelineEvent"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "resolutionState",
+          "createdAt",
+          "updatedAt",
+          "affectedVendorIds",
+          "relatedVendorIds",
+          "status",
+          "title",
+          "rootCause",
+          "threatActor",
+          "evidence",
+          "impact",
+          "timeline"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedResponse_VendorSecurityIncidentAlert_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/VendorSecurityIncidentAlert"
+                },
+                "type": "array"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            },
+            "required": [
+              "data",
+              "pageInfo"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "ListVendorSecurityIncidentAlertsQuery": {
+        "properties": {
+          "pageSize": {
+            "$ref": "#/components/schemas/PageSize"
+          },
+          "pageCursor": {
+            "$ref": "#/components/schemas/PageCursor"
+          },
+          "q": {
+            "type": "string",
+            "description": "Case-insensitive search on alert title and affected vendor name."
+          },
+          "vendorIdMatchesAny": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "Organization vendor IDs.",
+            "minItems": 1,
+            "maxItems": 20
+          },
+          "resolutionStateMatchesAny": {
+            "items": {
+              "$ref": "#/components/schemas/VendorSecurityIncidentAlertResolutionState"
+            },
+            "type": "array",
+            "description": "Filter by resolution state. Returns alerts matching any of the specified states.",
+            "minItems": 1
+          },
+          "confirmationStatusMatchesAny": {
+            "items": {
+              "$ref": "#/components/schemas/VendorSecurityIncidentAlertStatus"
+            },
+            "type": "array",
+            "description": "Filter by incident confirmation status. Returns alerts matching any of the specified statuses.",
+            "minItems": 1
+          },
+          "impactSeverityMatchesAny": {
+            "items": {
+              "$ref": "#/components/schemas/VendorSecurityIncidentAlertImpactSeverity"
+            },
+            "type": "array",
+            "description": "Filter by overall impact severity. Returns alerts matching any of the specified severities.",
+            "minItems": 1
+          },
+          "dataLeakSeverityMatchesAny": {
+            "items": {
+              "$ref": "#/components/schemas/VendorSecurityIncidentAlertImpactSeverity"
+            },
+            "type": "array",
+            "description": "Matches a DATA_LEAK consequence's severity, independently of overall impact.",
+            "minItems": 1
+          },
+          "sort": {
+            "type": "string",
+            "enum": [
+              "creationDate",
+              "impactSeverity",
+              "resolutionState",
+              "confirmationStatus"
+            ],
+            "default": "creationDate"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "description": "Ascending means oldest first, highest impact first (CRITICAL to LOW to UNSPECIFIED),\nOPEN before RESOLVED, or CONFIRMED before SUSPECTED before POTENTIAL.\nDescending reverses each order.",
+            "default": "desc"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "UpdateVendorSecurityIncidentAlertsResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/VendorSecurityIncidentAlert"
+            },
+            "type": "array",
+            "description": "Updated alerts, once per ID, in first-occurrence request order."
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "UpdateVendorSecurityIncidentAlertsInput": {
+        "properties": {
+          "alertIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "IDs of the security incident alerts to update. Use each alert’s ID, not the ID of the incident it reports. Every alert must belong to your organization.",
+            "minItems": 1,
+            "maxItems": 100
+          },
+          "resolutionState": {
+            "$ref": "#/components/schemas/VendorSecurityIncidentAlertResolutionState",
+            "description": "Target resolution state for every supplied alert. Use OPEN to reopen."
+          }
+        },
+        "required": [
+          "alertIds",
+          "resolutionState"
+        ],
         "type": "object",
         "additionalProperties": false
       },
@@ -3065,6 +3834,51 @@
         "type": "object",
         "additionalProperties": false
       },
+      "UpdateVendorAlertsResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/VendorAlert"
+            },
+            "type": "array",
+            "description": "Updated alerts, once per ID, in first-occurrence request order."
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "UpdateVendorAlertsInput": {
+        "properties": {
+          "alertIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "IDs of the vendor alerts to update. Each alert must belong to your organization.\nRepeated IDs are ignored; the supplied status applies to every unique ID.",
+            "minItems": 1,
+            "maxItems": 100
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "ESCALATED",
+              "RESOLVED",
+              "NOT_RELEVANT"
+            ],
+            "description": "Target status for every supplied alert. AUTO_RESOLVED is system-controlled."
+          }
+        },
+        "required": [
+          "alertIds",
+          "status"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "PaginatedResponse_VendorAlert_": {
         "properties": {
           "results": {
@@ -3092,14 +3906,118 @@
         "type": "object",
         "additionalProperties": false
       },
-      "OutboundError": {
+      "VendorAlertSettingsCategoryName": {
+        "type": "string",
+        "enum": [
+          "Application security",
+          "Exposed application user interfaces",
+          "Exposed services",
+          "Exposed & leaked sensitive information",
+          "End of life & outdated applications",
+          "Sensitive interfaces exposure",
+          "Threat intelligence",
+          "Trust",
+          "Vulnerabilities",
+          "Vulnerable misconfigurations",
+          "Security incidents"
+        ]
+      },
+      "VendorAlertRiskLevelSetting": {
+        "type": "string",
+        "enum": [
+          "ANY",
+          "LOW_MEDIUM_HIGH_CRITICAL",
+          "MEDIUM_HIGH_CRITICAL",
+          "HIGH_CRITICAL",
+          "CRITICAL"
+        ]
+      },
+      "VendorAlertSeveritySetting": {
+        "type": "string",
+        "enum": [
+          "ANY",
+          "MEDIUM_HIGH_CRITICAL",
+          "HIGH_CRITICAL",
+          "CRITICAL"
+        ]
+      },
+      "VendorAlertSettingsItem": {
         "properties": {
-          "message": {
-            "type": "string"
+          "category": {
+            "$ref": "#/components/schemas/VendorAlertSettingsCategoryName",
+            "description": "Alert category."
+          },
+          "isEnabled": {
+            "type": "boolean",
+            "description": "Whether alerts in this category are enabled."
+          },
+          "riskLevelSetting": {
+            "$ref": "#/components/schemas/VendorAlertRiskLevelSetting",
+            "description": "Vendor inherent-risk levels that produce alerts. ANY includes unscored vendors."
+          },
+          "severitySetting": {
+            "$ref": "#/components/schemas/VendorAlertSeveritySetting",
+            "description": "Alert severities to include. ANY includes all severities."
           }
         },
         "required": [
-          "message"
+          "category",
+          "isEnabled",
+          "riskLevelSetting",
+          "severitySetting"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorAlertSettingsResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VendorAlertSettingsItem"
+            },
+            "type": "array",
+            "description": "Effective organization-wide settings, including defaults for missing categories."
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorAlertSettingsChange": {
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/VendorAlertSettingsCategoryName"
+          },
+          "isEnabled": {
+            "type": "boolean"
+          },
+          "riskLevelSetting": {
+            "$ref": "#/components/schemas/VendorAlertRiskLevelSetting"
+          },
+          "severitySetting": {
+            "$ref": "#/components/schemas/VendorAlertSeveritySetting"
+          }
+        },
+        "required": [
+          "category"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "UpdateVendorAlertSettingsInput": {
+        "properties": {
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/VendorAlertSettingsChange"
+            },
+            "type": "array",
+            "description": "Partial updates, with each category appearing at most once. Omitted fields remain unchanged."
+          }
+        },
+        "required": [
+          "changes"
         ],
         "type": "object",
         "additionalProperties": false
@@ -3305,12 +4223,14 @@
         "additionalProperties": false
       },
       "BannerSetting.GRADIENT": {
+        "title": "BannerSetting.GRADIENT",
         "enum": [
           "GRADIENT"
         ],
         "type": "string"
       },
       "BannerSetting.MINIMAL": {
+        "title": "BannerSetting.MINIMAL",
         "enum": [
           "MINIMAL"
         ],
@@ -5377,6 +6297,7 @@
               "aiact",
               "aiuc1",
               "aiuc1_26q3",
+              "aiuc1_26q4",
               "atc",
               "aue8",
               "awsFTR",
@@ -5394,6 +6315,7 @@
               "fedramp20x",
               "fedramp20x_2026",
               "fedramp20x_classA",
+              "fedramp20x_classBC",
               "gdpr",
               "hipaa",
               "hitruste1",
@@ -5460,6 +6382,7 @@
               "aiact",
               "aiuc1",
               "aiuc1_26q3",
+              "aiuc1_26q4",
               "atc",
               "aue8",
               "awsFTR",
@@ -5477,6 +6400,7 @@
               "fedramp20x",
               "fedramp20x_2026",
               "fedramp20x_classA",
+              "fedramp20x_classBC",
               "gdpr",
               "hipaa",
               "hitruste1",
@@ -6260,6 +7184,7 @@
         "additionalProperties": false
       },
       "RequirementNotApplied": {
+        "title": "RequirementNotApplied",
         "description": "A requirement the set does not apply to the personnel it covers.",
         "properties": {
           "required": {
@@ -6277,6 +7202,7 @@
         "additionalProperties": false
       },
       "AllPoliciesRequired": {
+        "title": "AllPoliciesRequired",
         "properties": {
           "required": {
             "type": "boolean",
@@ -6301,6 +7227,7 @@
         "additionalProperties": false
       },
       "SelectedPoliciesRequired": {
+        "title": "SelectedPoliciesRequired",
         "properties": {
           "required": {
             "type": "boolean",
@@ -6346,6 +7273,7 @@
         ]
       },
       "BackgroundCheckRequired": {
+        "title": "BackgroundCheckRequired",
         "properties": {
           "required": {
             "type": "boolean",
@@ -6382,6 +7310,7 @@
         "type": "string",
         "enum": [
           "aiRisk",
+          "businessContinuity",
           "c5",
           "ccpa",
           "gdpr",
@@ -6394,6 +7323,7 @@
         ]
       },
       "SecurityTrainingRequired": {
+        "title": "SecurityTrainingRequired",
         "properties": {
           "required": {
             "type": "boolean",
@@ -6457,6 +7387,7 @@
         ]
       },
       "DeviceMonitoringRequired": {
+        "title": "DeviceMonitoringRequired",
         "properties": {
           "required": {
             "type": "boolean",
@@ -6515,6 +7446,7 @@
         "additionalProperties": false
       },
       "CustomRequirementsRequired": {
+        "title": "CustomRequirementsRequired",
         "properties": {
           "required": {
             "type": "boolean",
@@ -6576,6 +7508,7 @@
         "additionalProperties": false
       },
       "DeactivateAllAccounts": {
+        "title": "DeactivateAllAccounts",
         "properties": {
           "deactivateAll": {
             "type": "boolean",
@@ -6592,6 +7525,7 @@
         "additionalProperties": false
       },
       "DeactivateSelectedAccounts": {
+        "title": "DeactivateSelectedAccounts",
         "properties": {
           "deactivateAll": {
             "type": "boolean",
@@ -6625,6 +7559,7 @@
         ]
       },
       "AccountDeactivationRequired": {
+        "title": "AccountDeactivationRequired",
         "properties": {
           "required": {
             "type": "boolean",
@@ -6859,6 +7794,7 @@
         "additionalProperties": false
       },
       "VantaSecurityTrainingInput": {
+        "title": "VantaSecurityTrainingInput",
         "description": "A training supplied by Vanta.",
         "properties": {
           "type": {
@@ -6894,6 +7830,7 @@
         "additionalProperties": false
       },
       "CustomSecurityTrainingInput": {
+        "title": "CustomSecurityTrainingInput",
         "description": "A training the organization hosts itself.",
         "properties": {
           "type": {
@@ -6927,6 +7864,7 @@
         "additionalProperties": false
       },
       "IntegrationSecurityTrainingInput": {
+        "title": "IntegrationSecurityTrainingInput",
         "description": "A training completed in a connected integration",
         "properties": {
           "type": {
@@ -6977,6 +7915,7 @@
         ]
       },
       "SecurityTrainingRequiredInput": {
+        "title": "SecurityTrainingRequiredInput",
         "properties": {
           "required": {
             "type": "boolean",
@@ -7081,6 +8020,7 @@
         "additionalProperties": false
       },
       "CreateCustomOffboardingRequirementInput": {
+        "title": "CreateCustomOffboardingRequirementInput",
         "properties": {
           "requirementType": {
             "type": "string",
@@ -7107,6 +8047,7 @@
         "additionalProperties": false
       },
       "CreateCustomOnboardingRequirementInput": {
+        "title": "CreateCustomOnboardingRequirementInput",
         "properties": {
           "requirementType": {
             "type": "string",
@@ -7158,6 +8099,7 @@
         ]
       },
       "UpdateCustomOffboardingRequirementInput": {
+        "title": "UpdateCustomOffboardingRequirementInput",
         "properties": {
           "requirementType": {
             "type": "string",
@@ -7183,6 +8125,7 @@
         "additionalProperties": false
       },
       "UpdateCustomOnboardingRequirementInput": {
+        "title": "UpdateCustomOnboardingRequirementInput",
         "properties": {
           "requirementType": {
             "type": "string",
@@ -7310,7 +8253,213 @@
         "type": "object",
         "additionalProperties": false
       },
+      "RiskScoreProfileType": {
+        "type": "string",
+        "enum": [
+          "CLASSIC",
+          "ADVANCED"
+        ]
+      },
+      "RiskScoreStageKey": {
+        "type": "string",
+        "enum": [
+          "INHERENT",
+          "CURRENT",
+          "TARGET"
+        ]
+      },
+      "RiskScoreStage": {
+        "properties": {
+          "stageKey": {
+            "$ref": "#/components/schemas/RiskScoreStageKey",
+            "description": "What the stage measures. `INHERENT` is risk before any controls,\n`CURRENT` is risk with today's controls, and `TARGET` is risk expected\nafter planned treatment."
+          },
+          "label": {
+            "type": "string",
+            "description": "The domain's name for this stage."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "stageKey",
+          "label",
+          "description"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "RiskScoreProfile": {
+        "properties": {
+          "profileType": {
+            "$ref": "#/components/schemas/RiskScoreProfileType",
+            "description": "`CLASSIC` scores the `CURRENT` and `TARGET` stages. `ADVANCED` also\nscores `INHERENT`."
+          },
+          "scoreStages": {
+            "items": {
+              "$ref": "#/components/schemas/RiskScoreStage"
+            },
+            "type": "array",
+            "description": "The stages, in display order."
+          }
+        },
+        "required": [
+          "profileType",
+          "scoreStages"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "RiskCategoryType": {
+        "type": "string",
+        "enum": [
+          "VANTA_DEFAULT",
+          "CUSTOM"
+        ]
+      },
+      "RiskCategory": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/RiskCategoryType",
+            "description": "`VANTA_DEFAULT` for a category Vanta provides, or `CUSTOM` for one the\ndomain created."
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "RiskCustomFieldDataType": {
+        "type": "string",
+        "enum": [
+          "CURRENCY",
+          "DATE",
+          "DECIMAL",
+          "INTEGER",
+          "PICKLIST",
+          "STRING",
+          "USER"
+        ]
+      },
+      "RiskCustomFieldCurrencyUnit": {
+        "type": "string",
+        "enum": [
+          "DEFAULT",
+          "K",
+          "M",
+          "B"
+        ]
+      },
+      "RiskCustomFieldCurrency": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "ISO 4217 currency code, such as `USD`."
+          },
+          "unit": {
+            "$ref": "#/components/schemas/RiskCustomFieldCurrencyUnit",
+            "description": "The unit amounts are shown in: `K` (thousands), `M` (millions),\n`B` (billions), or `DEFAULT` (no unit)."
+          }
+        },
+        "required": [
+          "code",
+          "unit"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "RiskCustomField": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "description": "The value accepted as `label` in the `customFields` field on\nrisk-scenario create and update requests."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataType": {
+            "$ref": "#/components/schemas/RiskCustomFieldDataType"
+          },
+          "picklistOptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "nullable": true,
+            "description": "The values a `PICKLIST` field accepts. `null` for other data types."
+          },
+          "decimalPlaces": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "The number of decimal places a `DECIMAL` field keeps. `null` for other\ndata types."
+          },
+          "currency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RiskCustomFieldCurrency"
+              }
+            ],
+            "nullable": true,
+            "description": "The currency of a `CURRENCY` field. `null` for other data types."
+          }
+        },
+        "required": [
+          "label",
+          "description",
+          "dataType",
+          "picklistOptions",
+          "decimalPlaces",
+          "currency"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "RiskSettings": {
+        "description": "The domain's risk settings: the stages risks are scored at, and the\ncategories and custom fields available on risk scenarios.",
+        "properties": {
+          "scoreProfile": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RiskScoreProfile"
+              }
+            ],
+            "nullable": true,
+            "description": "The stages every risk is scored at, with the domain's names for them.\n`null` when score stages aren't available to the domain."
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/RiskCategory"
+            },
+            "type": "array",
+            "description": "The categories risk scenarios can belong to: Vanta's default categories\nfollowed by the domain's custom ones. A category's `name` is the value\naccepted in the `categories` field on risk-scenario create and update\nrequests."
+          },
+          "customFields": {
+            "items": {
+              "$ref": "#/components/schemas/RiskCustomField"
+            },
+            "type": "array",
+            "description": "The custom fields configured for risk scenarios, in display order."
+          }
+        },
+        "required": [
+          "scoreProfile",
+          "categories",
+          "customFields"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "CIA": {
+        "title": "CIA",
         "type": "string",
         "enum": [
           "Confidentiality",
@@ -7319,6 +8468,7 @@
         ]
       },
       "Treatment": {
+        "title": "Treatment",
         "type": "string",
         "enum": [
           "Mitigate",
@@ -7530,7 +8680,7 @@
               "$ref": "#/components/schemas/CustomAttribute"
             },
             "type": "array",
-            "description": "The list of custom fields.\nYou can reference existing custom fields in the Risk Management settings and/or create new ones.\nThe format is:\n- {label: \"field-name\", value: \"string-representation\"} for text, date, number and currency fields\n- {label: \"field-name\", value: [\"option1\", \"option2\"]} for picklist fields"
+            "description": "The list of custom fields.\nYou can reference existing custom fields in the Risk Management settings and/or create new ones.\nThe format is:\n- {label: \"field-name\", value: \"string-representation\"} for text, date, number and currency fields\n- {label: \"field-name\", value: [\"option1\", \"option2\"]} for picklist fields\n\nEmpty if the organization doesn't have custom fields."
           },
           "isArchived": {
             "type": "boolean",
@@ -7618,6 +8768,7 @@
         "additionalProperties": false
       },
       "UNCATEGORIZED": {
+        "title": "UNCATEGORIZED",
         "type": "string",
         "enum": [
           "Uncategorized"
@@ -7625,6 +8776,7 @@
         "nullable": false
       },
       "NO_TREATMENT_TYPE": {
+        "title": "NO_TREATMENT_TYPE",
         "type": "string",
         "enum": [
           "No treatment type"
@@ -7715,7 +8867,7 @@
               "$ref": "#/components/schemas/CustomAttribute"
             },
             "type": "array",
-            "description": "The list of custom attributes.\nYou can reference existing custom attributes in the Risk Management settings and/or create new ones.\nThe format is:\n- {label: \"field-name\", value: \"string-representation\"} for text, date, number and currency fields\n- {label: \"field-name\", value: [\"option1\", \"option2\"]} for picklist fields"
+            "description": "The list of custom attributes.\nYou can reference existing custom attributes in the Risk Management settings and/or create new ones.\nThe format is:\n- {label: \"field-name\", value: \"string-representation\"} for text, date, number and currency fields\n- {label: \"field-name\", value: [\"option1\", \"option2\"]} for picklist fields\n\nIf the organization doesn't have custom fields, a non-empty list is\nrejected and an empty list is ignored."
           },
           "type": {
             "$ref": "#/components/schemas/RiskScenarioType",
@@ -7804,7 +8956,7 @@
               "$ref": "#/components/schemas/CustomAttribute"
             },
             "type": "array",
-            "description": "The list of custom fields.\nYou can reference custom fields in the Risk Management settings and/or create new one.\nThe format is:\n- {label: \"field-name\", value: \"string-representation\"} for text, date, number and currency fields\n- {label: \"field-name\", value: [\"option1\", \"option2\"]} for picklist fields"
+            "description": "The list of custom fields.\nYou can reference custom fields in the Risk Management settings and/or create new one.\nThe format is:\n- {label: \"field-name\", value: \"string-representation\"} for text, date, number and currency fields\n- {label: \"field-name\", value: [\"option1\", \"option2\"]} for picklist fields\n\nIf the organization doesn't have custom fields, a non-empty list is\nrejected and an empty list is ignored."
           },
           "type": {
             "$ref": "#/components/schemas/RiskScenarioType",
@@ -8347,7 +9499,7 @@
               "type": "string"
             },
             "type": "array",
-            "description": "Labels of the custom fields that apply to risk scenarios in this register.\nThese are the labels accepted in the `customFields` field on risk-scenario\ncreate and update requests for this register. The enterprise register\nlists every custom field, since enterprise risks accept all of them."
+            "description": "Labels of the custom fields that apply to risk scenarios in this register.\nThese are the labels accepted in the `customFields` field on risk-scenario\ncreate and update requests for this register. The enterprise register\nlists every custom field, since enterprise risks accept all of them.\nEmpty if the organization doesn't have custom fields."
           }
         },
         "required": [
@@ -8661,12 +9813,14 @@
         "additionalProperties": false
       },
       "NotificationFrequency.DAILY": {
+        "title": "NotificationFrequency.DAILY",
         "enum": [
           "DAILY"
         ],
         "type": "string"
       },
       "NotificationFrequency.WEEKLY": {
+        "title": "NotificationFrequency.WEEKLY",
         "enum": [
           "WEEKLY"
         ],
@@ -8680,6 +9834,7 @@
         "type": "string"
       },
       "EnabledPersonnelNotificationSettings": {
+        "title": "EnabledPersonnelNotificationSettings",
         "properties": {
           "enabled": {
             "type": "boolean",
@@ -8719,6 +9874,7 @@
         "additionalProperties": false
       },
       "DisabledPersonnelNotificationSettings": {
+        "title": "DisabledPersonnelNotificationSettings",
         "properties": {
           "enabled": {
             "type": "boolean",
@@ -8821,6 +9977,7 @@
         "type": "string"
       },
       "VantaBasedPersonInfoSource": {
+        "title": "VantaBasedPersonInfoSource",
         "description": "The person's information comes from what is set in Vanta.",
         "properties": {
           "type": {
@@ -8840,6 +9997,7 @@
         "type": "string"
       },
       "ScimBasedPersonInfoSource": {
+        "title": "ScimBasedPersonInfoSource",
         "description": "The person's information comes from SCIM.",
         "properties": {
           "type": {
@@ -8859,6 +10017,7 @@
         "type": "string"
       },
       "IntegrationBasedPersonInfoSource": {
+        "title": "IntegrationBasedPersonInfoSource",
         "description": "The person's information comes from an integration.",
         "properties": {
           "integrationId": {
@@ -9844,6 +11003,7 @@
         "additionalProperties": false
       },
       "KnowledgeBaseWebpageResourceOutput": {
+        "title": "KnowledgeBaseWebpageResourceOutput",
         "properties": {
           "id": {
             "type": "string"
@@ -10081,6 +11241,7 @@
         "additionalProperties": false
       },
       "KnowledgeBaseDocumentResourceOutput": {
+        "title": "KnowledgeBaseDocumentResourceOutput",
         "properties": {
           "id": {
             "type": "string"
@@ -10607,7 +11768,6 @@
         ]
       },
       "SourceType": {
-        "type": "string",
         "enum": [
           "AUDIT",
           "AUDIT_EXTERNAL",
@@ -10615,7 +11775,8 @@
           "EXTERNAL_PARTY",
           "SELF_ASSESSMENT",
           "OTHER"
-        ]
+        ],
+        "type": "string"
       },
       "Source": {
         "properties": {
@@ -10689,6 +11850,7 @@
         "additionalProperties": false
       },
       "StandardIssue": {
+        "title": "StandardIssue",
         "properties": {
           "id": {
             "type": "string"
@@ -10839,6 +12001,7 @@
         "description": "Extract from T those types that are assignable to U"
       },
       "StandardPOAM": {
+        "title": "StandardPOAM",
         "properties": {
           "id": {
             "type": "string"
@@ -11270,6 +12433,7 @@
         "type": "string"
       },
       "Resource": {
+        "title": "Resource",
         "properties": {
           "responseType": {
             "$ref": "#/components/schemas/ResourceResponseType"
@@ -11332,6 +12496,7 @@
         "additionalProperties": false
       },
       "CloudInfrastructure": {
+        "title": "CloudInfrastructure",
         "properties": {
           "responseType": {
             "$ref": "#/components/schemas/ResourceResponseType"
@@ -11404,6 +12569,7 @@
         "additionalProperties": false
       },
       "ContainerRepository": {
+        "title": "ContainerRepository",
         "properties": {
           "responseType": {
             "$ref": "#/components/schemas/ResourceResponseType"
@@ -11482,6 +12648,7 @@
         "additionalProperties": false
       },
       "Database": {
+        "title": "Database",
         "properties": {
           "responseType": {
             "$ref": "#/components/schemas/ResourceResponseType"
@@ -11572,6 +12739,7 @@
         "additionalProperties": false
       },
       "Device": {
+        "title": "Device",
         "properties": {
           "responseType": {
             "$ref": "#/components/schemas/ResourceResponseType"
@@ -11657,6 +12825,7 @@
         "additionalProperties": false
       },
       "PaaS": {
+        "title": "PaaS",
         "properties": {
           "responseType": {
             "$ref": "#/components/schemas/ResourceResponseType"
@@ -11731,6 +12900,7 @@
         "additionalProperties": false
       },
       "Queue": {
+        "title": "Queue",
         "properties": {
           "responseType": {
             "$ref": "#/components/schemas/ResourceResponseType"
@@ -11815,6 +12985,7 @@
         "additionalProperties": false
       },
       "StorageBucket": {
+        "title": "StorageBucket",
         "properties": {
           "responseType": {
             "$ref": "#/components/schemas/ResourceResponseType"
@@ -11910,6 +13081,7 @@
         "additionalProperties": false
       },
       "Account": {
+        "title": "Account",
         "properties": {
           "responseType": {
             "$ref": "#/components/schemas/ResourceResponseType"
@@ -12022,6 +13194,7 @@
         "additionalProperties": false
       },
       "AwsAccount": {
+        "title": "AwsAccount",
         "properties": {
           "responseType": {
             "$ref": "#/components/schemas/ResourceResponseType"
@@ -12134,6 +13307,7 @@
         "additionalProperties": false
       },
       "OrganizationSubunit": {
+        "title": "OrganizationSubunit",
         "properties": {
           "responseType": {
             "$ref": "#/components/schemas/ResourceResponseType"
@@ -12407,6 +13581,7 @@
         "additionalProperties": false
       },
       "ImportIdpGroupSuccess": {
+        "title": "ImportIdpGroupSuccess",
         "properties": {
           "idpGroupId": {
             "type": "string"
@@ -12438,6 +13613,7 @@
         "type": "string"
       },
       "ImportIdpGroupError": {
+        "title": "ImportIdpGroupError",
         "properties": {
           "idpGroupId": {
             "type": "string"
@@ -12615,6 +13791,7 @@
         "additionalProperties": false
       },
       "PendingFrameworkControlsExport": {
+        "title": "PendingFrameworkControlsExport",
         "properties": {
           "exportId": {
             "type": "string",
@@ -12638,6 +13815,7 @@
         "additionalProperties": false
       },
       "CompletedFrameworkControlsExport": {
+        "title": "CompletedFrameworkControlsExport",
         "properties": {
           "exportId": {
             "type": "string",
@@ -14069,6 +15247,7 @@
         "type": "string"
       },
       "DiscoveredVendorUser": {
+        "title": "DiscoveredVendorUser",
         "properties": {
           "id": {
             "type": "string",
@@ -14103,6 +15282,7 @@
         "type": "string"
       },
       "DiscoveredVendorComputer": {
+        "title": "DiscoveredVendorComputer",
         "properties": {
           "id": {
             "type": "string",
@@ -14918,6 +16098,7 @@
         "description": "Meta schema\n\nRecommended values:\n- 'http://json-schema.org/schema#'\n- 'http://json-schema.org/hyper-schema#'\n- 'http://json-schema.org/draft-07/schema#'\n- 'http://json-schema.org/draft-07/hyper-schema#'"
       },
       "JSONSchema7": {
+        "title": "JSONSchema7",
         "properties": {
           "$id": {
             "type": "string"
@@ -15141,6 +16322,7 @@
         "additionalProperties": false
       },
       "JSONSchema7Definition": {
+        "title": "JSONSchema7Definition",
         "anyOf": [
           {
             "$ref": "#/components/schemas/JSONSchema7"
@@ -15152,6 +16334,7 @@
         "description": "JSON Schema v7"
       },
       "JSONSchema7TypeName": {
+        "title": "JSONSchema7TypeName",
         "type": "string",
         "enum": [
           "string",
@@ -15187,6 +16370,7 @@
         "description": "Primitive type"
       },
       "JSONSchema7Object": {
+        "title": "JSONSchema7Object",
         "properties": {},
         "type": "object",
         "additionalProperties": {
@@ -15194,6 +16378,7 @@
         }
       },
       "JSONSchema7Array": {
+        "title": "JSONSchema7Array",
         "properties": {},
         "type": "object",
         "additionalProperties": false
@@ -15512,6 +16697,49 @@
         "type": "object",
         "additionalProperties": false
       },
+      "CustomerTrustAccountCustomRevenueMetric": {
+        "properties": {
+          "metricId": {
+            "type": "string",
+            "description": "Unique identifier of the configured revenue metric"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Display name of the revenue metric"
+          },
+          "fieldName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Mapped CRM field name, or null if no CRM field is mapped"
+          },
+          "syncedAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "Amount synced from the CRM, or null if no synced value exists"
+          },
+          "overrideAmount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "Manual override amount, or null if no override exists. When present, takes precedence over syncedAmount."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code for the amount, from the synced value or the organization's default currency (USD if unset)"
+          }
+        },
+        "required": [
+          "metricId",
+          "displayName",
+          "fieldName",
+          "syncedAmount",
+          "overrideAmount",
+          "currency"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "CustomerTrustAccountVantaApi": {
         "description": "Vanta API representation of a CustomerTrustAccount.",
         "properties": {
@@ -15563,6 +16791,13 @@
             },
             "type": "array",
             "description": "Tags assigned to this account, grouped by category"
+          },
+          "customRevenueMetrics": {
+            "items": {
+              "$ref": "#/components/schemas/CustomerTrustAccountCustomRevenueMetric"
+            },
+            "type": "array",
+            "description": "Configured revenue metrics with synced and manual override amounts. Empty when no metrics are configured."
           }
         },
         "required": [
@@ -15574,7 +16809,8 @@
           "ndaDetails",
           "accessConfig",
           "customFields",
-          "tagsByCategory"
+          "tagsByCategory",
+          "customRevenueMetrics"
         ],
         "type": "object",
         "additionalProperties": false
@@ -15649,6 +16885,26 @@
         "type": "object",
         "additionalProperties": false
       },
+      "CustomerTrustAccountRevenueOverrideInput": {
+        "properties": {
+          "fieldMappingId": {
+            "type": "string",
+            "description": "ID of the configured custom currency field"
+          },
+          "value": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "Non-negative amount in the configured default currency. Null removes the override."
+          }
+        },
+        "required": [
+          "fieldMappingId",
+          "value"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "CreateCustomerTrustAccountInput": {
         "properties": {
           "name": {
@@ -15668,6 +16924,13 @@
               "$ref": "#/components/schemas/CustomField"
             },
             "type": "array"
+          },
+          "revenueOverrides": {
+            "items": {
+              "$ref": "#/components/schemas/CustomerTrustAccountRevenueOverrideInput"
+            },
+            "type": "array",
+            "description": "Manual revenue overrides for configured currency fields. Omitted fields are unchanged."
           },
           "tagsByCategory": {
             "items": {
@@ -15700,6 +16963,13 @@
             },
             "type": "array",
             "description": "Updated custom field values for the account"
+          },
+          "revenueOverrides": {
+            "items": {
+              "$ref": "#/components/schemas/CustomerTrustAccountRevenueOverrideInput"
+            },
+            "type": "array",
+            "description": "Manual revenue overrides for configured currency fields. Omitted fields are unchanged."
           },
           "tagsByCategory": {
             "items": {
@@ -15808,6 +17078,7 @@
         "type": "string"
       },
       "FrameworkId": {
+        "title": "FrameworkId",
         "enum": [
           "AU_E_8",
           "AWS_FTR",
@@ -16388,6 +17659,7 @@
         "description": "Lifecycle of a suggestion job, from accepted through finished."
       },
       "EvidenceSuggestionJobScopeAll": {
+        "title": "EvidenceSuggestionJobScopeAll",
         "description": "Every in-scope control in the organization.",
         "properties": {
           "type": {
@@ -16405,6 +17677,7 @@
         "additionalProperties": false
       },
       "EvidenceSuggestionJobScopeFramework": {
+        "title": "EvidenceSuggestionJobScopeFramework",
         "description": "The controls mapped to one framework.",
         "properties": {
           "type": {
@@ -16426,6 +17699,7 @@
         "additionalProperties": false
       },
       "EvidenceSuggestionJobScopeControls": {
+        "title": "EvidenceSuggestionJobScopeControls",
         "description": "Exactly the controls named.",
         "properties": {
           "type": {
@@ -16595,6 +17869,7 @@
         "additionalProperties": false
       },
       "CreateEvidenceSuggestionJobInputAll": {
+        "title": "CreateEvidenceSuggestionJobInputAll",
         "description": "Every custom control in the organization that is not ignored. An\norganization whose controls all come from the Vanta library has nothing in\nscope and is rejected.",
         "properties": {
           "type": {
@@ -16616,6 +17891,7 @@
         "additionalProperties": false
       },
       "CreateEvidenceSuggestionJobInputFramework": {
+        "title": "CreateEvidenceSuggestionJobInputFramework",
         "description": "The framework's custom controls that are not ignored.",
         "properties": {
           "type": {
@@ -16642,6 +17918,7 @@
         "additionalProperties": false
       },
       "CreateEvidenceSuggestionJobInputControls": {
+        "title": "CreateEvidenceSuggestionJobInputControls",
         "description": "Exactly the controls named.",
         "properties": {
           "type": {
@@ -16908,11 +18185,13 @@
               },
               "multipleChoice": {
                 "type": "string",
-                "nullable": true
+                "nullable": true,
+                "deprecated": true
               },
               "explanation": {
                 "type": "string",
-                "nullable": true
+                "nullable": true,
+                "deprecated": true
               }
             },
             "required": [
@@ -16970,6 +18249,885 @@
           "question",
           "lastUpdated",
           "answer"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiProduct": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Canonical product catalog ID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "vendor": {
+            "type": "string"
+          },
+          "vendorUrl": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "PURPOSE_BUILT",
+              "EMBEDDED"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "recentDeviceCount": {
+            "type": "number",
+            "format": "double"
+          },
+          "recentUserCount": {
+            "type": "number",
+            "format": "double",
+            "description": "Distinct personnel linked through recent devices or identity-provider observations."
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "lastObservedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Latest qualifying device check-in or identity-provider update, not evidence of usage."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "vendor",
+          "vendorUrl",
+          "category",
+          "description",
+          "recentDeviceCount",
+          "recentUserCount",
+          "sources",
+          "lastObservedAt"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedResponse_AiProduct_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/AiProduct"
+                },
+                "type": "array"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            },
+            "required": [
+              "data",
+              "pageInfo"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiProductUser": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Personnel record ID linked through reporting devices or identity-provider assignments."
+          },
+          "deviceCount": {
+            "type": "number",
+            "format": "double"
+          },
+          "lastObservedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Latest qualifying device check-in or identity-provider update, not evidence of product usage."
+          }
+        },
+        "required": [
+          "id",
+          "deviceCount",
+          "lastObservedAt"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedResponse_AiProductUser_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/AiProductUser"
+                },
+                "type": "array"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            },
+            "required": [
+              "data",
+              "pageInfo"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiProductDevice": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "ownerId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Personnel record ID, or null for an unowned device or an unmapped owner."
+          },
+          "operatingSystem": {
+            "type": "string",
+            "nullable": true
+          },
+          "serialNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "lastObservedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Latest qualifying device check-in, not evidence of product usage."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "ownerId",
+          "operatingSystem",
+          "serialNumber",
+          "sources",
+          "lastObservedAt"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedResponse_AiProductDevice_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/AiProductDevice"
+                },
+                "type": "array"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            },
+            "required": [
+              "data",
+              "pageInfo"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiProductUseCase": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "organisationalRole": {
+            "type": "string",
+            "enum": [
+              "DEPLOYER",
+              "PROVIDER",
+              null
+            ],
+            "nullable": true
+          },
+          "ownerIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "Auth user IDs of the documented use case's owners."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "organisationalRole",
+          "ownerIds",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedResponse_AiProductUseCase_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/AiProductUseCase"
+                },
+                "type": "array"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            },
+            "required": [
+              "data",
+              "pageInfo"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiAgent": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Vanta resource ID used by the agent endpoints."
+          },
+          "providerAgentId": {
+            "type": "string",
+            "description": "Agent identifier assigned by the provider; unique within its source."
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "entryType": {
+            "type": "string",
+            "enum": [
+              "MANAGED_AGENT",
+              "PREBUILT_AGENT",
+              "AGENT"
+            ]
+          },
+          "vendor": {
+            "type": "string"
+          },
+          "ownerEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "firstSeenDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastActivityDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "activityLookbackDays": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "Coverage of the provider snapshot, or null when unspecified."
+          },
+          "supportedLookbackDays": {
+            "items": {
+              "type": "number",
+              "enum": [
+                7,
+                30
+              ]
+            },
+            "type": "array"
+          },
+          "activeUserCount": {
+            "type": "number",
+            "format": "double",
+            "description": "Provider-reported snapshot count, independent of windowed usage."
+          },
+          "lastModelUsed": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "providerAgentId",
+          "sourceId",
+          "name",
+          "entryType",
+          "vendor",
+          "ownerEmail",
+          "createdAt",
+          "firstSeenDate",
+          "lastActivityDate",
+          "activityLookbackDays",
+          "supportedLookbackDays",
+          "activeUserCount",
+          "lastModelUsed"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedResponse_AiAgent_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/AiAgent"
+                },
+                "type": "array"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            },
+            "required": [
+              "data",
+              "pageInfo"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiAgentUsage": {
+        "properties": {
+          "activeUserCount": {
+            "type": "number",
+            "format": "double"
+          },
+          "tokenCost": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "dailyUsers": {
+            "items": {
+              "properties": {
+                "userCount": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "date": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "userCount",
+                "date"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "models": {
+            "items": {
+              "properties": {
+                "percent": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "activityCount": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "model": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "percent",
+                "activityCount",
+                "model"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "toolUsage": {
+            "anyOf": [
+              {
+                "properties": {
+                  "groups": {
+                    "items": {
+                      "properties": {
+                        "toolNames": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "totalCount": {
+                          "type": "number",
+                          "format": "double"
+                        },
+                        "mcpServerUrl": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "integration": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "required": [
+                        "toolNames",
+                        "totalCount",
+                        "mcpServerUrl",
+                        "integration"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "groups"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tools": {
+                    "items": {
+                      "properties": {
+                        "count": {
+                          "type": "number",
+                          "format": "double"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "count",
+                        "name"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "tools"
+                ],
+                "type": "object"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "activeUserCount",
+          "tokenCost",
+          "dailyUsers",
+          "models",
+          "toolUsage"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "Record_string.AiAgentActivityDate_": {
+        "properties": {},
+        "additionalProperties": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "type": "object",
+        "description": "Construct a type with a set of properties K of type T"
+      },
+      "AiAgentUserActivity": {
+        "properties": {
+          "accessVia": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "lastActivity": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "models": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Record_string.AiAgentActivityDate_"
+              }
+            ],
+            "nullable": true
+          },
+          "toolsUsed": {
+            "items": {
+              "properties": {
+                "count": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "mcpServerUrl": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "integration": {
+                  "type": "string"
+                },
+                "toolName": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "count",
+                "mcpServerUrl",
+                "integration",
+                "toolName"
+              ],
+              "type": "object"
+            },
+            "type": "array",
+            "nullable": true
+          }
+        },
+        "required": [
+          "accessVia",
+          "lastActivity",
+          "models",
+          "toolsUsed"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "Record_string.AiAgentUserActivity_": {
+        "properties": {},
+        "additionalProperties": {
+          "$ref": "#/components/schemas/AiAgentUserActivity"
+        },
+        "type": "object",
+        "description": "Construct a type with a set of properties K of type T"
+      },
+      "AiAgentDetails": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Vanta resource ID used by the agent endpoints."
+          },
+          "providerAgentId": {
+            "type": "string",
+            "description": "Agent identifier assigned by the provider; unique within its source."
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "entryType": {
+            "type": "string",
+            "enum": [
+              "MANAGED_AGENT",
+              "PREBUILT_AGENT",
+              "AGENT"
+            ]
+          },
+          "vendor": {
+            "type": "string"
+          },
+          "ownerEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "firstSeenDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastActivityDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "activityLookbackDays": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "Coverage of the provider snapshot, or null when unspecified."
+          },
+          "supportedLookbackDays": {
+            "items": {
+              "type": "number",
+              "enum": [
+                7,
+                30
+              ]
+            },
+            "type": "array"
+          },
+          "activeUserCount": {
+            "type": "number",
+            "format": "double",
+            "description": "Provider-reported snapshot count, independent of windowed usage."
+          },
+          "lastModelUsed": {
+            "type": "string",
+            "nullable": true
+          },
+          "usage7Days": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AiAgentUsage"
+              }
+            ],
+            "nullable": true,
+            "description": "Null when the provider snapshot cannot support this window."
+          },
+          "usage30Days": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AiAgentUsage"
+              }
+            ],
+            "nullable": true,
+            "description": "Null when the provider snapshot cannot support this window."
+          },
+          "userActivity": {
+            "$ref": "#/components/schemas/Record_string.AiAgentUserActivity_",
+            "description": "Observed activity keyed by email over the provider snapshot's full coverage."
+          }
+        },
+        "required": [
+          "id",
+          "providerAgentId",
+          "sourceId",
+          "name",
+          "entryType",
+          "vendor",
+          "ownerEmail",
+          "createdAt",
+          "firstSeenDate",
+          "lastActivityDate",
+          "activityLookbackDays",
+          "supportedLookbackDays",
+          "activeUserCount",
+          "lastModelUsed",
+          "usage7Days",
+          "usage30Days",
+          "userActivity"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiAgentUser": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Observation ID combining the Vanta agent resource ID and email, not a personnel ID."
+          },
+          "email": {
+            "type": "string"
+          },
+          "lastActivity": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "lastActivity"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedResponse_AiAgentUser_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/AiAgentUser"
+                },
+                "type": "array"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            },
+            "required": [
+              "data",
+              "pageInfo"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiAgentUsersQuery": {
+        "properties": {
+          "pageSize": {
+            "$ref": "#/components/schemas/PageSize"
+          },
+          "pageCursor": {
+            "$ref": "#/components/schemas/PageCursor"
+          },
+          "lookbackDays": {
+            "type": "number",
+            "enum": [
+              7,
+              30
+            ],
+            "description": "Usage window in UTC days. Must be supported by the provider snapshot.",
+            "default": 7
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiAgentUseCase": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "organisationalRole": {
+            "type": "string",
+            "enum": [
+              "DEPLOYER",
+              "PROVIDER",
+              null
+            ],
+            "nullable": true
+          },
+          "ownerIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "Auth user IDs of the documented use case's owners."
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "organisationalRole",
+          "ownerIds",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedResponse_AiAgentUseCase_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/AiAgentUseCase"
+                },
+                "type": "array"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            },
+            "required": [
+              "data",
+              "pageInfo"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
         ],
         "type": "object",
         "additionalProperties": false
@@ -18604,6 +20762,16 @@
                               "autoApprovalEnabled": false,
                               "grantAccessOption": "INCLUDE_EVERYTHING_REQUESTED"
                             },
+                            "customRevenueMetrics": [
+                              {
+                                "metricId": "507f1f77bcf86cd799439014",
+                                "displayName": "Annual recurring revenue",
+                                "fieldName": "AnnualRecurringRevenue__c",
+                                "syncedAmount": 120000,
+                                "overrideAmount": 125000,
+                                "currency": "USD"
+                              }
+                            ],
                             "customFields": [
                               {
                                 "label": "externalId",
@@ -18707,6 +20875,16 @@
                         "autoApprovalEnabled": false,
                         "grantAccessOption": "INCLUDE_EVERYTHING_REQUESTED"
                       },
+                      "customRevenueMetrics": [
+                        {
+                          "metricId": "507f1f77bcf86cd799439014",
+                          "displayName": "Annual recurring revenue",
+                          "fieldName": "AnnualRecurringRevenue__c",
+                          "syncedAmount": 120000,
+                          "overrideAmount": 125000,
+                          "currency": "USD"
+                        }
+                      ],
                       "customFields": [
                         {
                           "label": "externalId",
@@ -18778,6 +20956,16 @@
                         "autoApprovalEnabled": false,
                         "grantAccessOption": "INCLUDE_EVERYTHING_REQUESTED"
                       },
+                      "customRevenueMetrics": [
+                        {
+                          "metricId": "507f1f77bcf86cd799439014",
+                          "displayName": "Annual recurring revenue",
+                          "fieldName": "AnnualRecurringRevenue__c",
+                          "syncedAmount": 120000,
+                          "overrideAmount": 125000,
+                          "currency": "USD"
+                        }
+                      ],
                       "customFields": [
                         {
                           "label": "externalId",
@@ -18874,6 +21062,16 @@
                         "autoApprovalEnabled": false,
                         "grantAccessOption": "INCLUDE_EVERYTHING_REQUESTED"
                       },
+                      "customRevenueMetrics": [
+                        {
+                          "metricId": "507f1f77bcf86cd799439014",
+                          "displayName": "Annual recurring revenue",
+                          "fieldName": "AnnualRecurringRevenue__c",
+                          "syncedAmount": 120000,
+                          "overrideAmount": 125000,
+                          "currency": "USD"
+                        }
+                      ],
                       "customFields": [
                         {
                           "label": "externalId",
@@ -23475,6 +25673,109 @@
             }
           }
         }
+      }
+    },
+    "/groups/{groupId}/task-requirement-set": {
+      "get": {
+        "operationId": "GetGroupTaskRequirementSet",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/TaskRequirementSet"
+                    }
+                  ],
+                  "nullable": true
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "id": "5f2c939a52855e725c8d5824",
+                      "name": "Engineering Onboarding",
+                      "description": "Requirements for engineers",
+                      "isReusable": true,
+                      "createdAt": "2024-03-07T18:46:05.944Z",
+                      "updatedAt": "2024-03-07T18:46:05.944Z",
+                      "taskRequirements": {
+                        "onboarding": {
+                          "policyAcceptance": {
+                            "required": true,
+                            "acceptAll": true
+                          },
+                          "backgroundCheck": {
+                            "required": true,
+                            "cutoffDate": null
+                          },
+                          "securityTraining": {
+                            "required": true,
+                            "requiredCategories": [
+                              "general"
+                            ],
+                            "requirementIds": [
+                              "5f2c939a52855e725c8d5826"
+                            ]
+                          },
+                          "deviceMonitoring": {
+                            "required": true,
+                            "preferredPasswordManagerId": "ONEPASSWORD",
+                            "installPrompt": "INSTALL_VANTA_AGENT"
+                          },
+                          "custom": {
+                            "required": true,
+                            "requirements": [
+                              {
+                                "id": "5f2c939a52855e725c8d5827",
+                                "effectiveDate": null
+                              }
+                            ]
+                          }
+                        },
+                        "offboarding": {
+                          "accountDeactivation": {
+                            "required": true,
+                            "accounts": {
+                              "deactivateAll": true
+                            }
+                          },
+                          "custom": {
+                            "required": false
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "The group has no task requirement set"
+          }
+        },
+        "description": "Gets the task requirement set applied to a group. Returns no content if the\ngroup has no task requirement set.",
+        "summary": "Get group task requirement set",
+        "tags": [
+          "Groups"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "groupId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
       }
     },
     "/integrations": {
@@ -29117,8 +31418,8 @@
             }
           }
         },
-        "description": "List the enterprise risk a risk scenario is linked to, identified by the\nenterprise risk's Risk ID. Supply the risk scenario's Risk ID or object ID.\nReturns at most one result. The list is empty when the scenario isn't\nlinked to an enterprise risk, when the scenario is itself an enterprise\nrisk, or when the linked enterprise risk is archived or not visible to the\ncaller.",
-        "summary": "List the enterprise risk mapped to a risk scenario",
+        "description": "List every enterprise risk a risk scenario is linked to that the caller\ncan view, identified by each enterprise risk's Risk ID, in link order.\nSupply the risk scenario's Risk ID or object ID. Archived enterprise risks\nand enterprise risks the caller can't view are omitted. The list is empty\nwhen the scenario isn't linked to an enterprise risk or when the scenario\nis itself an enterprise risk.",
+        "summary": "List the enterprise risks mapped to a risk scenario",
         "tags": [
           "Risk Scenarios"
         ],
@@ -29626,6 +31927,732 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SubmitRiskForApprovalInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/task-requirement-sets": {
+      "get": {
+        "operationId": "ListTaskRequirementSets",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_TaskRequirementSet_"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "results": {
+                        "pageInfo": {
+                          "hasNextPage": false,
+                          "hasPreviousPage": false,
+                          "startCursor": "eyJpIjowfQ==",
+                          "endCursor": "eyJpIjowfQ=="
+                        },
+                        "data": [
+                          {
+                            "id": "5f2c939a52855e725c8d5824",
+                            "name": "Engineering Onboarding",
+                            "description": "Requirements for engineers",
+                            "isReusable": true,
+                            "createdAt": "2024-03-07T18:46:05.944Z",
+                            "updatedAt": "2024-03-07T18:46:05.944Z",
+                            "taskRequirements": {
+                              "onboarding": {
+                                "policyAcceptance": {
+                                  "required": true,
+                                  "acceptAll": true
+                                },
+                                "backgroundCheck": {
+                                  "required": true,
+                                  "cutoffDate": null
+                                },
+                                "securityTraining": {
+                                  "required": true,
+                                  "requiredCategories": [
+                                    "general"
+                                  ],
+                                  "requirementIds": [
+                                    "5f2c939a52855e725c8d5826"
+                                  ]
+                                },
+                                "deviceMonitoring": {
+                                  "required": true,
+                                  "preferredPasswordManagerId": "ONEPASSWORD",
+                                  "installPrompt": "INSTALL_VANTA_AGENT"
+                                },
+                                "custom": {
+                                  "required": true,
+                                  "requirements": [
+                                    {
+                                      "id": "5f2c939a52855e725c8d5827",
+                                      "effectiveDate": null
+                                    }
+                                  ]
+                                }
+                              },
+                              "offboarding": {
+                                "accountDeactivation": {
+                                  "required": true,
+                                  "accounts": {
+                                    "deactivateAll": true
+                                  }
+                                },
+                                "custom": {
+                                  "required": false
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Lists the organization's task requirement sets.",
+        "summary": "List task requirement sets",
+        "tags": [
+          "Task Requirement Sets"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageSize"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageCursor",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageCursor"
+            }
+          },
+          {
+            "description": "Filter sets by reusable status. If omitted, returns both reusable and non-reusable sets.",
+            "in": "query",
+            "name": "reusable",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "CreateTaskRequirementSet",
+        "responses": {
+          "201": {
+            "description": "Task requirement set created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskRequirementSet"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "id": "5f2c939a52855e725c8d5824",
+                      "name": "Engineering Onboarding",
+                      "description": "Requirements for engineers",
+                      "isReusable": true,
+                      "createdAt": "2024-03-07T18:46:05.944Z",
+                      "updatedAt": "2024-03-07T18:46:05.944Z",
+                      "taskRequirements": {
+                        "onboarding": {
+                          "policyAcceptance": {
+                            "required": true,
+                            "acceptAll": true
+                          },
+                          "backgroundCheck": {
+                            "required": true,
+                            "cutoffDate": null
+                          },
+                          "securityTraining": {
+                            "required": true,
+                            "requiredCategories": [
+                              "general"
+                            ],
+                            "requirementIds": [
+                              "5f2c939a52855e725c8d5826"
+                            ]
+                          },
+                          "deviceMonitoring": {
+                            "required": true,
+                            "preferredPasswordManagerId": "ONEPASSWORD",
+                            "installPrompt": "INSTALL_VANTA_AGENT"
+                          },
+                          "custom": {
+                            "required": true,
+                            "requirements": [
+                              {
+                                "id": "5f2c939a52855e725c8d5827",
+                                "effectiveDate": null
+                              }
+                            ]
+                          }
+                        },
+                        "offboarding": {
+                          "accountDeactivation": {
+                            "required": true,
+                            "accounts": {
+                              "deactivateAll": true
+                            }
+                          },
+                          "custom": {
+                            "required": false
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Creates a task requirement set and assigns it to a group.",
+        "summary": "Create task requirement set",
+        "tags": [
+          "Task Requirement Sets"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaskRequirementSetInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/task-requirement-sets/custom-requirements": {
+      "get": {
+        "operationId": "ListCustomRequirements",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_CustomRequirement_"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "results": {
+                        "pageInfo": {
+                          "hasNextPage": false,
+                          "hasPreviousPage": false,
+                          "startCursor": "eyJpIjowfQ==",
+                          "endCursor": "eyJpIjowfQ=="
+                        },
+                        "data": [
+                          {
+                            "id": "5f2c939a52855e725c8d5827",
+                            "title": "Sign the acceptable use policy",
+                            "requirementType": "ONBOARDING",
+                            "ownerType": "EMPLOYEE",
+                            "textInputLabel": null,
+                            "fileInputLabel": "Signed policy",
+                            "instructions": "Download, sign, and upload the acceptable use policy.",
+                            "createdAt": "2024-03-07T18:46:05.944Z",
+                            "updatedAt": "2024-03-07T18:46:05.944Z"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Lists the organization's custom onboarding and offboarding requirements.",
+        "summary": "List custom requirements",
+        "tags": [
+          "Task Requirement Sets"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageSize"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageCursor",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageCursor"
+            }
+          },
+          {
+            "description": "Filter requirements by type. If omitted, returns both onboarding and offboarding requirements.",
+            "in": "query",
+            "name": "requirementType",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CustomRequirementType"
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "CreateCustomRequirement",
+        "responses": {
+          "201": {
+            "description": "Custom requirement created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomRequirement"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "id": "5f2c939a52855e725c8d5827",
+                      "title": "Sign the acceptable use policy",
+                      "requirementType": "ONBOARDING",
+                      "ownerType": "EMPLOYEE",
+                      "textInputLabel": null,
+                      "fileInputLabel": "Signed policy",
+                      "instructions": "Download, sign, and upload the acceptable use policy.",
+                      "createdAt": "2024-03-07T18:46:05.944Z",
+                      "updatedAt": "2024-03-07T18:46:05.944Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Creates a custom onboarding or offboarding requirement.",
+        "summary": "Create custom requirement",
+        "tags": [
+          "Task Requirement Sets"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCustomRequirementInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/task-requirement-sets/custom-requirements/{customRequirementId}": {
+      "patch": {
+        "operationId": "UpdateCustomRequirement",
+        "responses": {
+          "200": {
+            "description": "Custom requirement updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomRequirement"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "id": "5f2c939a52855e725c8d5827",
+                      "title": "Sign the acceptable use policy",
+                      "requirementType": "ONBOARDING",
+                      "ownerType": "EMPLOYEE",
+                      "textInputLabel": null,
+                      "fileInputLabel": "Signed policy",
+                      "instructions": "Download, sign, and upload the acceptable use policy.",
+                      "createdAt": "2024-03-07T18:46:05.944Z",
+                      "updatedAt": "2024-03-07T18:46:05.944Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Partially updates a custom onboarding or offboarding requirement. The requirement type\nmust match the requirement being updated.",
+        "summary": "Update custom requirement",
+        "tags": [
+          "Task Requirement Sets"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "customRequirementId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCustomRequirementInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/task-requirement-sets/{requirementSetId}": {
+      "get": {
+        "operationId": "GetTaskRequirementSet",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskRequirementSet"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "id": "5f2c939a52855e725c8d5824",
+                      "name": "Engineering Onboarding",
+                      "description": "Requirements for engineers",
+                      "isReusable": true,
+                      "createdAt": "2024-03-07T18:46:05.944Z",
+                      "updatedAt": "2024-03-07T18:46:05.944Z",
+                      "taskRequirements": {
+                        "onboarding": {
+                          "policyAcceptance": {
+                            "required": true,
+                            "acceptAll": true
+                          },
+                          "backgroundCheck": {
+                            "required": true,
+                            "cutoffDate": null
+                          },
+                          "securityTraining": {
+                            "required": true,
+                            "requiredCategories": [
+                              "general"
+                            ],
+                            "requirementIds": [
+                              "5f2c939a52855e725c8d5826"
+                            ]
+                          },
+                          "deviceMonitoring": {
+                            "required": true,
+                            "preferredPasswordManagerId": "ONEPASSWORD",
+                            "installPrompt": "INSTALL_VANTA_AGENT"
+                          },
+                          "custom": {
+                            "required": true,
+                            "requirements": [
+                              {
+                                "id": "5f2c939a52855e725c8d5827",
+                                "effectiveDate": null
+                              }
+                            ]
+                          }
+                        },
+                        "offboarding": {
+                          "accountDeactivation": {
+                            "required": true,
+                            "accounts": {
+                              "deactivateAll": true
+                            }
+                          },
+                          "custom": {
+                            "required": false
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get task requirement set by ID",
+        "tags": [
+          "Task Requirement Sets"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requirementSetId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/task-requirement-sets/{requirementSetId}/details": {
+      "patch": {
+        "operationId": "UpdateTaskRequirementSetDetails",
+        "responses": {
+          "200": {
+            "description": "Task requirement set updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskRequirementSet"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "id": "5f2c939a52855e725c8d5824",
+                      "name": "Engineering Onboarding",
+                      "description": "Requirements for engineers",
+                      "isReusable": true,
+                      "createdAt": "2024-03-07T18:46:05.944Z",
+                      "updatedAt": "2024-03-07T18:46:05.944Z",
+                      "taskRequirements": {
+                        "onboarding": {
+                          "policyAcceptance": {
+                            "required": true,
+                            "acceptAll": true
+                          },
+                          "backgroundCheck": {
+                            "required": true,
+                            "cutoffDate": null
+                          },
+                          "securityTraining": {
+                            "required": true,
+                            "requiredCategories": [
+                              "general"
+                            ],
+                            "requirementIds": [
+                              "5f2c939a52855e725c8d5826"
+                            ]
+                          },
+                          "deviceMonitoring": {
+                            "required": true,
+                            "preferredPasswordManagerId": "ONEPASSWORD",
+                            "installPrompt": "INSTALL_VANTA_AGENT"
+                          },
+                          "custom": {
+                            "required": true,
+                            "requirements": [
+                              {
+                                "id": "5f2c939a52855e725c8d5827",
+                                "effectiveDate": null
+                              }
+                            ]
+                          }
+                        },
+                        "offboarding": {
+                          "accountDeactivation": {
+                            "required": true,
+                            "accounts": {
+                              "deactivateAll": true
+                            }
+                          },
+                          "custom": {
+                            "required": false
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Partially updates a task requirement set's details.",
+        "summary": "Update task requirement set details",
+        "tags": [
+          "Task Requirement Sets"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requirementSetId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "description": "New description. Omit to preserve."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "New name. Omit to preserve."
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/task-requirement-sets/{requirementSetId}/requirements": {
+      "patch": {
+        "operationId": "UpdateTaskRequirementSetRequirements",
+        "responses": {
+          "200": {
+            "description": "Task requirement set requirements updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskRequirementSet"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "id": "5f2c939a52855e725c8d5824",
+                      "name": "Engineering Onboarding",
+                      "description": "Requirements for engineers",
+                      "isReusable": true,
+                      "createdAt": "2024-03-07T18:46:05.944Z",
+                      "updatedAt": "2024-03-07T18:46:05.944Z",
+                      "taskRequirements": {
+                        "onboarding": {
+                          "policyAcceptance": {
+                            "required": true,
+                            "acceptAll": true
+                          },
+                          "backgroundCheck": {
+                            "required": true,
+                            "cutoffDate": null
+                          },
+                          "securityTraining": {
+                            "required": true,
+                            "requiredCategories": [
+                              "general"
+                            ],
+                            "requirementIds": [
+                              "5f2c939a52855e725c8d5826"
+                            ]
+                          },
+                          "deviceMonitoring": {
+                            "required": true,
+                            "preferredPasswordManagerId": "ONEPASSWORD",
+                            "installPrompt": "INSTALL_VANTA_AGENT"
+                          },
+                          "custom": {
+                            "required": true,
+                            "requirements": [
+                              {
+                                "id": "5f2c939a52855e725c8d5827",
+                                "effectiveDate": null
+                              }
+                            ]
+                          }
+                        },
+                        "offboarding": {
+                          "accountDeactivation": {
+                            "required": true,
+                            "accounts": {
+                              "deactivateAll": true
+                            }
+                          },
+                          "custom": {
+                            "required": false
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Partially updates the onboarding and offboarding requirements a task requirement set\napplies to its personnel. Supplying a requirement replaces it outright; omitting one\nleaves it as it was.",
+        "summary": "Update task requirement set requirements",
+        "tags": [
+          "Task Requirement Sets"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requirementSetId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskRequirementsInput"
               }
             }
           }
@@ -35806,6 +38833,95 @@
               "items": {
                 "$ref": "#/components/schemas/VendorStatus"
               }
+            }
+          }
+        ]
+      }
+    },
+    "/vendors/{parentVendorId}/engagement-relationship/{engagementVendorId}": {
+      "put": {
+        "operationId": "SetEngagement",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorEngagement"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "engagementVendorId": "507f1f77bcf86cd799439011",
+                      "parentVendorId": "507f1f77bcf86cd799439012"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Sets an existing vendor as an engagement of the specified parent vendor.\nReturns 200 without changes when already attached to this parent.\nRejects vendors attached to a different parent, preserving that relationship.",
+        "summary": "Set vendor engagement",
+        "tags": [
+          "Vendors"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "parentVendorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "engagementVendorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "RemoveEngagement",
+        "responses": {
+          "200": {
+            "description": "Vendor engagement removed"
+          }
+        },
+        "description": "Removes the engagement relationship without deleting either vendor.\nReturns 200 without changes when the engagement has no parent or belongs\nto a different parent.",
+        "summary": "Remove vendor engagement",
+        "tags": [
+          "Vendors"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "parentVendorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "engagementVendorId",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ]

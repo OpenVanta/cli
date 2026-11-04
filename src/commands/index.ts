@@ -28,6 +28,7 @@ import { registerKnowledgeBaseCommand } from "./knowledge-base.js";
 import { registerTrustCentersCommand } from "./trust-centers.js";
 import { registerCustomAssetsCommand } from "./custom-assets.js";
 import { registerOrganizationCommand } from "./organization.js";
+import { registerTaskRequirementSetsCommand } from "./task-requirement-sets.js";
 import { registerVendorCategoriesCommand } from "./vendor-categories.js";
 import type { GetFlags } from "./helpers.js";
 
@@ -64,5 +65,6 @@ export function registerApiCommands(
   registerTrustCentersCommand(program, getFlags);
   registerCustomAssetsCommand(program, getFlags);
   registerOrganizationCommand(program, getFlags);
+  registerTaskRequirementSetsCommand(program, getFlags);
   registerVendorCategoriesCommand(program, getFlags);
 }
