@@ -124,6 +124,12 @@ describe("vanta login", () => {
       code: "the-code",
     });
     const logs = await runLogin(t.deps);
+    assert.ok(
+      logs.some((l) =>
+        /No client secret given; signing in with your browser/.test(l),
+      ),
+      "says the entered client ID is not used",
+    );
 
     // Prompt text tells people how to choose browser sign-in.
     assert.match(
@@ -204,6 +210,18 @@ describe("vanta login", () => {
     );
     assert.equal(net.requests.length, 0);
     await assert.rejects(home.readConfig());
+  });
+
+  it("does not blame the workspace flag for a callback without a code", async () => {
+    const t = makeDeps(["https://api.vanta.com/v1", "", "", ""], {
+      kind: "error",
+      error: "missing_code",
+    });
+    await assert.rejects(runLogin(t.deps), (err: Error) => {
+      assert.match(err.message, /without an authorization code/);
+      assert.doesNotMatch(err.message, /enabled for your workspace/);
+      return true;
+    });
   });
 
   it("re-prints the URL when the wait times out", async () => {

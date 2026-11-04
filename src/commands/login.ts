@@ -176,7 +176,9 @@ async function browserLogin(args: {
     const hint =
       result.error === "access_denied"
         ? "sign-in was declined in the browser"
-        : "the Vanta web app could not complete sign-in; check that browser sign-in is enabled for your workspace";
+        : result.error === "server_error"
+          ? "the Vanta web app could not complete sign-in; check that browser sign-in is enabled for your workspace"
+          : "the browser returned without an authorization code";
     throw new Error(
       `browser sign-in failed: ${result.error}${detail}: ${hint}`,
     );
@@ -249,6 +251,11 @@ export function registerLoginCommand(
         const scopeDefault = opts.scope?.trim() || defaultOAuthScope;
 
         if (!clientSecret) {
+          if (clientID) {
+            console.log(
+              "No client secret given; signing in with your browser instead of client credentials.",
+            );
+          }
           await browserLogin({
             apiBase,
             overrides,
