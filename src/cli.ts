@@ -2,6 +2,7 @@ import { Command } from "commander";
 import type { GlobalFlags } from "./api-client.js";
 import { registerApiCommands } from "./commands/index.js";
 import { registerLoginCommand } from "./commands/login.js";
+import { registerLogoutCommand } from "./commands/logout.js";
 import { registerVersionCommand } from "./commands/version.js";
 import {
   finishBackgroundUpdateCheck,
@@ -78,6 +79,7 @@ function buildProgram(): Command {
   });
 
   registerLoginCommand(program, getFlags);
+  registerLogoutCommand(program, getFlags);
   registerVersionCommand(program);
   registerApiCommands(program, getFlags);
 

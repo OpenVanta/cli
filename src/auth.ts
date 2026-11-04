@@ -513,6 +513,7 @@ export async function requestRefreshedToken(args: {
 
 export type StoredCredentials = {
   authMode: AuthMode;
+  clientId: string;
   refreshToken: string;
   accessToken: string;
   expiresAt: Date | null;
@@ -531,6 +532,7 @@ export async function loadStoredCredentials(
   const expiresAt = expiresRaw ? new Date(expiresRaw) : null;
   return {
     authMode: src.auth_mode === "user" ? "user" : "client",
+    clientId: src.oauth_client_id?.trim() ?? "",
     refreshToken: src.oauth_refresh_token?.trim() ?? "",
     accessToken: src.cached_access_token?.trim() ?? "",
     expiresAt:
@@ -655,4 +657,33 @@ async function resolveUserAccessToken(
   // Persist before use: the old refresh token stops working after its grace period.
   await updateCredentialState((state) => writeUserTokens(state, tokens));
   return tokens.accessToken;
+}
+
+/**
+ * Revokes a browser sign-in's grant (RFC 7009; a public client authenticates
+ * by client id alone). Throws on network failure or a non-2xx response.
+ */
+export async function revokeUserToken(
+  apiBase: string,
+  token: string,
+): Promise<void> {
+  const url = new URL(apiBase.trim() || defaultAPIBase);
+  url.pathname = "/v1/oauth/token/suspend";
+  url.search = "";
+  const resp = await fetch(url.toString(), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "User-Agent": userAgent(),
+    },
+    body: new URLSearchParams({
+      client_id: FIRST_PARTY_CLI_CLIENT_ID,
+      token,
+    }).toString(),
+  });
+  if (!resp.ok) {
+    throw new Error(
+      `revoke failed (${resp.status}): ${(await resp.text()).trim()}`,
+    );
+  }
 }
