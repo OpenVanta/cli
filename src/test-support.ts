@@ -2,6 +2,7 @@
 import { mkdtemp, readFile, rm, writeFile, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { disableSystemCredentialStoreForTests } from "./keychain.js";
 
 export type RecordedRequest = {
   url: string;
@@ -10,7 +11,11 @@ export type RecordedRequest = {
   body: string;
 };
 
-/** Points HOME at a fresh directory so the config file is isolated. */
+/**
+ * Points HOME at a fresh directory and turns off the OS credential store, so
+ * credentials go to that directory's config file on every platform and the
+ * real keychain entry is never read or written.
+ */
 export async function useTempHome(): Promise<{
   dir: string;
   readConfig: () => Promise<Record<string, unknown>>;
@@ -20,6 +25,7 @@ export async function useTempHome(): Promise<{
   const previous = process.env.HOME;
   const dir = await mkdtemp(join(tmpdir(), "vanta-cli-test-"));
   process.env.HOME = dir;
+  disableSystemCredentialStoreForTests(true);
   const path = join(dir, ".vanta", "config.json");
   return {
     dir,
@@ -30,6 +36,7 @@ export async function useTempHome(): Promise<{
     },
     restore: async () => {
       process.env.HOME = previous;
+      disableSystemCredentialStoreForTests(false);
       await rm(dir, { recursive: true, force: true });
     },
   };

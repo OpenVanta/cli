@@ -15,6 +15,7 @@ import {
   type RecordedRequest,
 } from "./test-support.js";
 import { FIRST_PARTY_CLI_CLIENT_ID } from "./user-login.js";
+import { systemCredentialStoreAvailable } from "./keychain.js";
 
 describe("credential store selection", () => {
   it("uses the system store on darwin and win32", () => {
@@ -106,6 +107,16 @@ describe("resolveAccessToken", () => {
     for (const k of envKeys) {
       if (savedEnv[k] === undefined) delete process.env[k];
       else process.env[k] = savedEnv[k];
+    }
+  });
+
+  it("never uses the OS keychain during tests, even on macOS", async () => {
+    const platform = Object.getOwnPropertyDescriptor(process, "platform")!;
+    Object.defineProperty(process, "platform", { value: "darwin" });
+    try {
+      assert.equal(await systemCredentialStoreAvailable(), false);
+    } finally {
+      Object.defineProperty(process, "platform", platform);
     }
   });
 

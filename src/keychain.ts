@@ -226,7 +226,19 @@ export async function setKeychainPassword(
   throw new Error("system credential store is unavailable");
 }
 
+let systemStoreDisabledForTests = false;
+
+/**
+ * Tests only: route every credential read/write to the config file so a test
+ * run on macOS or Windows never touches the real keychain entry.
+ */
+export function disableSystemCredentialStoreForTests(disabled = true): void {
+  systemStoreDisabledForTests = disabled;
+  cachedPassword = undefined;
+}
+
 export async function systemCredentialStoreAvailable(): Promise<boolean> {
+  if (systemStoreDisabledForTests) return false;
   if (process.platform === "darwin") {
     return true;
   }
