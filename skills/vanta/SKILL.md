@@ -18,8 +18,8 @@ The `vanta` binary must be on `$PATH`. See the project README for install option
 ## Authentication
 
 ```bash
-vanta login
-
+vanta login    # sign in with your browser (leave the client ID blank), or enter OAuth client credentials
+vanta logout   # sign out and revoke a browser sign-in
 ```
 
 ## Global Flags
@@ -30,6 +30,7 @@ vanta login
 | `--client-secret <SECRET>` | OAuth client secret (overrides saved login) |
 | `--scope <SCOPE>` | OAuth scope (default: `vanta-api.all:read vanta-api.all:write`) |
 | `--api-base <URL>` | Base API URL (overrides saved config) |
+| `--web-base <URL>` | Vanta web app URL for browser sign-in (default `https://app.vanta.com`) |
 | `--dry-run` | Print request details without sending |
 | `--pretty[=true|false]` | Pretty-print JSON responses (default: `true`) |
 | `--verbose` | Log request metadata to stderr |

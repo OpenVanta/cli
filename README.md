@@ -46,13 +46,23 @@ Standalone binaries are published for Linux, macOS, and Windows. macOS builds ar
 
 ## Authenticate
 
-Create an OAuth client in the [Vanta developer portal](https://app.vanta.com/settings/developer-console), then run:
+Sign in with your browser:
 
 ```bash
 vanta login
 ```
 
-You’ll be prompted for your API base URL, client ID, and client secret. Credentials are stored in the OS keychain when available (macOS Keychain or Windows Credential Manager), matching the previous Go CLI (`com.vanta.cli` / `oauth`). Your API base is saved to `~/.vanta/config.json`.
+Accept the API base URL, leave the client ID blank, and approve access in the browser window that opens. The CLI then calls the API as you, limited to what your Vanta role allows, and refreshes its token automatically. If the browser can't reach the machine running the CLI, pass `--no-browser`, open the printed URL yourself, and paste back the URL the browser was redirected to.
+
+To use an OAuth client from the [Vanta developer portal](https://app.vanta.com/settings/developer-console) instead, enter its client ID and secret at the prompts.
+
+Credentials are stored in the OS keychain when available (macOS Keychain or Windows Credential Manager), matching the previous Go CLI (`com.vanta.cli` / `oauth`). Your API base is saved to `~/.vanta/config.json`.
+
+To sign out (this also revokes a browser sign-in):
+
+```bash
+vanta logout
+```
 
 You can also pass credentials via environment variables or flags:
 
@@ -62,8 +72,12 @@ You can also pass credentials via environment variables or flags:
 | Client secret | `--client-secret` | `VANTA_CLIENT_SECRET` |
 | OAuth scope | `--scope` | `VANTA_OAUTH_SCOPE` |
 | API base URL | `--api-base` | `VANTA_API_BASE` |
+| Web app URL (browser sign-in) | `--web-base` | `VANTA_WEB_BASE` |
+
+A client secret from a flag or environment variable always uses client credentials, even after a browser sign-in.
 
 Default API base: `https://api.vanta.com/v1`  
+Default web app URL: `https://app.vanta.com`  
 Default scope: `vanta-api.all:read vanta-api.all:write`
 
 ## Quick start
