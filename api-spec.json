@@ -14900,6 +14900,30 @@
         "type": "object",
         "additionalProperties": false
       },
+      "OutboundError": {
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "DocumentEvaluation": {
+        "properties": {
+          "summary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "PaginatedResponse_Document_": {
         "properties": {
           "results": {
@@ -23323,6 +23347,113 @@
         },
         "description": "Submit document collection.",
         "summary": "Submit document collection",
+        "tags": [
+          "Documents"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/documents/{documentId}/evaluate": {
+      "post": {
+        "operationId": "EvaluateDocument",
+        "responses": {
+          "202": {
+            "description": "Evaluation request accepted"
+          },
+          "204": {
+            "description": "A matching successful evaluation already exists"
+          },
+          "422": {
+            "description": "Evidence cannot be evaluated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutboundError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Request Vanta AI evaluation of all files and URLs in the document's current draft.\nReturns 202 when the request is accepted, or 204 when a matching successful evaluation already exists. Both responses have an empty body.\n\nRetrieve the results with GET /documents/{documentId}/evaluation. GET returns 404 when no matching evaluation outcome is available; poll with a bounded timeout.\n\nRepeated requests for the same evidence set are deduplicated and will not trigger multiple evaluations.\n\nEvaluations are disabled for sensitive documents.\nVanta AI and evidence evaluation must be enabled for your organization.\nSaved evaluation failures and unmet evaluation preconditions return a standard 422 error.",
+        "summary": "Evaluate document evidence",
+        "tags": [
+          "Documents"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/documents/{documentId}/evaluation": {
+      "get": {
+        "operationId": "GetDocumentDraftEvaluation",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentEvaluation"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "summary": "The evidence demonstrates an implemented CI/CD workflow."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No evaluation is available for the current draft, or the document was not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutboundError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Evidence cannot be evaluated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutboundError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retrieve the saved evaluation summary for the document's current draft.\nEach request reflects the current evidence, so changing the draft can make a previously available evaluation unavailable until that evidence is evaluated.\n\nReturns 404 when no matching outcome is saved, including while an evaluation is running. This endpoint does not start evaluations or report queue status.\nPoll with a bounded timeout after POSTing to the evaluate endpoint; some worker failures do not produce a saved outcome.\nEvaluations are disabled for sensitive documents. Vanta AI and evidence evaluation must be enabled for your organization, including to read saved results. Saved evaluation failures and unmet evaluation preconditions return a standard 422 error.",
+        "summary": "Get document evaluation",
         "tags": [
           "Documents"
         ],

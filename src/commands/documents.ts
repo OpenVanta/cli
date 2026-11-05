@@ -22,6 +22,8 @@ import type {
   SetOwnerForDocumentData,
 } from "../generated/types.gen.js";
 import { printResponse } from "../output.js";
+import { agentModeEnabled } from "../agent-mode.js";
+import { pollDocumentEvaluation } from "./document-evaluation.js";
 import {
   addJsonFileOptions,
   addPaginationOptions,
@@ -198,6 +200,32 @@ export function registerDocumentsCommand(
       }),
     );
   });
+
+  documents
+    .command("evaluate")
+    .description("Evaluate document evidence")
+    .requiredOption("--id <id>", "Document ID")
+    .addHelpText(
+      "after",
+      "\nUse Vanta AI to review all files and links attached to a document\n" +
+        "and suggest improvements to the evidence. This evaluation provides\n" +
+        "optional guidance while preparing evidence and does not submit the\n" +
+        "document.\n\n" +
+        "Waits for evaluation to complete, then returns a summary of findings.\n" +
+        "Waits up to 5 minutes for results before reporting a timeout.\n\n" +
+        "Wait for this command to finish before changing the document's evidence\n" +
+        "or starting another evaluation for the same document.",
+    )
+    .action(async (opts: { id: string }) => {
+      await withClient(getFlags, async (api, flags) => {
+        const result = await pollDocumentEvaluation(api.client, opts.id, () => {
+          if (process.stderr.isTTY && !agentModeEnabled(flags.agentMode)) {
+            process.stderr.write("Evaluating document evidence...\n");
+          }
+        });
+        printResponse(result, flags);
+      });
+    });
 
   documents
     .command("submit")
