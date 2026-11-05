@@ -14900,6 +14900,18 @@
         "type": "object",
         "additionalProperties": false
       },
+      "OutboundError": {
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "DocumentEvaluation": {
         "properties": {
           "summary": {
