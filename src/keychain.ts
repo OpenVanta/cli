@@ -157,6 +157,14 @@ function repairDarwinAcl(service: string, account: string, raw: string): void {
   }
 }
 
+/**
+ * Drops the in-process copy so the next read goes to the OS store. Used before
+ * a token refresh, since another CLI process may have rotated the grant.
+ */
+export function invalidateKeychainCache(): void {
+  cachedPassword = undefined;
+}
+
 export async function getKeychainPassword(
   service = credentialStoreService,
   account = credentialStoreAccount,
@@ -218,7 +226,19 @@ export async function setKeychainPassword(
   throw new Error("system credential store is unavailable");
 }
 
+let systemStoreDisabledForTests = false;
+
+/**
+ * Tests only: route every credential read/write to the config file so a test
+ * run on macOS or Windows never touches the real keychain entry.
+ */
+export function disableSystemCredentialStoreForTests(disabled = true): void {
+  systemStoreDisabledForTests = disabled;
+  cachedPassword = undefined;
+}
+
 export async function systemCredentialStoreAvailable(): Promise<boolean> {
+  if (systemStoreDisabledForTests) return false;
   if (process.platform === "darwin") {
     return true;
   }
