@@ -372,6 +372,17 @@ export async function resolveAccessToken(
   overrides: AuthOverrides = {},
   options: { dryRun?: boolean } = {},
 ): Promise<string> {
+  const stored = await loadStoredCredentials();
+  if (stored.authMode === "user") {
+    // A secret from a flag or the environment always means client credentials.
+    const explicitSecret =
+      overrides.clientSecret?.trim() ||
+      process.env[oauthClientSecretEnvVar]?.trim();
+    return explicitSecret
+      ? requestUncachedClientToken(apiBase, overrides, explicitSecret, options)
+      : resolveUserAccessToken(apiBase, options);
+  }
+
   const cached = await loadCachedAccessToken();
   if (
     cached.token &&
@@ -379,17 +390,6 @@ export async function resolveAccessToken(
     Date.now() < cached.expiresAt.getTime() - 30_000
   ) {
     return cached.token;
-  }
-
-  // A secret from a flag or the environment always means client credentials.
-  const explicitSecret =
-    overrides.clientSecret?.trim() ||
-    process.env[oauthClientSecretEnvVar]?.trim();
-  if (!explicitSecret) {
-    const stored = await loadStoredCredentials();
-    if (stored.authMode === "user") {
-      return resolveUserAccessToken(apiBase, options);
-    }
   }
 
   const { clientID, clientSecret, scope } =
@@ -729,4 +729,39 @@ export async function revokePreviousBrowserLogin(
   } catch {
     // The grant idles out server-side; a failed cleanup must not block login.
   }
+}
+
+/**
+ * Client credentials given by flag or environment while a browser sign-in is
+ * saved. The token is for a different identity than the signed-in person, so
+ * it is never read from or written to the sign-in's cache: a later command
+ * without those credentials must not act as the client while looking like the
+ * person, and the person's cached token must not stand in for the client.
+ */
+async function requestUncachedClientToken(
+  apiBase: string,
+  overrides: AuthOverrides,
+  clientSecret: string,
+  options: { dryRun?: boolean },
+): Promise<string> {
+  const clientID =
+    overrides.clientId?.trim() || process.env[oauthClientIDEnvVar]?.trim();
+  if (!clientID) {
+    if (options.dryRun) return "<dry-run>";
+    throw new Error(
+      "missing client ID: set VANTA_CLIENT_ID or --client-id along with the client secret",
+    );
+  }
+  if (options.dryRun) return "<dry-run>";
+  const scope =
+    overrides.scope?.trim() ||
+    process.env[oauthScopeEnvVar]?.trim() ||
+    defaultOAuthScope;
+  const { accessToken } = await requestOAuthToken(
+    apiBase,
+    clientID,
+    clientSecret,
+    scope,
+  );
+  return accessToken;
 }

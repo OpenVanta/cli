@@ -260,6 +260,34 @@ describe("resolveAccessToken", () => {
     );
   });
 
+  it("env client credentials never touch a browser sign-in's cached token", async () => {
+    // The signed-in person's token is still valid.
+    await home.writeConfig(userConfig({ cached_token_expires: future() }));
+    process.env.VANTA_CLIENT_ID = "env-id";
+    process.env.VANTA_CLIENT_SECRET = "env-secret";
+
+    // The env credentials win over the person's cached token...
+    assert.equal(await resolveAccessToken(apiBase), "at-new");
+    assert.equal(JSON.parse(net.requests[0]!.body).client_id, "env-id");
+    // ...and their token is not cached as the person's.
+    const cfg = await home.readConfig();
+    assert.equal(cfg.cached_access_token, "at-old");
+    assert.equal(cfg.oauth_refresh_token, "rt-old");
+
+    // Without the env vars, commands act as the person again.
+    delete process.env.VANTA_CLIENT_ID;
+    delete process.env.VANTA_CLIENT_SECRET;
+    assert.equal(await resolveAccessToken(apiBase), "at-old");
+    assert.equal(net.requests.length, 1);
+  });
+
+  it("an env secret without a client ID does not borrow the first-party ID", async () => {
+    await home.writeConfig(userConfig());
+    process.env.VANTA_CLIENT_SECRET = "env-secret";
+    await assert.rejects(resolveAccessToken(apiBase), /missing client ID/);
+    assert.equal(net.requests.length, 0);
+  });
+
   it("an explicit secret overrides a stored browser login", async () => {
     await home.writeConfig(userConfig());
     process.env.VANTA_CLIENT_ID = "env-id";
