@@ -2,6 +2,7 @@ import { Command } from "commander";
 import type { GlobalFlags } from "./api-client.js";
 import { registerApiCommands } from "./commands/index.js";
 import { registerLoginCommand } from "./commands/login.js";
+import { registerLogoutCommand } from "./commands/logout.js";
 import { registerVersionCommand } from "./commands/version.js";
 import {
   finishBackgroundUpdateCheck,
@@ -21,6 +22,10 @@ function buildProgram(): Command {
     .option(
       "--api-base <url>",
       "Base API URL (overrides saved config; default https://api.vanta.com/v1)",
+    )
+    .option(
+      "--web-base <url>",
+      "Vanta web app URL for `vanta login --browser` (default https://app.vanta.com, or http://127.0.0.1:8080 for a 127.0.0.1 API base)",
     )
     .option("--dry-run", "Print request details without sending", false)
     .option("--pretty", "Pretty-print JSON responses", true)
@@ -43,6 +48,7 @@ function buildProgram(): Command {
   const getFlags = (): GlobalFlags => {
     const opts = program.opts<{
       apiBase?: string;
+      webBase?: string;
       dryRun?: boolean;
       pretty?: boolean;
       verbose?: boolean;
@@ -54,6 +60,7 @@ function buildProgram(): Command {
 
     return {
       apiBase: opts.apiBase,
+      webBase: opts.webBase,
       dryRun: Boolean(opts.dryRun),
       pretty: opts.pretty !== false,
       verbose: Boolean(opts.verbose),
@@ -72,6 +79,7 @@ function buildProgram(): Command {
   });
 
   registerLoginCommand(program, getFlags);
+  registerLogoutCommand(program, getFlags);
   registerVersionCommand(program);
   registerApiCommands(program, getFlags);
 
