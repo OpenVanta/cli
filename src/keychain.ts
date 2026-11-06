@@ -97,6 +97,25 @@ function getViaSecurity(service: string, account: string): string | null {
   return value || null;
 }
 
+/** security(1) -i reads at most 4096 bytes per command line. */
+const securityCommandLimit = 4096;
+
+function securityAddCommand(
+  service: string,
+  account: string,
+  password: string,
+): string {
+  const command =
+    `add-generic-password -s ${shellQuote(service)} -a ${shellQuote(account)} ` +
+    `-w ${shellQuote(password)} -T ${shellQuote(securityPath)}\n`;
+  if (command.length > securityCommandLimit) {
+    throw new Error(
+      `keychain entry is too large to store via security(1) (${command.length} of ${securityCommandLimit} bytes)`,
+    );
+  }
+  return command;
+}
+
 function setViaSecurity(
   service: string,
   account: string,
@@ -107,12 +126,7 @@ function setViaSecurity(
   // CLI — not every application (-A).
   deleteViaSecurity(service, account);
 
-  const command =
-    `add-generic-password -s ${shellQuote(service)} -a ${shellQuote(account)} ` +
-    `-w ${shellQuote(password)} -T ${shellQuote(securityPath)}\n`;
-  if (command.length > 4096) {
-    throw new Error("keychain secret is too large to store via security(1)");
-  }
+  const command = securityAddCommand(service, account, password);
 
   const result = runSecurity(["-i"], command);
   if (result.status !== 0) {
@@ -173,6 +187,11 @@ export async function getKeychainPassword(
     return cachedPassword;
   }
 
+  if (fakeKeychain) {
+    cachedPassword = fakeKeychain.value;
+    return cachedPassword;
+  }
+
   if (process.platform === "darwin") {
     const raw = getViaSecurity(service, account);
     cachedPassword = raw;
@@ -208,6 +227,12 @@ export async function setKeychainPassword(
   service = credentialStoreService,
   account = credentialStoreAccount,
 ): Promise<void> {
+  if (fakeKeychain) {
+    securityAddCommand(service, account, password);
+    fakeKeychain.value = password;
+    cachedPassword = password;
+    return;
+  }
   if (process.platform === "darwin") {
     setViaSecurity(service, account, password);
     cachedPassword = password;
@@ -227,6 +252,19 @@ export async function setKeychainPassword(
 }
 
 let systemStoreDisabledForTests = false;
+let fakeKeychain: { value: string | null } | null = null;
+
+/**
+ * Tests only: an in-memory keychain behind the same functions, with the
+ * in-process cache and the macOS size limit, so the system-store code path is
+ * covered on every platform. Pass null to turn it off.
+ */
+export function useFakeKeychainForTests(
+  store: { value: string | null } | null,
+): void {
+  fakeKeychain = store;
+  cachedPassword = undefined;
+}
 
 /**
  * Tests only: route every credential read/write to the config file so a test
@@ -238,6 +276,7 @@ export function disableSystemCredentialStoreForTests(disabled = true): void {
 }
 
 export async function systemCredentialStoreAvailable(): Promise<boolean> {
+  if (fakeKeychain) return true;
   if (systemStoreDisabledForTests) return false;
   if (process.platform === "darwin") {
     return true;

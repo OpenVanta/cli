@@ -153,6 +153,16 @@ describe("resolveAccessToken", () => {
     );
   });
 
+  it("--dry-run does not refresh or rotate the stored grant", async () => {
+    await home.writeConfig(userConfig());
+    assert.equal(
+      await resolveAccessToken(apiBase, {}, { dryRun: true }),
+      "<dry-run>",
+    );
+    assert.equal(net.requests.length, 0);
+    assert.equal((await home.readConfig()).oauth_refresh_token, "rt-old");
+  });
+
   it("refreshes inside the 30 s early-expiry margin", async () => {
     await home.writeConfig(
       userConfig({
