@@ -88,29 +88,36 @@ export function parseCallback(url: URL, expectedState: string): CallbackResult {
   return { kind: "code", code };
 }
 
+export type PastedResult = CallbackResult | { kind: "unrecognized" };
+
+/** Authorization codes are opaque URL-safe tokens. */
+const bareCodePattern = /^[A-Za-z0-9._~-]+$/;
+
 /**
  * Parses what a person pasted when the browser could not reach this machine's
- * loopback: the whole callback URL (state checked), a `code=…` fragment, or the
- * bare code. Returns null for a blank line.
+ * loopback. Anything that looks like a URL or query string, with or without a
+ * scheme, must carry the expected state, exactly as the loopback requires. A
+ * bare code (the value alone) is accepted as is. Returns null for a blank line
+ * and "unrecognized" for anything else, so stray text is never exchanged.
  */
 export function parsePastedCallback(
   line: string,
   expectedState: string,
-): CallbackResult | null {
+): PastedResult | null {
   const trimmed = line.trim();
   if (!trimmed) return null;
 
-  if (/^https?:\/\//i.test(trimmed)) {
-    try {
-      return parseCallback(new URL(trimmed), expectedState);
-    } catch {
-      // Fall through to the looser forms.
-    }
+  if (/[?&=]/.test(trimmed)) {
+    const query = trimmed.includes("?")
+      ? trimmed.slice(trimmed.indexOf("?") + 1)
+      : trimmed;
+    const url = new URL("http://127.0.0.1/");
+    url.search = query.split("#")[0]!;
+    return parseCallback(url, expectedState);
   }
 
-  const match = trimmed.match(/(?:^|[?&])code=([^&\s]+)/);
-  const code = decodeURIComponent(match?.[1] ?? trimmed);
-  return { kind: "code", code };
+  if (bareCodePattern.test(trimmed)) return { kind: "code", code: trimmed };
+  return { kind: "unrecognized" };
 }
 
 export type CallbackListener = {

@@ -157,14 +157,45 @@ describe("parsePastedCallback", () => {
     );
   });
 
-  it("accepts code=… or a bare code", () => {
-    assert.deepEqual(parsePastedCallback("  code=a%2Fb&x=1 ", "s1"), {
+  it("checks state on a URL pasted without its scheme", () => {
+    assert.deepEqual(
+      parsePastedCallback("127.0.0.1:1/callback?code=abc&state=WRONG", "s1"),
+      { kind: "state-mismatch" },
+    );
+    assert.deepEqual(
+      parsePastedCallback("127.0.0.1:1/callback?code=abc&state=s1", "s1"),
+      { kind: "code", code: "abc" },
+    );
+  });
+
+  it("requires state on a pasted query string", () => {
+    assert.deepEqual(parsePastedCallback("code=zzz", "s1"), {
+      kind: "state-mismatch",
+    });
+    assert.deepEqual(
+      parsePastedCallback("?error=access_denied&state=WRONG", "s1"),
+      { kind: "state-mismatch" },
+    );
+    assert.deepEqual(
+      parsePastedCallback("?error=access_denied&state=s1", "s1"),
+      { kind: "error", error: "access_denied" },
+    );
+    assert.deepEqual(parsePastedCallback("code=a%2Fb&state=s1&x=1", "s1"), {
       kind: "code",
       code: "a/b",
     });
-    assert.deepEqual(parsePastedCallback("abc123", "s1"), {
+  });
+
+  it("accepts a bare code but not stray text", () => {
+    assert.deepEqual(parsePastedCallback("abc123_-.~", "s1"), {
       kind: "code",
-      code: "abc123",
+      code: "abc123_-.~",
+    });
+    assert.deepEqual(parsePastedCallback("garbage text", "s1"), {
+      kind: "unrecognized",
+    });
+    assert.deepEqual(parsePastedCallback("a/b", "s1"), {
+      kind: "unrecognized",
     });
     assert.equal(parsePastedCallback("   ", "s1"), null);
   });
