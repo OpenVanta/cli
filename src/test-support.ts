@@ -53,7 +53,12 @@ export function stubFetch(
       url: input instanceof Request ? input.url : String(input),
       method: init?.method ?? "GET",
       headers: new Headers(init?.headers),
-      body: typeof init?.body === "string" ? init.body : "",
+      body:
+        typeof init?.body === "string"
+          ? init.body
+          : input instanceof Request
+            ? await input.clone().text()
+            : "",
     };
     requests.push(req);
     return respond(req);
