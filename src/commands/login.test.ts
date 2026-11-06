@@ -60,11 +60,15 @@ function makeDeps(answers: string[], callback: CallbackResult) {
   };
 }
 
-async function runLogin(deps: LoginDeps, argv: string[] = []) {
+async function runLogin(
+  deps: LoginDeps,
+  argv: string[] = [],
+  overrides: { clientId?: string; clientSecret?: string } = {},
+) {
   const program = new Command().exitOverride();
   registerLoginCommand(
     program,
-    () => ({}),
+    () => overrides,
     () => deps,
   );
   const logs: string[] = [];
@@ -157,6 +161,24 @@ describe("vanta login", () => {
       });
       await assert.rejects(runLogin(blankSecret.deps), /value cannot be empty/);
       assert.equal(net.requests.length, 0);
+    });
+
+    it("uses the global --client-id/--client-secret as prompt defaults", async () => {
+      const t = makeDeps(["https://api.vanta.com/v1", "", "", ""], {
+        kind: "code",
+        code: "c",
+      });
+      await runLogin(t.deps, [], { clientId: "gid", clientSecret: "gsec" });
+      assert.equal(t.prompts[1]!.defaultValue, "gid");
+      assert.equal(JSON.parse(net.requests[0]!.body).client_secret, "gsec");
+    });
+
+    it("refuses --no-open without --browser", async () => {
+      const t = makeDeps([], { kind: "code", code: "c" });
+      await assert.rejects(
+        runLogin(t.deps, ["--no-open"]),
+        /--no-open only applies to `vanta login --browser`/,
+      );
     });
 
     it("revokes a previous browser sign-in it replaces", async () => {
@@ -266,6 +288,51 @@ describe("vanta login", () => {
       assert.equal(eu.prompts[1]!.defaultValue, "https://app.eu.vanta.com");
     });
 
+    it("refuses --browser with the global --client-id/--client-secret too", async () => {
+      const t = makeDeps([], { kind: "code", code: "c" });
+      await assert.rejects(
+        runLogin(t.deps, ["--browser"], { clientSecret: "s" }),
+        /either --browser or --client-id\/--client-secret/,
+      );
+      await assert.rejects(
+        runLogin(t.deps, ["--browser"], { clientId: "x" }),
+        /either --browser or --client-id\/--client-secret/,
+      );
+      assert.equal(t.prompts.length, 0);
+    });
+
+    it("explains a rejected sign-in code", async () => {
+      respond = () => jsonResponse(400, { error: "invalid_grant" });
+      const t = makeDeps(["https://api.vanta.com/v1", "", ""], {
+        kind: "code",
+        code: "stale",
+      });
+      await assert.rejects(
+        runLogin(t.deps, ["--browser"]),
+        /sign-in code was rejected \(it expires after 60 seconds and works once\)/,
+      );
+    });
+
+    it("warns when VANTA_CLIENT_SECRET will override the sign-in", async () => {
+      const saved = process.env.VANTA_CLIENT_SECRET;
+      process.env.VANTA_CLIENT_SECRET = "s";
+      const error = console.error;
+      const errors: string[] = [];
+      console.error = (...a: unknown[]) => errors.push(a.join(" "));
+      try {
+        const t = makeDeps(["https://api.vanta.com/v1", "", ""], {
+          kind: "code",
+          code: "c",
+        });
+        await runLogin(t.deps, ["--browser"]);
+        assert.match(errors.join("\n"), /VANTA_CLIENT_SECRET is set/);
+      } finally {
+        console.error = error;
+        if (saved === undefined) delete process.env.VANTA_CLIENT_SECRET;
+        else process.env.VANTA_CLIENT_SECRET = saved;
+      }
+    });
+
     it("refuses to mix --browser with client credentials", async () => {
       const t = makeDeps([], { kind: "code", code: "c" });
       await assert.rejects(
@@ -325,10 +392,14 @@ describe("vanta login", () => {
       });
       await assert.rejects(runLogin(t.deps, ["--browser"]), (err: Error) => {
         assert.match(err.message, /timed out/);
-        assert.match(err.message, /vanta login --browser/);
         assert.match(
           err.message,
-          /https:\/\/app\.vanta\.com\/oauth\/authorize\?/,
+          /Run `vanta login --browser` to try again\.$/,
+        );
+        assert.doesNotMatch(
+          err.message,
+          /oauth\/authorize/,
+          "a dead URL is not re-offered",
         );
         return true;
       });
@@ -419,7 +490,7 @@ describe("terminal prompts", () => {
     console.error = (...a: unknown[]) => errors.push(a.join(" "));
     try {
       const deps = pipe(
-        "http://127.0.0.1:1/callback?code=bad&state=other\nhttp://127.0.0.1:1/callback?code=good&state=s1\n",
+        "http://127.0.0.1:1/callback?code=bad&state=other\ngarbage text\n127.0.0.1:1/callback?code=bad&state=other\nhttp://127.0.0.1:1/callback?code=good&state=s1\n",
         false,
       );
       assert.deepEqual(await deps.readPasted("s1"), {
@@ -427,6 +498,8 @@ describe("terminal prompts", () => {
         code: "good",
       });
       assert.match(errors.join("\n"), /does not match this sign-in request/);
+      assert.match(errors.join("\n"), /doesn't look like a sign-in URL/);
+      assert.equal(errors.length, 3, "all three bad pastes are refused");
       deps.close();
     } finally {
       console.error = error;

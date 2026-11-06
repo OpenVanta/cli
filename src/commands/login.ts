@@ -9,10 +9,12 @@ import {
   requestOAuthToken,
   resolveAPIBase,
   resolveWebBase,
+  OAuthTokenError,
   revokePreviousBrowserLogin,
   saveOAuthCredentials,
   saveUserCredentials,
   type AuthOverrides,
+  type UserTokens,
 } from "../auth.js";
 import { InputClosedError, LineInput } from "../line-input.js";
 import {
@@ -116,6 +118,12 @@ export function terminalDeps(
           );
           continue;
         }
+        if (parsed?.kind === "unrecognized") {
+          console.error(
+            "That doesn't look like a sign-in URL; paste the full URL from the browser's address bar.",
+          );
+          continue;
+        }
         if (parsed) return parsed;
       }
     },
@@ -174,9 +182,7 @@ async function browserLogin(args: {
     result = await Promise.race([listener.result, deps.readPasted(state)]);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    throw new Error(
-      `${message}. Run \`vanta login --browser\` to try again:\n  ${authorizeUrl}`,
-    );
+    throw new Error(`${message}. Run \`vanta login --browser\` to try again.`);
   } finally {
     listener.close();
   }
@@ -197,12 +203,22 @@ async function browserLogin(args: {
     throw new Error("browser sign-in failed: unexpected response");
   }
 
-  const tokens = await exchangeAuthorizationCode({
-    apiBase: args.apiBase,
-    code: result.code,
-    codeVerifier: verifier,
-    redirectUri: listener.redirectUri,
-  });
+  let tokens: UserTokens;
+  try {
+    tokens = await exchangeAuthorizationCode({
+      apiBase: args.apiBase,
+      code: result.code,
+      codeVerifier: verifier,
+      redirectUri: listener.redirectUri,
+    });
+  } catch (err) {
+    if (err instanceof OAuthTokenError && err.code === "invalid_grant") {
+      throw new Error(
+        "browser sign-in failed: the sign-in code was rejected (it expires after 60 seconds and works once). Run `vanta login --browser` to try again.",
+      );
+    }
+    throw err;
+  }
   await revokePreviousBrowserLogin(args.apiBase);
   await saveUserCredentials({ apiBase: args.apiBase, webBase, scope, tokens });
 
@@ -214,6 +230,11 @@ async function browserLogin(args: {
   console.log(
     `Access token cached (expires at ${tokens.expiresAt.toISOString().replace(/\.\d{3}Z$/, "Z")}); it refreshes automatically`,
   );
+  if (process.env.VANTA_CLIENT_SECRET?.trim()) {
+    console.error(
+      "Warning: VANTA_CLIENT_SECRET is set, so commands in this shell use those client credentials, not this sign-in. Unset it to act as yourself.",
+    );
+  }
 }
 
 export function registerLoginCommand(
@@ -245,15 +266,22 @@ export function registerLoginCommand(
         browser?: boolean;
         open?: boolean;
       }) => {
-        if (opts.browser && (opts.clientId || opts.clientSecret)) {
+        // --client-id/--client-secret are also global options, and commander
+        // hands them to the program, not to this command, so read both.
+        const overrides = getOverrides();
+        const clientIdFlag = opts.clientId ?? overrides.clientId;
+        const clientSecretFlag = opts.clientSecret ?? overrides.clientSecret;
+        if (opts.browser && (clientIdFlag || clientSecretFlag)) {
           throw new Error(
             "--browser signs in without client credentials: pass either --browser or --client-id/--client-secret",
           );
         }
+        if (!opts.browser && opts.open === false) {
+          throw new Error("--no-open only applies to `vanta login --browser`");
+        }
 
         const deps = makeDeps();
         try {
-          const overrides = getOverrides();
           const apiBaseDefault = await resolveAPIBase(overrides);
           const apiBase = await deps.prompt(
             "API base URL",
@@ -275,12 +303,12 @@ export function registerLoginCommand(
 
           const clientID = await deps.prompt(
             "OAuth client ID",
-            opts.clientId ?? "",
+            clientIdFlag ?? "",
             true,
           );
           const clientSecret = await deps.prompt(
             "OAuth client secret",
-            opts.clientSecret ?? "",
+            clientSecretFlag ?? "",
             true,
           );
           const scope =
