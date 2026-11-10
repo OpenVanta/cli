@@ -32,6 +32,19 @@ describe("LineInput", () => {
     li.close();
   });
 
+  it("still answers queued lines after input has ended and readline closed", async () => {
+    const s = streams();
+    const li = new LineInput(s.input, s.output);
+    s.input.end("one\ntwo\n");
+    // Let readline see the end of input and close before anything is asked.
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    assert.equal(await li.question("A: "), "one");
+    assert.equal(await li.question("B: "), "two");
+    await assert.rejects(li.question("C: "), InputClosedError);
+    assert.match(s.printed(), /A: .*B: .*C: /s);
+    li.close();
+  });
+
   it("rejects pending and later questions at end of input", async () => {
     const s = streams();
     const li = new LineInput(s.input, s.output);

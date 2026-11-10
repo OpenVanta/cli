@@ -24,11 +24,13 @@ export class LineInput {
     reject: (err: Error) => void;
   }[] = [];
   private ended = false;
+  private readonly output: NodeJS.WritableStream;
 
   constructor(
     input: NodeJS.ReadableStream = process.stdin,
     output: NodeJS.WritableStream = process.stdout,
   ) {
+    this.output = output;
     const terminal = Boolean((input as { isTTY?: boolean }).isTTY);
     this.rl = createInterface({ input, output, terminal });
     this.rl.on("line", (line) => {
@@ -51,8 +53,14 @@ export class LineInput {
 
   /** Shows `prompt` and resolves with the next line; rejects at end of input. */
   question(prompt: string): Promise<string> {
-    this.rl.setPrompt(prompt);
-    this.rl.prompt();
+    if (this.ended) {
+      // Piped input can end, closing readline, while answers are still
+      // queued. Node 24+ throws on prompt() after close, so print it directly.
+      this.output.write(prompt);
+    } else {
+      this.rl.setPrompt(prompt);
+      this.rl.prompt();
+    }
     return this.nextLine();
   }
 
