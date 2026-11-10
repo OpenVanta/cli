@@ -69,7 +69,7 @@ git fetch origin
 git checkout nikhilbh2/cli-browser-login-staging-test
 git pull
 pnpm install                  # no pnpm? run: npm install -g pnpm@12.6.0
-pnpm generate && pnpm test    # expect 101 passing and no Keychain prompt
+pnpm generate && pnpm test    # expect 102 passing and no Keychain prompt
 pnpm build:binaries
 vdev --version                # prints "dev"
 ```
