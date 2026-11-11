@@ -29,7 +29,12 @@ import { registerTrustCentersCommand } from "./trust-centers.js";
 import { registerCustomAssetsCommand } from "./custom-assets.js";
 import { registerOrganizationCommand } from "./organization.js";
 import { registerTaskRequirementSetsCommand } from "./task-requirement-sets.js";
+import { registerVendorAlertSettingsCommand } from "./vendor-alert-settings.js";
+import { registerVendorAlertsCommand } from "./vendor-alerts.js";
 import { registerVendorCategoriesCommand } from "./vendor-categories.js";
+import { registerVendorCustomFieldsCommand } from "./vendor-custom-fields.js";
+import { registerVendorDocumentTypesCommand } from "./vendor-document-types.js";
+import { registerVendorSecurityIncidentAlertsCommand } from "./vendor-security-incident-alerts.js";
 import type { GetFlags } from "./helpers.js";
 
 export function registerApiCommands(
@@ -66,5 +71,10 @@ export function registerApiCommands(
   registerCustomAssetsCommand(program, getFlags);
   registerOrganizationCommand(program, getFlags);
   registerTaskRequirementSetsCommand(program, getFlags);
+  registerVendorAlertSettingsCommand(program, getFlags);
+  registerVendorAlertsCommand(program, getFlags);
   registerVendorCategoriesCommand(program, getFlags);
+  registerVendorCustomFieldsCommand(program, getFlags);
+  registerVendorDocumentTypesCommand(program, getFlags);
+  registerVendorSecurityIncidentAlertsCommand(program, getFlags);
 }
