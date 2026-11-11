@@ -162,7 +162,7 @@ async function noteReplacedLogin(next: SignInMethod): Promise<void> {
   const stored = await loadStoredCredentials();
   if (next === "browser" && stored.authMode === "client" && stored.clientId) {
     console.log(
-      `Note: this replaces the saved client credentials (client ID ${stored.clientId}). Run \`vanta login\` to use them again.`,
+      "Note: this replaces the saved client credentials. Run `vanta login` to use them again.",
     );
   } else if (
     next === "client" &&
