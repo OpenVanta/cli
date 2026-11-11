@@ -308,49 +308,6 @@ describe("vanta login", () => {
     });
   });
 
-  describe("replacing a saved login", () => {
-    const code: CallbackResult = { kind: "code", code: "the-code" };
-
-    it("says when a browser sign-in replaces saved client credentials", async () => {
-      await runLogin(
-        makeDeps(["https://api.vanta.com/v1", "cid", "sec", ""], code).deps,
-      );
-      const logs = await runLogin(
-        makeDeps(["http://127.0.0.1:10290/v1", "", ""], code).deps,
-        ["--browser"],
-      );
-      assert.ok(
-        logs.some((l) => /replaces the saved client credentials/.test(l)),
-        logs.join("\n"),
-      );
-      const cfg = await home.readConfig();
-      assert.equal(cfg.auth_mode, "user");
-      assert.equal(cfg.oauth_client_secret, "");
-    });
-
-    it("says when client credentials replace a browser sign-in", async () => {
-      await runLogin(
-        makeDeps(["http://127.0.0.1:10290/v1", "", ""], code).deps,
-        ["--browser"],
-      );
-      const logs = await runLogin(
-        makeDeps(["https://api.vanta.com/v1", "cid", "sec", ""], code).deps,
-      );
-      assert.ok(
-        logs.some((l) => /replaces your browser sign-in/.test(l)),
-        logs.join("\n"),
-      );
-      assert.equal((await home.readConfig()).auth_mode, "client");
-    });
-
-    it("says nothing on a first login", async () => {
-      const logs = await runLogin(
-        makeDeps(["https://api.vanta.com/v1", "cid", "sec", ""], code).deps,
-      );
-      assert.ok(!logs.some((l) => /replaces/.test(l)));
-    });
-  });
-
   describe("--browser", () => {
     it("signs in through the browser without asking for client credentials", async () => {
       const t = makeDeps(["http://127.0.0.1:10290/v1", "", ""], {

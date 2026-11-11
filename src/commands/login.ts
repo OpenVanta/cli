@@ -6,7 +6,6 @@ import {
   credentialStorageDescription,
   defaultOAuthScope,
   exchangeAuthorizationCode,
-  loadStoredCredentials,
   requestOAuthToken,
   resolveAPIBase,
   resolveWebBase,
@@ -157,24 +156,6 @@ async function chooseSignInMethod(deps: LoginDeps): Promise<SignInMethod> {
   }
 }
 
-/** One login is saved at a time, so say what a new one of the other kind replaces. */
-async function noteReplacedLogin(next: SignInMethod): Promise<void> {
-  const stored = await loadStoredCredentials();
-  if (next === "browser" && stored.authMode === "client" && stored.clientId) {
-    console.log(
-      "Note: this replaces the saved client credentials. Run `vanta login` to use them again.",
-    );
-  } else if (
-    next === "client" &&
-    stored.authMode === "user" &&
-    stored.refreshToken
-  ) {
-    console.log(
-      "Note: this replaces your browser sign-in, which will be revoked. Run `vanta login --browser` to sign in as yourself again.",
-    );
-  }
-}
-
 const browserSignInHint =
   "browser sign-in is in beta and may not be enabled for your workspace yet; you can still sign in with client credentials: `vanta login`";
 
@@ -194,7 +175,6 @@ async function browserLogin(args: {
       args.scopeDefault,
       false,
     )) || args.scopeDefault;
-  await noteReplacedLogin("browser");
 
   const { verifier, challenge } = createPkcePair();
   const state = createState();
@@ -371,7 +351,6 @@ export function registerLoginCommand(
               scopeDefault,
               false,
             )) || scopeDefault;
-          await noteReplacedLogin("client");
 
           const { accessToken, expiresAt } = await requestOAuthToken(
             apiBase,

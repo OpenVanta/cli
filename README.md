@@ -68,7 +68,7 @@ Approve access in the browser window that opens. The CLI then calls the API as y
 
 Browser sign-in is rolling out gradually and may not be enabled for your workspace yet. If sign-in fails with `server_error`, use client credentials with `vanta login`.
 
-The CLI keeps one login at a time. Signing in with the browser replaces saved client credentials, and signing in with client credentials replaces (and revokes) a browser sign-in; the CLI says so when that happens.
+The CLI keeps one login at a time. Signing in with the browser replaces saved client credentials, and signing in with client credentials replaces (and revokes) a browser sign-in.
 
 You can also pass credentials via environment variables or flags:
 
