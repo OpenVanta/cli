@@ -31,7 +31,7 @@ git fetch origin && git checkout nikhilbh2/cli-browser-login-staging-test && git
 pnpm install && pnpm generate && pnpm test && pnpm build:binaries
 ```
 
-Expect `111 passing` with no Keychain prompt.
+Expect `108 passing` with no Keychain prompt.
 
 ### 3. Helpers
 
