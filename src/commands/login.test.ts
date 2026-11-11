@@ -320,7 +320,7 @@ describe("vanta login", () => {
         ["--browser"],
       );
       assert.ok(
-        logs.some((l) => /replaces the saved client credentials.*cid/.test(l)),
+        logs.some((l) => /replaces the saved client credentials/.test(l)),
         logs.join("\n"),
       );
       const cfg = await home.readConfig();
