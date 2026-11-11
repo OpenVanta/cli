@@ -24,12 +24,17 @@ const tokenBody = {
   scope: "vanta-api.all:read",
 };
 
-function makeDeps(answers: string[], callback: CallbackResult) {
+function makeDeps(
+  answers: string[],
+  callback: CallbackResult,
+  options: { interactive?: boolean } = {},
+) {
   const prompts: { label: string; defaultValue: string }[] = [];
   const opened: string[] = [];
   let listenerClosed = false;
   let expectedState = "";
   const deps: LoginDeps = {
+    interactive: options.interactive ?? false,
     prompt: async (label, defaultValue, required) => {
       prompts.push({ label, defaultValue });
       const answer = answers.shift();
@@ -201,6 +206,148 @@ describe("vanta login", () => {
       );
       assert.equal(new URLSearchParams(suspend.body).get("token"), "rt-old");
       assert.equal((await home.readConfig()).auth_mode, "client");
+    });
+  });
+
+  describe("sign-in method menu", () => {
+    const code: CallbackResult = { kind: "code", code: "the-code" };
+    const choice = "Choice";
+
+    it("in a terminal, asks how to sign in first and defaults to client credentials", async () => {
+      const t = makeDeps(
+        ["", "https://api.vanta.com/v1", "cid", "sec", ""],
+        code,
+        {
+          interactive: true,
+        },
+      );
+      const logs = await runLogin(t.deps);
+
+      assert.equal(t.prompts[0]!.label, choice);
+      assert.equal(t.prompts[0]!.defaultValue, "1");
+      assert.ok(logs.some((l) => /client ID and secret/.test(l)));
+      assert.ok(logs.some((l) => /browser.*beta/.test(l)));
+      assert.deepEqual(
+        t.prompts.slice(1).map((p) => p.label),
+        [
+          "API base URL",
+          "OAuth client ID",
+          "OAuth client secret",
+          "OAuth scope (default: vanta-api.all:read vanta-api.all:write)",
+        ],
+      );
+      assert.equal(t.opened.length, 0);
+      assert.equal(
+        JSON.parse(net.requests[0]!.body).grant_type,
+        "client_credentials",
+      );
+    });
+
+    it("choosing 2 signs in through the browser", async () => {
+      const t = makeDeps(["2", "http://127.0.0.1:10290/v1", "", ""], code, {
+        interactive: true,
+      });
+      await runLogin(t.deps);
+
+      assert.deepEqual(
+        t.prompts.map((p) => p.label),
+        [
+          choice,
+          "API base URL",
+          "Web app URL",
+          "OAuth scope (default: vanta-api.all:read vanta-api.all:write)",
+        ],
+      );
+      assert.equal(t.opened.length, 1);
+      const form = new URLSearchParams(net.requests.filter(isToken)[0]!.body);
+      assert.equal(form.get("grant_type"), "authorization_code");
+      assert.equal((await home.readConfig()).auth_mode, "user");
+    });
+
+    it("asks again after an answer that is not 1 or 2", async () => {
+      const t = makeDeps(
+        ["yes", "3", "2", "http://127.0.0.1:10290/v1", "", ""],
+        code,
+        {
+          interactive: true,
+        },
+      );
+      const logs = await runLogin(t.deps);
+      assert.deepEqual(
+        t.prompts.slice(0, 4).map((p) => p.label),
+        [choice, choice, choice, "API base URL"],
+      );
+      assert.equal(logs.filter((l) => /Enter 1 or 2/.test(l)).length, 2);
+      assert.equal(t.opened.length, 1);
+    });
+
+    it("is skipped when input is not a terminal, so piped answers work as before", async () => {
+      const t = makeDeps(["https://api.vanta.com/v1", "cid", "sec", ""], code);
+      await runLogin(t.deps);
+      assert.equal(t.prompts[0]!.label, "API base URL");
+      assert.equal(t.prompts.length, 4);
+    });
+
+    it("is skipped by --browser", async () => {
+      const t = makeDeps(["http://127.0.0.1:10290/v1", "", ""], code, {
+        interactive: true,
+      });
+      await runLogin(t.deps, ["--browser"]);
+      assert.equal(t.prompts[0]!.label, "API base URL");
+      assert.equal(t.opened.length, 1);
+    });
+
+    it("is skipped by client credential flags", async () => {
+      const t = makeDeps(["https://api.vanta.com/v1", "", "sec", ""], code, {
+        interactive: true,
+      });
+      await runLogin(t.deps, ["--client-id", "cid"]);
+      assert.equal(t.prompts[0]!.label, "API base URL");
+      assert.equal(t.prompts[1]!.defaultValue, "cid");
+      assert.equal(t.opened.length, 0);
+    });
+  });
+
+  describe("replacing a saved login", () => {
+    const code: CallbackResult = { kind: "code", code: "the-code" };
+
+    it("says when a browser sign-in replaces saved client credentials", async () => {
+      await runLogin(
+        makeDeps(["https://api.vanta.com/v1", "cid", "sec", ""], code).deps,
+      );
+      const logs = await runLogin(
+        makeDeps(["http://127.0.0.1:10290/v1", "", ""], code).deps,
+        ["--browser"],
+      );
+      assert.ok(
+        logs.some((l) => /replaces the saved client credentials.*cid/.test(l)),
+        logs.join("\n"),
+      );
+      const cfg = await home.readConfig();
+      assert.equal(cfg.auth_mode, "user");
+      assert.equal(cfg.oauth_client_secret, "");
+    });
+
+    it("says when client credentials replace a browser sign-in", async () => {
+      await runLogin(
+        makeDeps(["http://127.0.0.1:10290/v1", "", ""], code).deps,
+        ["--browser"],
+      );
+      const logs = await runLogin(
+        makeDeps(["https://api.vanta.com/v1", "cid", "sec", ""], code).deps,
+      );
+      assert.ok(
+        logs.some((l) => /replaces your browser sign-in/.test(l)),
+        logs.join("\n"),
+      );
+      assert.equal((await home.readConfig()).auth_mode, "client");
+    });
+
+    it("says nothing on a first login", async () => {
+      const logs = await runLogin(
+        makeDeps(["https://api.vanta.com/v1", "cid", "sec", ""], code).deps,
+      );
+      assert.ok(!logs.some((l) => /replaces/.test(l)));
     });
   });
 

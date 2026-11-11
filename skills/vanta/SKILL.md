@@ -18,8 +18,8 @@ The `vanta` binary must be on `$PATH`. See the project README for install option
 ## Authentication
 
 ```bash
-vanta login             # save OAuth client credentials
-vanta login --browser   # beta: sign in as yourself in the browser (needs a person to approve)
+vanta login             # in a terminal, asks: client ID and secret (default) or browser; piped input gets the client prompts directly
+vanta login --browser   # beta: sign in as yourself in the browser, no question asked (needs a person to approve)
 vanta logout            # remove saved credentials and revoke a browser sign-in
 ```
 
