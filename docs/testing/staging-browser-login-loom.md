@@ -31,7 +31,7 @@ git fetch origin && git checkout nikhilbh2/cli-browser-login-staging-test && git
 pnpm install && pnpm generate && pnpm test && pnpm build:binaries
 ```
 
-Expect `102 passing` with no Keychain prompt.
+Expect `111 passing` with no Keychain prompt.
 
 ### 3. Helpers
 
@@ -91,11 +91,25 @@ vdev login --help
 vdev login --api-base "$API"
 ```
 
-Press **Enter** at "API base URL". When "OAuth client ID:" appears, press
-**Ctrl-C**.
+**Expect:** a question first:
 
-**Say:** "Without `--browser`, existing users and scripts get exactly the same
-prompts: client ID and secret. Nothing changes for them."
+```
+How do you want to sign in?
+  1) With an API client ID and secret
+  2) With your Vanta account in the browser (beta; may not be enabled for your workspace yet)
+Choice [1]:
+```
+
+Press **Enter** to take the default, then **Enter** again at "API base URL".
+When "OAuth client ID:" appears, press **Ctrl-C**.
+
+**Say:** "In a terminal, login now asks which way you want to sign in. The
+default is still client credentials, so pressing Enter gives the exact flow
+existing users know. Scripts that pipe answers in never see the question. When
+browser sign-in is out of beta we flip the default."
+
+Optional, to show that: `printf '\n' | vdev login --api-base "$API"` prints
+the old prompts directly, with no question, and fails at the client ID.
 
 ### Scene B. Sign in with the browser
 
@@ -104,6 +118,7 @@ scene "B. Sign in with the browser"
 vdev login --browser --api-base "$API" --web-base "$WEB"
 ```
 
+`--browser` skips the question (choosing 2 at the prompt does the same).
 Press **Enter** three times (API base URL, Web app URL, OAuth scope). The browser
 opens the staging consent page. Show it, then click **Approve**. Show the tab
 saying "Signed in to the Vanta CLI.", then switch back to the terminal.

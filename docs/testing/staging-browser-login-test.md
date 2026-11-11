@@ -69,7 +69,7 @@ git fetch origin
 git checkout nikhilbh2/cli-browser-login-staging-test
 git pull
 pnpm install                  # no pnpm? run: npm install -g pnpm@12.6.0
-pnpm generate && pnpm test    # expect 102 passing and no Keychain prompt
+pnpm generate && pnpm test    # expect 111 passing and no Keychain prompt
 pnpm build:binaries
 vdev --version                # prints "dev"
 ```
@@ -98,14 +98,19 @@ vdev login --help
 vdev login --api-base "$API"
 ```
 
-You get the same prompts as today: API base URL, then **OAuth client ID**, then
-secret. Press **Ctrl-C** at the client ID prompt. Nothing is saved.
+In a terminal it first asks how you want to sign in; option 1 (client ID and
+secret) is the default. Press **Enter**, and you get the same prompts as today:
+API base URL, then **OAuth client ID**, then secret. Press **Ctrl-C** at the
+client ID prompt. Nothing is saved. Piped input skips the question:
+`printf '\n' | vdev login --api-base "$API"` goes straight to the old prompts.
 
 ## Scene B. Sign in with the browser
 
 ```bash
 vdev login --browser --api-base "$API" --web-base "$WEB"
 ```
+
+(`--browser` skips the question; choosing 2 at the prompt is the same.)
 
 | Prompt | Answer |
 |---|---|
