@@ -1561,6 +1561,95 @@
         "type": "object",
         "additionalProperties": false
       },
+      "FourthParty": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "isMatched": {
+            "type": "boolean"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true
+          },
+          "locations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "sources": {
+            "items": {
+              "properties": {
+                "ingestionMethod": {
+                  "type": "string"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ingestionMethod",
+                "url"
+              ],
+              "type": "object"
+            },
+            "type": "array",
+            "description": "Disclosures identifying this fourth party."
+          },
+          "dependentVendorCount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "url",
+          "isMatched",
+          "category",
+          "locations",
+          "sources",
+          "dependentVendorCount"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedResponse_FourthParty_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/FourthParty"
+                },
+                "type": "array"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            },
+            "required": [
+              "data",
+              "pageInfo"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "PaginatedResponse_Vendor_": {
         "properties": {
           "results": {
@@ -6337,6 +6426,7 @@
               "nistAiRmf",
               "nistCSF",
               "nistcsf2",
+              "nydfs500_2023",
               "ofdss",
               "pciDss4",
               "pciSaqA",
@@ -6422,6 +6512,7 @@
               "nistAiRmf",
               "nistCSF",
               "nistcsf2",
+              "nydfs500_2023",
               "ofdss",
               "pciDss4",
               "pciSaqA",
@@ -10785,6 +10876,117 @@
         "type": "object",
         "additionalProperties": false
       },
+      "CompanyProfile": {
+        "description": "The business details an organization provides so Vanta can tailor its compliance program. Fields that haven't been provided are null; lists that haven't been provided are empty.",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "nullable": true,
+            "description": "The name the organization goes by."
+          },
+          "legalName": {
+            "type": "string",
+            "nullable": true,
+            "description": "The organization's registered legal name."
+          },
+          "mailingAddress": {
+            "type": "string",
+            "nullable": true
+          },
+          "telephone": {
+            "type": "string",
+            "nullable": true
+          },
+          "websiteUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "The organization's primary website."
+          },
+          "urls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "Websites associated with the organization; may include `websiteUrl`."
+          },
+          "USCompany": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the organization is incorporated in the United States."
+          },
+          "emailDomain": {
+            "type": "string",
+            "nullable": true,
+            "description": "The organization's email domain."
+          },
+          "companySize": {
+            "type": "string",
+            "nullable": true,
+            "description": "Employee count range, such as `1-20` or `50001+`."
+          },
+          "operatingRegions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "Regions the organization operates in, such as `north-america` or `europe`."
+          },
+          "workplaceTypes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "Employment model: `company-office`, `coworking`, or `home`."
+          },
+          "physicalDataCenters": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the organization has physical data centers."
+          },
+          "boardOfDirectors": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the organization has a board of directors."
+          },
+          "portableDevices": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the organization uses portable devices."
+          },
+          "externalSupport": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the organization provides external support."
+          },
+          "sensitiveDataTypes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "Types of sensitive data the organization handles: `pii`, `phi`, `pci`, or `financial`."
+          }
+        },
+        "required": [
+          "displayName",
+          "legalName",
+          "mailingAddress",
+          "telephone",
+          "websiteUrl",
+          "urls",
+          "USCompany",
+          "emailDomain",
+          "companySize",
+          "operatingRegions",
+          "workplaceTypes",
+          "physicalDataCenters",
+          "boardOfDirectors",
+          "portableDevices",
+          "externalSupport",
+          "sensitiveDataTypes"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "ComputerStatusOutcome": {
         "description": "The possible outcomes of a status check. The outcome can be one of the following:\nFAIL:  The check is failing.\nIN_PROGRESS: The check needs further data from the given computer in order to evaluate. The field(s) needed from a computer to calculate the ComputerStatusOutcome were null.\nNA: The check is not applicable for the given computer.\nPASS: The check is passing.",
         "enum": [
@@ -11774,6 +11976,14 @@
           "INCIDENT",
           "EXTERNAL_PARTY",
           "SELF_ASSESSMENT",
+          "VULNERABILITY_SCANNER",
+          "PENETRATION_TEST",
+          "SECURITY_ASSESSMENT",
+          "BUG_BOUNTY",
+          "THREAT_INTELLIGENCE",
+          "AUTOMATED_CONTROL_TESTING",
+          "MANUAL_ANALYSIS",
+          "SUPPLY_CHAIN_MONITORING",
           "OTHER"
         ],
         "type": "string"
@@ -14476,6 +14686,94 @@
         "type": "object",
         "additionalProperties": false
       },
+      "FourthPartyVendor": {
+        "properties": {
+          "vendorId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "usage": {
+            "properties": {
+              "sources": {
+                "items": {
+                  "properties": {
+                    "ingestionMethod": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ingestionMethod",
+                    "url"
+                  ],
+                  "type": "object"
+                },
+                "type": "array",
+                "description": "Disclosures identifying this fourth party."
+              },
+              "locations": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "category": {
+                "type": "string",
+                "nullable": true
+              },
+              "purpose": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "required": [
+              "sources",
+              "locations",
+              "category",
+              "purpose"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "vendorId",
+          "name",
+          "usage"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedResponse_FourthPartyVendor_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/FourthPartyVendor"
+                },
+                "type": "array"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            },
+            "required": [
+              "data",
+              "pageInfo"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "EventLog": {
         "properties": {
           "id": {
@@ -14896,6 +15194,30 @@
           "deletionDate",
           "effectiveDate",
           "url"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "OutboundError": {
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "DocumentEvaluation": {
+        "properties": {
+          "summary": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary"
         ],
         "type": "object",
         "additionalProperties": false
@@ -23074,6 +23396,113 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/PageCursor"
+            }
+          }
+        ]
+      }
+    },
+    "/documents/{documentId}/evaluate": {
+      "post": {
+        "operationId": "EvaluateDocument",
+        "responses": {
+          "202": {
+            "description": "Evaluation request accepted"
+          },
+          "204": {
+            "description": "A matching successful evaluation already exists"
+          },
+          "422": {
+            "description": "Evidence cannot be evaluated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutboundError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Request Vanta AI evaluation of all files and URLs in the document's current draft.\nReturns 202 when the request is accepted, or 204 when a matching successful\nevaluation already exists. Both responses have an empty body.\n\nRetrieve the results with GET /documents/{documentId}/evaluation. GET returns 404\nwhen no matching evaluation outcome is available; poll with a bounded timeout.\n\nRepeated requests for the same evidence set are deduplicated and will not trigger\nmultiple evaluations.\n\nEvaluations are disabled for sensitive documents.\nVanta AI and evidence evaluation must be enabled for your organization.\nSaved evaluation failures and unmet evaluation preconditions return a\nstandard 422 error.",
+        "summary": "Evaluate document evidence",
+        "tags": [
+          "Documents"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/documents/{documentId}/evaluation": {
+      "get": {
+        "operationId": "GetDocumentDraftEvaluation",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentEvaluation"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "summary": "The evidence demonstrates an implemented CI/CD workflow."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No evaluation is available for the current draft, or the document was not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutboundError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Evidence cannot be evaluated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutboundError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retrieve the saved evaluation summary for the document's current draft.\nEach request reflects the current evidence, so changing the draft can make\na previously available evaluation unavailable until that evidence is evaluated.\n\nReturns 404 when no matching outcome is saved, including while an evaluation\nis running. This endpoint does not start evaluations or report queue status.\nPoll with a bounded timeout after POSTing to the evaluate endpoint; some\nworker failures do not produce a saved outcome.\nEvaluations are disabled for sensitive documents. Vanta AI and evidence\nevaluation must be enabled for your organization, including to read saved\nresults. Saved evaluation failures and unmet evaluation preconditions return\na standard 422 error.",
+        "summary": "Get document evaluation",
+        "tags": [
+          "Documents"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ]
@@ -37575,6 +38004,55 @@
       }
     },
     "/trust-centers/{slugId}/videos": {
+      "get": {
+        "operationId": "ListTrustCenterVideos",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArrayResponse_TrustCenterVideo_"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "results": [
+                        {
+                          "id": "a2f7e1b9d0c3f4e5a6c7b8d9",
+                          "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                          "title": "Product security overview",
+                          "description": "An overview of our security practices"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Lists the videos displayed on a Trust Center, in display order. Send a\nvideo's id back when setting videos to keep that video.",
+        "summary": "List Trust Center videos",
+        "tags": [
+          "Trust Centers"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slugId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
       "put": {
         "operationId": "UpsertTrustCenterVideos",
         "responses": {
@@ -37603,7 +38081,7 @@
             }
           }
         },
-        "description": "Configures the videos displayed on a Trust Center. Replaces all\nexisting videos with the provided list.",
+        "description": "Configures the videos displayed on a Trust Center. Replaces all\nexisting videos with the provided list. To keep an existing video, send\nits id from the list endpoint; a video sent without an id is added as a\nnew video with a new id.",
         "summary": "Set Trust Center videos",
         "tags": [
           "Trust Centers"
@@ -38154,6 +38632,395 @@
         ]
       }
     },
+    "/vendor-alert-settings": {
+      "get": {
+        "operationId": "GetVendorAlertSettings",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorAlertSettingsResponse"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retrieves the alert settings in effect for your organization, one set for each\nalert category, including security incidents. Categories and settings you haven’t\nconfigured use their defaults. Requires continuous monitoring.",
+        "summary": "Get vendor alert settings",
+        "tags": [
+          "Vendor Alert Settings"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": []
+      },
+      "patch": {
+        "operationId": "UpdateVendorAlertSettings",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorAlertSettingsResponse"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "items": [
+                        {
+                          "category": "Security incidents",
+                          "isEnabled": false,
+                          "riskLevelSetting": "HIGH_CRITICAL",
+                          "severitySetting": "HIGH_CRITICAL"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Changes alert settings for your organization. Categories and fields you leave\nout keep their current values, and no setting can be set to null. The response\nreturns the complete updated settings. If someone else updates the settings\nbetween your read and your save, your update can overwrite theirs. Requires\ncontinuous monitoring.",
+        "summary": "Update vendor alert settings",
+        "tags": [
+          "Vendor Alert Settings"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVendorAlertSettingsInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendor-alerts": {
+      "patch": {
+        "operationId": "UpdateVendorAlerts",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateVendorAlertsResponse"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "results": [
+                        {
+                          "id": "68f620000000000000000001",
+                          "vendorId": "68f620000000000000000002",
+                          "title": "Exposed service detected",
+                          "description": "A service is publicly accessible.",
+                          "severity": "HIGH",
+                          "status": "OPEN",
+                          "category": "Exposed services",
+                          "type": "GENERAL",
+                          "source": "external attack surface scanning",
+                          "creationDate": "2026-10-20T12:00:00.000Z",
+                          "updatedDate": "2026-10-20T12:00:00.000Z"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Applies one status to 1-100 vendor alerts. Duplicate IDs are ignored; each\nalert is returned once, in its first-occurrence order in `alertIds`. If any\nalert isn't found in your organization, the entire request fails without\nchanges. Requires continuous monitoring.",
+        "summary": "Update vendor alerts",
+        "tags": [
+          "Vendor Alerts"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVendorAlertsInput"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "ListVendorAlerts",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_VendorAlert_"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "results": {
+                        "data": [
+                          {
+                            "id": "68f620000000000000000001",
+                            "vendorId": "68f620000000000000000002",
+                            "title": "Exposed service detected",
+                            "description": "A service is publicly accessible.",
+                            "severity": "HIGH",
+                            "status": "OPEN",
+                            "category": "Exposed services",
+                            "type": "GENERAL",
+                            "source": "external attack surface scanning",
+                            "creationDate": "2026-10-20T12:00:00.000Z",
+                            "updatedDate": "2026-10-20T12:00:00.000Z"
+                          }
+                        ],
+                        "pageInfo": {
+                          "startCursor": null,
+                          "endCursor": null,
+                          "hasNextPage": false,
+                          "hasPreviousPage": false
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Retrieves vendor alerts in your organization, such as CVEs, leaked\ncredentials, and exposed assets. Doesn't return security incident alerts.\nFilters combine across fields; values within each filter match any value.\n\nRequires vendor read access and continuous monitoring enabled for your\norganization.",
+        "summary": "List vendor alerts",
+        "tags": [
+          "Vendor Alerts"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageSize"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageCursor",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageCursor"
+            }
+          },
+          {
+            "description": "Search alert titles and vendor names.",
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter to alerts matching any of the provided statuses.",
+            "in": "query",
+            "name": "statusMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/VendorAlertStatus"
+              }
+            },
+            "example": [
+              "OPEN",
+              "ESCALATED"
+            ]
+          },
+          {
+            "description": "Filter to alerts matching any of the provided severities.",
+            "in": "query",
+            "name": "severityMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/VendorAlertSeverity"
+              }
+            },
+            "example": [
+              "HIGH",
+              "CRITICAL"
+            ]
+          },
+          {
+            "description": "Filter to alerts matching any of the provided security categories.",
+            "in": "query",
+            "name": "categoryMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "example": [
+              "Vulnerabilities"
+            ]
+          },
+          {
+            "description": "Filter to alerts matching any of the provided types.",
+            "in": "query",
+            "name": "typeMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/VendorAlertType"
+              }
+            },
+            "example": [
+              "CVE"
+            ]
+          },
+          {
+            "description": "Filter to alerts whose vendors match any of the provided inherent risk levels.",
+            "in": "query",
+            "name": "vendorRiskLevelMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "CRITICAL",
+                  "HIGH",
+                  "MEDIUM",
+                  "LOW",
+                  "UNSCORED"
+                ]
+              }
+            },
+            "example": [
+              "HIGH"
+            ]
+          },
+          {
+            "description": "Field to sort results by. Defaults to severity.",
+            "in": "query",
+            "name": "orderBy",
+            "required": false,
+            "schema": {
+              "default": "severity",
+              "type": "string",
+              "enum": [
+                "severity",
+                "status",
+                "creationDate"
+              ]
+            },
+            "example": "creationDate"
+          },
+          {
+            "description": "Direction to sort results in. Defaults to descending.",
+            "in": "query",
+            "name": "orderDirection",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            },
+            "example": "desc"
+          }
+        ]
+      }
+    },
+    "/vendor-alerts/{alertId}": {
+      "get": {
+        "operationId": "GetVendorAlert",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorAlert"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "id": "68f620000000000000000001",
+                      "vendorId": "68f620000000000000000002",
+                      "title": "Exposed service detected",
+                      "description": "A service is publicly accessible.",
+                      "severity": "HIGH",
+                      "status": "OPEN",
+                      "category": "Exposed services",
+                      "type": "GENERAL",
+                      "source": "external attack surface scanning",
+                      "creationDate": "2026-10-20T12:00:00.000Z",
+                      "updatedDate": "2026-10-20T12:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Retrieves a specific vendor alert by ID, such as a CVE, leaked credentials,\nor an exposed asset. Doesn't return security incident alerts. Returns a 404\nerror if the alert isn't found in your organization.\n\nRequires vendor read access and continuous monitoring enabled for your\norganization.",
+        "summary": "Get vendor alert",
+        "tags": [
+          "Vendor Alerts"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "description": "Unique identifier of the vendor alert to retrieve.",
+            "in": "path",
+            "name": "alertId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "68f620000000000000000001"
+          }
+        ]
+      }
+    },
     "/vendor-assessment-types": {
       "get": {
         "operationId": "ListVendorAssessmentTypes",
@@ -38532,6 +39399,156 @@
         }
       }
     },
+    "/vendor-custom-fields": {
+      "get": {
+        "operationId": "ListVendorCustomFieldDefinitions",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_VendorCustomFieldDefinition_"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "results": {
+                        "data": [
+                          {
+                            "id": "6696ea0595df50d5cd6ec3b8",
+                            "label": "Business criticality",
+                            "description": "The impact of this vendor on business operations.",
+                            "type": "PICKLIST",
+                            "options": [
+                              {
+                                "id": "6696ea0595df50d5cd6ec3b9",
+                                "label": "Critical"
+                              },
+                              {
+                                "id": "6696ea0595df50d5cd6ec3ba",
+                                "label": "Standard"
+                              }
+                            ]
+                          }
+                        ],
+                        "pageInfo": {
+                          "hasNextPage": false,
+                          "hasPreviousPage": false,
+                          "startCursor": "NjY5NmVhMDU5NWRmNTBkNWNkNmVjM2I4",
+                          "endCursor": "NjY5NmVhMDU5NWRmNTBkNWNkNmVjM2I4"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Lists the organization's configured vendor custom fields, including fields\nwithout values on any vendor. Results are ordered by stable field ID.\nUse field labels and option labels when writing vendor customFields values.",
+        "summary": "List vendor custom field definitions",
+        "tags": [
+          "Vendor Custom Fields"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageSize"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageCursor",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageCursor"
+            }
+          }
+        ]
+      }
+    },
+    "/vendor-document-types": {
+      "get": {
+        "operationId": "ListVendorDocumentTypes",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_VendorDocumentTypeCatalogEntry_"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "results": {
+                        "data": [
+                          {
+                            "id": "SOC2_REPORT",
+                            "name": "SOC 2 report",
+                            "type": "SOC2_REPORT",
+                            "isCustom": false
+                          },
+                          {
+                            "id": "custom-doc-type-123",
+                            "name": "Security whitepaper",
+                            "type": "Security whitepaper",
+                            "isCustom": true
+                          }
+                        ],
+                        "pageInfo": {
+                          "hasNextPage": false,
+                          "hasPreviousPage": false,
+                          "startCursor": "U09DMl9SRVBPUlQ=",
+                          "endCursor": "Y3VzdG9tLWRvYy10eXBlLTEyMw=="
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Lists Vanta-provided and custom document types accepted by the vendor\ndocument upload APIs.\n\nUse the returned `type` value when uploading a vendor document. Use `id`\nto save a mapping to a document type. For custom document types, the `id`\nstays the same if the document type is renamed, while `name` and `type`\nreflect the current name. Refresh this catalog before uploading documents\nif custom document type names may have changed.\n\nResults return Vanta-provided document types first, then custom document\ntypes, with each group sorted by display name and ID. Custom document types\nwith names matching values reserved for Vanta-provided document types are\nexcluded because uploads would otherwise use the Vanta-provided type.",
+        "summary": "List vendor document types",
+        "tags": [
+          "Vendor Document Types"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageSize"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageCursor",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageCursor"
+            }
+          }
+        ]
+      }
+    },
     "/vendor-risk-attributes": {
       "get": {
         "operationId": "ListVendorRiskAttributes",
@@ -38611,6 +39628,277 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/PageCursor"
+            }
+          }
+        ]
+      }
+    },
+    "/vendor-security-incident-alerts": {
+      "get": {
+        "operationId": "ListVendorSecurityIncidentAlerts",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_VendorSecurityIncidentAlert_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Returns a paginated list of security incident alerts that affect your vendors. Requires continuous monitoring.",
+        "summary": "List vendor security incident alerts",
+        "tags": [
+          "Vendor Security Incident Alerts"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageSize"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageCursor",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageCursor"
+            }
+          },
+          {
+            "description": "Case-insensitive search on alert title and affected vendor name.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Organization vendor IDs.",
+            "in": "query",
+            "name": "vendorIdMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "maxItems": 20
+            }
+          },
+          {
+            "description": "Filter by resolution state. Returns alerts matching any of the specified states.",
+            "in": "query",
+            "name": "resolutionStateMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/VendorSecurityIncidentAlertResolutionState"
+              },
+              "minItems": 1
+            }
+          },
+          {
+            "description": "Filter by incident confirmation status. Returns alerts matching any of the specified statuses.",
+            "in": "query",
+            "name": "confirmationStatusMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/VendorSecurityIncidentAlertStatus"
+              },
+              "minItems": 1
+            }
+          },
+          {
+            "description": "Filter by overall impact severity. Returns alerts matching any of the specified severities.",
+            "in": "query",
+            "name": "impactSeverityMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/VendorSecurityIncidentAlertImpactSeverity"
+              },
+              "minItems": 1
+            }
+          },
+          {
+            "description": "Matches a DATA_LEAK consequence's severity, independently of overall impact.",
+            "in": "query",
+            "name": "dataLeakSeverityMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/VendorSecurityIncidentAlertImpactSeverity"
+              },
+              "minItems": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "creationDate",
+              "type": "string",
+              "enum": [
+                "creationDate",
+                "impactSeverity",
+                "resolutionState",
+                "confirmationStatus"
+              ]
+            }
+          },
+          {
+            "description": "Ascending means oldest first, highest impact first (CRITICAL to LOW to UNSPECIFIED),\nOPEN before RESOLVED, or CONFIRMED before SUSPECTED before POTENTIAL.\nDescending reverses each order.",
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "UpdateVendorSecurityIncidentAlerts",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateVendorSecurityIncidentAlertsResponse"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "results": [
+                        {
+                          "id": "68f620000000000000000010",
+                          "resolutionState": "RESOLVED",
+                          "createdAt": "2026-10-20T12:00:00.000Z",
+                          "updatedAt": "2026-10-20T13:00:00.000Z",
+                          "affectedVendorIds": [
+                            "68f620000000000000000002"
+                          ],
+                          "relatedVendorIds": [],
+                          "status": "CONFIRMED",
+                          "title": "Confirmed unauthorized access at Example Vendor",
+                          "rootCause": "COMPROMISED_CREDENTIALS",
+                          "threatActor": {
+                            "name": "Unknown"
+                          },
+                          "evidence": [],
+                          "impact": {
+                            "severity": "HIGH",
+                            "context": "Customer credentials were exposed.",
+                            "affectedParties": [
+                              "CUSTOMERS"
+                            ],
+                            "dataLeakStatus": "CONFIRMED",
+                            "consequences": [
+                              {
+                                "type": "DATA_LEAK",
+                                "dataCategories": [
+                                  "CREDENTIALS"
+                                ],
+                                "severity": "HIGH"
+                              }
+                            ]
+                          },
+                          "timeline": [
+                            {
+                              "type": "INCIDENT_DETECTION",
+                              "occurredAt": "2026-10-19T12:00:00.000Z"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Resolves or reopens 1–100 security incident alerts in a single request. Set the resolution state to RESOLVED to resolve alerts or OPEN to reopen them. This doesn’t change an alert’s confirmation status. Duplicate IDs are updated once, and the response lists each alert once, in the order it first appears in alertIds. If any alert isn’t found in your organization, the request fails and no alerts change. Requires continuous monitoring.",
+        "summary": "Update vendor security incident alerts",
+        "tags": [
+          "Vendor Security Incident Alerts"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVendorSecurityIncidentAlertsInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendor-security-incident-alerts/{alertId}": {
+      "get": {
+        "operationId": "GetVendorSecurityIncidentAlert",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorSecurityIncidentAlert"
+                }
+              }
+            }
+          }
+        },
+        "description": "Retrieves a specific security incident alert that affects one of your vendors, by ID. Requires continuous monitoring.",
+        "summary": "Get vendor security incident alert by ID",
+        "tags": [
+          "Vendor Security Incident Alerts"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "description": "The organization's alert ID, not the canonical incident ID.",
+            "in": "path",
+            "name": "alertId",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ]
@@ -38818,6 +40106,15 @@
             "description": "Filter vendors by name (case-insensitive, partial match)",
             "in": "query",
             "name": "name",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter vendors by website URL using canonical vendor matching.",
+            "in": "query",
+            "name": "websiteUrl",
             "required": false,
             "schema": {
               "type": "string"
@@ -39319,6 +40616,83 @@
             }
           }
         ]
+      },
+      "post": {
+        "operationId": "StartAssessmentForVendor",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorAssessment"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "id": "a2f7e1b9d0c3f4e5a6c7b8d8",
+                      "vendorId": "6696e9bca247cbdf1c8e5054",
+                      "status": "COMPLETED",
+                      "audience": "EXTERNAL",
+                      "completedByUserId": "6696ea0595df50d5cd6ec3b7",
+                      "startDate": "2024-02-01T00:00:00.000Z",
+                      "dueDate": "2024-03-01T00:00:00.000Z",
+                      "overrideDueDate": "2024-03-15T00:00:00.000Z",
+                      "completionDate": "2024-03-10T00:00:00.000Z",
+                      "createdDate": "2024-01-25T00:00:00.000Z",
+                      "decision": {
+                        "status": "APPROVED",
+                        "lastUpdatedAt": "2024-03-17T00:00:00.000Z",
+                        "comments": "No major concerns, limited sharing of data, low security risk."
+                      },
+                      "assessmentType": {
+                        "id": "6696ea0595df50d5cd6ec3b8",
+                        "name": "Security",
+                        "description": null
+                      },
+                      "owner": {
+                        "id": "6696ea0595df50d5cd6ec3b9",
+                        "type": "USER",
+                        "displayName": "Jane Doe",
+                        "email": "jane.doe@example.com"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Starts an assessment for the specified vendor and assessment type.\nCreates an assessment if needed, or starts an eligible existing assessment.\nAssessments associated with security incidents cannot be started through\nthis endpoint.\n\nRequires both the `vendors:view` and `vendors_data:manage` organization\npermissions: `vendors:view` to read the assessment type and\n`vendors_data:manage` to start the assessment.\n\nReturns 403 Forbidden when the caller lacks either permission.\nReturns 404 Not Found when the vendor or the assessment type does not\nexist in the customer's organization.\nReturns 422 Unprocessable Entity when an eligible assessment cannot be\nstarted, including when it is already in progress.",
+        "summary": "Start assessment",
+        "tags": [
+          "Vendors"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vendorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartVendorAssessmentInput"
+              }
+            }
+          }
+        }
       }
     },
     "/vendors/{vendorId}/assessments/{assessmentId}": {
@@ -39396,6 +40770,103 @@
             }
           }
         ]
+      }
+    },
+    "/vendors/{vendorId}/assessments/{assessmentId}/documents": {
+      "post": {
+        "operationId": "UploadDocumentForAssessment",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorDocument"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "id": "a2f7e1b9d0c3f4e5a6c7b8d8",
+                      "url": "https://example.com",
+                      "title": "PDF SOC2 Report",
+                      "fileName": "soc2.pdf",
+                      "type": "SOC2_REPORT",
+                      "mimeType": "application/pdf",
+                      "description": "The 2023 SOC2 file provided by the vendor",
+                      "uploadedBy": {
+                        "id": "66993da0cf4ba2ad40599ba7",
+                        "type": "USER"
+                      },
+                      "creationDate": "2024-02-01T00:00:00.000Z",
+                      "updatedDate": "2024-02-07T00:00:00.000Z",
+                      "deletionDate": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Add a document to a vendor assessment of any type.",
+        "summary": "Add document to assessment",
+        "tags": [
+          "Vendors"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vendorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assessmentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "Type of the vendor document."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The document's title."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "The document's description."
+                  }
+                },
+                "required": [
+                  "file",
+                  "type"
+                ]
+              }
+            }
+          }
+        }
       }
     },
     "/vendors/{vendorId}/documents": {
@@ -39568,6 +41039,246 @@
             }
           }
         }
+      }
+    },
+    "/vendors/{vendorId}/external-findings": {
+      "get": {
+        "operationId": "ListVendorExternalFindings",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_VendorExternalFinding_"
+                }
+              }
+            }
+          }
+        },
+        "description": "Lists the security findings continuous monitoring has found on a vendor’s external-facing assets, such as exposed assets and vulnerabilities. When you use pageCursor, keep the filters and sorting the same as in your previous request. Requires continuous monitoring.",
+        "summary": "List vendor external findings",
+        "tags": [
+          "Vendors"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "description": "Unique identifier of the vendor.",
+            "in": "path",
+            "name": "vendorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageSize"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageCursor",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageCursor"
+            }
+          },
+          {
+            "description": "Search finding titles and descriptions.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Match any specified severity. Omitted: all except INFO.",
+            "in": "query",
+            "name": "severityMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "CRITICAL",
+                  "HIGH",
+                  "MEDIUM",
+                  "LOW",
+                  "INFO"
+                ]
+              },
+              "minItems": 1
+            }
+          },
+          {
+            "description": "Match any specified status. Omitted: both statuses.",
+            "in": "query",
+            "name": "statusMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "ACTIVE",
+                  "RESOLVED"
+                ]
+              },
+              "minItems": 1
+            }
+          },
+          {
+            "description": "Match any specified monitoring category, exactly and case-sensitively. Omitted: all categories.",
+            "in": "query",
+            "name": "categoryMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "Application security",
+                  "Exposed application user interfaces",
+                  "Exposed services",
+                  "Exposed & leaked sensitive information",
+                  "End of life & outdated applications",
+                  "Sensitive interfaces exposure",
+                  "Threat intelligence",
+                  "Trust",
+                  "Vulnerabilities",
+                  "Vulnerable misconfigurations"
+                ]
+              },
+              "minItems": 1
+            }
+          },
+          {
+            "description": "Inclusive ISO 8601 first-seen lower bound. Supply both date bounds with start no later than end.",
+            "in": "query",
+            "name": "firstSeenStartDate",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Inclusive ISO 8601 first-seen upper bound. Supply both date bounds with start no later than end.",
+            "in": "query",
+            "name": "firstSeenEndDate",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "firstSeenDate",
+              "type": "string",
+              "enum": [
+                "firstSeenDate",
+                "severity",
+                "title"
+              ]
+            }
+          },
+          {
+            "description": "Ascending means oldest first, highest severity first (CRITICAL to INFO), or title A to Z.\nDescending reverses each order, matching security incident alerts' severity convention.",
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/vendors/{vendorId}/external-findings/{findingId}": {
+      "get": {
+        "operationId": "GetVendorExternalFinding",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorExternalFinding"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "id": "68f620000000000000000020",
+                      "vendorId": "68f620000000000000000002",
+                      "title": "Exposed service detected",
+                      "description": "A service is publicly accessible.",
+                      "severity": "HIGH",
+                      "severityReason": null,
+                      "status": "ACTIVE",
+                      "category": "Exposed services",
+                      "type": "GENERAL",
+                      "source": null,
+                      "firstSeenDate": "2026-10-19T12:00:00.000Z",
+                      "lastSeenDate": "2026-10-20T12:00:00.000Z",
+                      "appearances": 2,
+                      "remediationGuidance": "Restrict access to the service.",
+                      "riskContext": null,
+                      "cveMetadata": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Retrieves an external monitoring finding for a vendor in your organization.\nRequires continuous monitoring.",
+        "summary": "Get vendor external finding",
+        "tags": [
+          "Vendors"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "description": "Unique identifier of the vendor.",
+            "in": "path",
+            "name": "vendorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Unique identifier of the external finding.",
+            "in": "path",
+            "name": "findingId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
       }
     },
     "/vendors/{vendorId}/findings": {

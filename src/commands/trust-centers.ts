@@ -74,6 +74,7 @@ import {
   deleteTrustCenterUpdate,
   sendNotificationsToAllSubscribers,
   sendTrustCenterUpdateNotifications,
+  listTrustCenterVideos,
   upsertTrustCenterVideos,
   listTrustCenterViewers,
   addTrustCenterViewer,
@@ -1583,6 +1584,19 @@ export function registerTrustCentersCommand(
       );
     },
   );
+
+  trustCenters
+    .command("list-videos")
+    .description("List videos for a Trust Center")
+    .requiredOption("--slug-id <slug>", "Trust Center slug ID")
+    .action(async (opts: { slugId: string }) => {
+      await runSdk(getFlags, (api) =>
+        listTrustCenterVideos({
+          client: api.client,
+          path: { slugId: opts.slugId },
+        }),
+      );
+    });
 
   addJsonFileOptions(
     trustCenters

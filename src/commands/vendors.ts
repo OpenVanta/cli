@@ -8,9 +8,13 @@ import {
   setEngagement,
   removeEngagement,
   getAssessmentsByVendorId,
+  startAssessmentForVendor,
   getAssessmentById,
+  uploadDocumentForAssessment,
   listVendorDocuments,
   uploadDocumentToVendor,
+  listVendorExternalFindings,
+  getVendorExternalFinding,
   listVendorFindings,
   createVendorFinding,
   updateVendorFinding,
@@ -27,6 +31,8 @@ import type {
   CreateVendorData,
   UpdateVendorData,
   GetAssessmentsByVendorIdData,
+  StartAssessmentForVendorData,
+  ListVendorExternalFindingsData,
   CreateVendorFindingData,
   UpdateVendorFindingData,
 } from "../generated/types.gen.js";
@@ -56,6 +62,10 @@ export function registerVendorsCommand(
         "Filter vendors by name (case-insensitive, partial match)",
       )
       .option(
+        "--website-url <url>",
+        "Filter vendors by website URL using canonical vendor matching",
+      )
+      .option(
         "--status-matches-any <status>",
         "Filter vendors by status (can specify multiple): MANAGED, ARCHIVED, IN_PROCUREMENT (repeatable)",
         collectString,
@@ -66,6 +76,7 @@ export function registerVendorsCommand(
       pageSize?: number;
       pageCursor?: string;
       name?: string;
+      websiteUrl?: string;
       statusMatchesAny: NonNullable<
         NonNullable<ListVendorsData["query"]>["statusMatchesAny"]
       >;
@@ -76,6 +87,7 @@ export function registerVendorsCommand(
           query: {
             ...paginationQuery(opts),
             name: opts.name,
+            websiteUrl: opts.websiteUrl,
             statusMatchesAny: opts.statusMatchesAny,
           },
         }),
@@ -205,6 +217,27 @@ export function registerVendorsCommand(
     },
   );
 
+  addJsonFileOptions(
+    vendors
+      .command("create-assessment")
+      .description(
+        "Create or start a vendor assessment (requires an assessmentTypeId from vendor-assessment-types list)",
+      )
+      .requiredOption("--id <id>", "Vendor ID"),
+  ).action(async (opts: { id: string; json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as StartAssessmentForVendorData["body"];
+    await runSdk(getFlags, (api) =>
+      startAssessmentForVendor({
+        client: api.client,
+        path: { vendorId: opts.id },
+        body,
+      }),
+    );
+  });
+
   vendors
     .command("get-assessment")
     .description("Get a vendor assessment by ID")
@@ -218,6 +251,43 @@ export function registerVendorsCommand(
         }),
       );
     });
+
+  vendors
+    .command("upload-assessment-document")
+    .description("Upload a document for a vendor assessment")
+    .requiredOption("--id <id>", "Vendor ID")
+    .requiredOption("--assessment-id <id>", "Assessment ID")
+    .requiredOption("--file <path>", "Path to file to upload")
+    .requiredOption(
+      "--type <type>",
+      "Vendor document type from vendor-document-types list",
+    )
+    .option("--title <title>", "The document's title")
+    .option("--description <text>", "The document's description")
+    .action(
+      async (opts: {
+        id: string;
+        assessmentId: string;
+        file: string;
+        type: string;
+        title?: string;
+        description?: string;
+      }) => {
+        const file = await readBinaryFile(opts.file);
+        await runSdk(getFlags, (api) =>
+          uploadDocumentForAssessment({
+            client: api.client,
+            path: { vendorId: opts.id, assessmentId: opts.assessmentId },
+            body: {
+              file,
+              type: opts.type,
+              title: opts.title,
+              description: opts.description,
+            },
+          }),
+        );
+      },
+    );
 
   addPaginationOptions(
     vendors
@@ -267,6 +337,103 @@ export function registerVendorsCommand(
         );
       },
     );
+
+  addPaginationOptions(
+    vendors
+      .command("list-external-findings")
+      .description("List external findings for a vendor")
+      .requiredOption("--id <id>", "Vendor ID")
+      .option("--q <query>", "Search finding titles and descriptions")
+      .option(
+        "--severity-matches-any <severity>",
+        "Match any specified severity. Omitted: all except INFO: CRITICAL, HIGH, MEDIUM, LOW, INFO (repeatable)",
+        collectString,
+        [] as string[],
+      )
+      .option(
+        "--status-matches-any <status>",
+        "Match any specified status. Omitted: both statuses: ACTIVE, RESOLVED (repeatable)",
+        collectString,
+        [] as string[],
+      )
+      .option(
+        "--category-matches-any <category>",
+        "Match any specified monitoring category, exactly and case-sensitively. Omitted: all categories: Application security, Exposed application user interfaces, Exposed services, Exposed & leaked sensitive information, End of life & outdated applications, Sensitive interfaces exposure, Threat intelligence, Trust, Vulnerabilities, Vulnerable misconfigurations (repeatable)",
+        collectString,
+        [] as string[],
+      )
+      .option(
+        "--first-seen-start-date <timestamp>",
+        "Inclusive ISO 8601 timestamp first-seen lower bound. Supply both date bounds with start no later than end",
+      )
+      .option(
+        "--first-seen-end-date <timestamp>",
+        "Inclusive ISO 8601 timestamp first-seen upper bound. Supply both date bounds with start no later than end",
+      )
+      .option("--sort <sort>", "Filter by sort: firstSeenDate, severity, title")
+      .option(
+        "--direction <direction>",
+        "Ascending means oldest first, highest severity first (CRITICAL to INFO), or title A to Z. Descending reverses each order, matching security incident alerts' severity convention: asc, desc",
+      ),
+  ).action(
+    async (opts: {
+      id: string;
+      pageSize?: number;
+      pageCursor?: string;
+      q?: string;
+      severityMatchesAny: NonNullable<
+        NonNullable<
+          ListVendorExternalFindingsData["query"]
+        >["severityMatchesAny"]
+      >;
+      statusMatchesAny: NonNullable<
+        NonNullable<ListVendorExternalFindingsData["query"]>["statusMatchesAny"]
+      >;
+      categoryMatchesAny: NonNullable<
+        NonNullable<
+          ListVendorExternalFindingsData["query"]
+        >["categoryMatchesAny"]
+      >;
+      firstSeenStartDate?: string;
+      firstSeenEndDate?: string;
+      sort?: NonNullable<ListVendorExternalFindingsData["query"]>["sort"];
+      direction?: NonNullable<
+        ListVendorExternalFindingsData["query"]
+      >["direction"];
+    }) => {
+      await runSdk(getFlags, (api) =>
+        listVendorExternalFindings({
+          client: api.client,
+          path: { vendorId: opts.id },
+          query: {
+            ...paginationQuery(opts),
+            q: opts.q,
+            severityMatchesAny: opts.severityMatchesAny,
+            statusMatchesAny: opts.statusMatchesAny,
+            categoryMatchesAny: opts.categoryMatchesAny,
+            firstSeenStartDate: opts.firstSeenStartDate,
+            firstSeenEndDate: opts.firstSeenEndDate,
+            sort: opts.sort,
+            direction: opts.direction,
+          },
+        }),
+      );
+    },
+  );
+
+  vendors
+    .command("get-external-finding")
+    .description("Get a vendor external finding by ID")
+    .requiredOption("--id <id>", "Vendor ID")
+    .requiredOption("--finding-id <id>", "Finding ID")
+    .action(async (opts: { id: string; findingId: string }) => {
+      await runSdk(getFlags, (api) =>
+        getVendorExternalFinding({
+          client: api.client,
+          path: { vendorId: opts.id, findingId: opts.findingId },
+        }),
+      );
+    });
 
   addPaginationOptions(
     vendors
