@@ -45,8 +45,6 @@ async function main(): Promise<void> {
       "Bun is required to build standalone binaries. Install with `pnpm add -D bun` or https://bun.sh",
     );
   }
-  // The compiled binaries embed this Bun runtime, so record it in the build log.
-  console.log(`Compiling with Bun ${bunCheck.stdout.trim()}`);
 
   await mkdir(outDir, { recursive: true });
 
