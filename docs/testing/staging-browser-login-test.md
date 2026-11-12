@@ -31,7 +31,8 @@ workspace with `rest_user_oauth_enabled` on, with the **editor** role.
 ```bash
 API=https://api.staging.vanta.com/v1
 WEB=https://app.staging.vanta.com
-alias vdev="$PWD/dist/binaries/vanta-darwin-$( [ "$(uname -m)" = arm64 ] && echo arm64 || echo amd64 )"
+VDEV="$PWD/dist/binaries/vanta-darwin-$( [ "$(uname -m)" = arm64 ] && echo arm64 || echo amd64 )"
+vdev() { "$VDEV" "$@"; }   # a function, so `VAR=x vdev …` works in bash and zsh
 
 # Optional: a staging API client, for the steps marked "needs an API client".
 CID=""      # e.g. vci_…
