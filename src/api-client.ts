@@ -1,6 +1,7 @@
 import { createClient, type Client } from "./generated/client/index.js";
 import {
   type AuthOverrides,
+  refreshAfterUnauthorized,
   resolveAccessToken,
   resolveAPIBase,
 } from "./auth.js";
@@ -26,7 +27,16 @@ export type ApiClient = {
   handleError: (err: unknown) => unknown;
 };
 
-function createInstrumentedFetch(flags: GlobalFlags): typeof fetch {
+type RetryUnauthorized = (rejectedToken: string) => Promise<string | null>;
+
+function bearerToken(headers: Headers): string {
+  return (headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+}
+
+export function createInstrumentedFetch(
+  flags: GlobalFlags,
+  retryUnauthorized?: RetryUnauthorized,
+): typeof fetch {
   return async (input, init) => {
     const method =
       init?.method ?? (input instanceof Request ? input.method : "GET");
@@ -68,10 +78,44 @@ function createInstrumentedFetch(flags: GlobalFlags): typeof fetch {
       process.stderr.write(`-> ${method} ${url}\n`);
     }
 
-    const response = await fetch(input, { ...init, headers });
+    // A browser sign-in's token can be revoked or expired server-side before
+    // its cached expiry. Keep a copy of the request so it can be resent once
+    // with a refreshed token. Multipart uploads are not retried: a copy would
+    // buffer the whole file.
+    const isMultipart = (headers.get("Content-Type") ?? "").startsWith(
+      "multipart/form-data",
+    );
+    const retryCopy =
+      retryUnauthorized && !isMultipart && input instanceof Request
+        ? input.clone()
+        : undefined;
+
+    let response = await fetch(input, { ...init, headers });
 
     if (flags.verbose) {
       process.stderr.write(`<- ${response.status}\n`);
+    }
+
+    const rejected = bearerToken(headers);
+    // A Request's body is used up by the first send, so it can only be resent
+    // from the copy; a URL with a string or no body can be sent again as is.
+    const canResend =
+      !isMultipart &&
+      (retryCopy !== undefined ||
+        (!(input instanceof Request) &&
+          (init?.body == null || typeof init.body === "string")));
+    if (response.status === 401 && retryUnauthorized && rejected && canResend) {
+      const fresh = await retryUnauthorized(rejected);
+      if (fresh && fresh !== rejected) {
+        headers.set("Authorization", `Bearer ${fresh}`);
+        if (flags.verbose) {
+          process.stderr.write(`-> ${method} ${url} (retry after refresh)\n`);
+        }
+        response = await fetch(retryCopy ?? input, { ...init, headers });
+        if (flags.verbose) {
+          process.stderr.write(`<- ${response.status}\n`);
+        }
+      }
     }
 
     return response;
@@ -86,7 +130,9 @@ export async function newAPIClient(flags: GlobalFlags): Promise<ApiClient> {
   const client = createClient({
     baseUrl,
     auth: token,
-    fetch: createInstrumentedFetch(flags),
+    fetch: createInstrumentedFetch(flags, (rejected) =>
+      refreshAfterUnauthorized(base, rejected, flags),
+    ),
   });
 
   return {

@@ -52,7 +52,23 @@ Create an OAuth client in the [Vanta developer portal](https://app.vanta.com/set
 vanta login
 ```
 
-You’ll be prompted for your API base URL, client ID, and client secret. Credentials are stored in the OS keychain when available (macOS Keychain or Windows Credential Manager), matching the previous Go CLI (`com.vanta.cli` / `oauth`). Your API base is saved to `~/.vanta/config.json`.
+In a terminal, `vanta login` first asks how you want to sign in: with an API client ID and secret (the default), or with your Vanta account in the browser (beta, see below). With piped input it asks no such question and behaves as before. For client credentials, you’ll be prompted for your API base URL, client ID, and client secret. Credentials are stored in the OS keychain when available (macOS Keychain or Windows Credential Manager), matching the previous Go CLI (`com.vanta.cli` / `oauth`). Your API base is saved to `~/.vanta/config.json`.
+
+To sign out, run `vanta logout`. It removes the saved credentials.
+
+### Sign in with your browser (beta)
+
+Instead of an OAuth client, you can sign in as yourself. Choose option 2 at the `vanta login` prompt, or skip the question:
+
+```bash
+vanta login --browser
+```
+
+Approve access in the browser window that opens. The CLI then calls the API as you, limited to what your Vanta role allows, and refreshes its token automatically. `vanta logout` also revokes the sign-in. If the browser can't reach the machine running the CLI (for example over SSH), add `--no-open`, open the printed URL yourself, and paste back the URL the browser was redirected to.
+
+Browser sign-in is rolling out gradually and may not be enabled for your workspace yet. If sign-in fails with `server_error`, use client credentials with `vanta login`.
+
+The CLI keeps one login at a time. Signing in with the browser replaces saved client credentials, and signing in with client credentials replaces (and revokes) a browser sign-in.
 
 You can also pass credentials via environment variables or flags:
 
@@ -62,8 +78,12 @@ You can also pass credentials via environment variables or flags:
 | Client secret | `--client-secret` | `VANTA_CLIENT_SECRET` |
 | OAuth scope | `--scope` | `VANTA_OAUTH_SCOPE` |
 | API base URL | `--api-base` | `VANTA_API_BASE` |
+| Web app URL (`--browser` only) | `--web-base` | `VANTA_WEB_BASE` |
+
+A client secret from a flag or environment variable always uses client credentials, even after a browser sign-in.
 
 Default API base: `https://api.vanta.com/v1`  
+Default web app URL: `https://app.vanta.com`  
 Default scope: `vanta-api.all:read vanta-api.all:write`
 
 ## Quick start
