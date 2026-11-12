@@ -90,15 +90,13 @@ export function parseCallback(url: URL, expectedState: string): CallbackResult {
 
 export type PastedResult = CallbackResult | { kind: "unrecognized" };
 
-/** Authorization codes are opaque URL-safe tokens. */
-const bareCodePattern = /^[A-Za-z0-9._~-]+$/;
-
 /**
  * Parses what a person pasted when the browser could not reach this machine's
  * loopback. Anything that looks like a URL or query string, with or without a
- * scheme, must carry the expected state, exactly as the loopback requires. A
- * bare code (the value alone) is accepted as is. Returns null for a blank line
- * and "unrecognized" for anything else, so stray text is never exchanged.
+ * scheme, must carry the expected state, exactly as the loopback requires.
+ * Returns null for a blank line and "unrecognized" for anything else. A bare
+ * code is not accepted: it would skip the state check, and a stray word would
+ * be sent to the token endpoint and end the attempt.
  */
 export function parsePastedCallback(
   line: string,
@@ -116,7 +114,6 @@ export function parsePastedCallback(
     return parseCallback(url, expectedState);
   }
 
-  if (bareCodePattern.test(trimmed)) return { kind: "code", code: trimmed };
   return { kind: "unrecognized" };
 }
 

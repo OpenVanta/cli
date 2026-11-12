@@ -186,10 +186,12 @@ describe("parsePastedCallback", () => {
     });
   });
 
-  it("accepts a bare code but not stray text", () => {
+  it("refuses stray text, including a bare code", () => {
     assert.deepEqual(parsePastedCallback("abc123_-.~", "s1"), {
-      kind: "code",
-      code: "abc123_-.~",
+      kind: "unrecognized",
+    });
+    assert.deepEqual(parsePastedCallback("hello", "s1"), {
+      kind: "unrecognized",
     });
     assert.deepEqual(parsePastedCallback("garbage text", "s1"), {
       kind: "unrecognized",
