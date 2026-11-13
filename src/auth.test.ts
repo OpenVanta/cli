@@ -65,11 +65,8 @@ describe("API base resolution", { skip: usesOSStore }, () => {
   });
   afterEach(() => env.restore());
 
-  it("defaults to the commercial API", async () => {
+  it("accepts the default and approved regional bases from any source", async () => {
     assert.equal(await resolveAPIBase(), "https://api.vanta.com/v1");
-  });
-
-  it("accepts an approved regional base from any source", async () => {
     assert.equal(
       await resolveAPIBase({ apiBase: "https://api.eu.vanta.com/v1/" }),
       "https://api.eu.vanta.com/v1",
@@ -81,19 +78,14 @@ describe("API base resolution", { skip: usesOSStore }, () => {
     assert.equal(await resolveAPIBase(), "https://api.vanta-gov.com/v1");
   });
 
-  it("rejects an unapproved base from the flag", async () => {
+  it("rejects an unapproved base from each source", async () => {
     await assert.rejects(
       resolveAPIBase({ apiBase: "https://attacker.example/v1" }),
       /--api-base: invalid API base/,
     );
-  });
-
-  it("rejects an unapproved base from the environment", async () => {
     process.env.VANTA_API_BASE = "http://api.vanta.com/v1";
     await assert.rejects(resolveAPIBase(), /VANTA_API_BASE: invalid API base/);
-  });
-
-  it("rejects an unapproved base saved in config", async () => {
+    delete process.env.VANTA_API_BASE;
     await env.writeConfig({ api_base: "https://attacker.example/v1" });
     await assert.rejects(resolveAPIBase(), /config api_base: invalid API base/);
   });
@@ -155,43 +147,32 @@ describe("access token cache", { skip: usesOSStore }, () => {
     assert.equal(env.requests.length, 0);
   });
 
-  it("does not present a token minted for one origin to another", async () => {
-    await env.writeConfig({
-      ...cachedForCommercial,
-      cached_token_expires: inOneHour(),
-    });
-    assert.equal(
-      await resolveAccessToken("https://api.eu.vanta.com/v1"),
-      "minted-token",
-    );
+  it("does not reuse a token minted for a different origin, client or scope", async () => {
+    const cases: Array<[string, Parameters<typeof resolveAccessToken>]> = [
+      ["origin", ["https://api.eu.vanta.com/v1"]],
+      [
+        "client",
+        [
+          "https://api.vanta.com/v1",
+          { clientId: "client-b", clientSecret: "secret-b" },
+        ],
+      ],
+      [
+        "scope",
+        [
+          "https://api.vanta.com/v1",
+          { scope: "vanta-api.all:read vanta-api.all:write" },
+        ],
+      ],
+    ];
+    for (const [name, args] of cases) {
+      await env.writeConfig({
+        ...cachedForCommercial,
+        cached_token_expires: inOneHour(),
+      });
+      assert.equal(await resolveAccessToken(...args), "minted-token", name);
+    }
     assert.equal(env.requests[0]?.url, "https://api.eu.vanta.com/oauth/token");
-  });
-
-  it("does not reuse a token minted for a different client", async () => {
-    await env.writeConfig({
-      ...cachedForCommercial,
-      cached_token_expires: inOneHour(),
-    });
-    assert.equal(
-      await resolveAccessToken("https://api.vanta.com/v1", {
-        clientId: "client-b",
-        clientSecret: "secret-b",
-      }),
-      "minted-token",
-    );
-  });
-
-  it("does not reuse a token minted for a different scope", async () => {
-    await env.writeConfig({
-      ...cachedForCommercial,
-      cached_token_expires: inOneHour(),
-    });
-    assert.equal(
-      await resolveAccessToken("https://api.vanta.com/v1", {
-        scope: "vanta-api.all:read vanta-api.all:write",
-      }),
-      "minted-token",
-    );
   });
 
   it("discards a cached token saved before tokens were bound to an origin", async () => {

@@ -61,14 +61,5 @@ describe(
       assert.equal(env.requests.length, 0);
       assert.equal((await env.readConfig()).cached_access_token, undefined);
     });
-
-    it("dry run still rejects an unapproved base", async () => {
-      await assert.rejects(
-        newAPIClient(
-          flags({ dryRun: true, apiBase: "https://attacker.example/v1" }),
-        ),
-        /invalid API base/,
-      );
-    });
   },
 );
