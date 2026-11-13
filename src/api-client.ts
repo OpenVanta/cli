@@ -13,6 +13,8 @@ export class DryRunError extends Error {
   }
 }
 
+const dryRunToken = "<dry-run>";
+
 export type GlobalFlags = AuthOverrides & {
   dryRun: boolean;
   verbose: boolean;
@@ -68,7 +70,12 @@ function createInstrumentedFetch(flags: GlobalFlags): typeof fetch {
       process.stderr.write(`-> ${method} ${url}\n`);
     }
 
-    const response = await fetch(input, { ...init, headers });
+    // Every API request carries the bearer token; a redirect could forward it.
+    const response = await fetch(input, {
+      ...init,
+      headers,
+      redirect: "error",
+    });
 
     if (flags.verbose) {
       process.stderr.write(`<- ${response.status}\n`);
@@ -80,7 +87,10 @@ function createInstrumentedFetch(flags: GlobalFlags): typeof fetch {
 
 export async function newAPIClient(flags: GlobalFlags): Promise<ApiClient> {
   const base = await resolveAPIBase(flags);
-  const token = await resolveAccessToken(base, flags, { dryRun: flags.dryRun });
+  // Dry runs never load or refresh credentials, so they cannot send them.
+  const token = flags.dryRun
+    ? dryRunToken
+    : await resolveAccessToken(base, flags);
   const baseUrl = base.replace(/\/+$/, "");
 
   const client = createClient({

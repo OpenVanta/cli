@@ -63,7 +63,7 @@ You can also pass credentials via environment variables or flags:
 | OAuth scope | `--scope` | `VANTA_OAUTH_SCOPE` |
 | API base URL | `--api-base` | `VANTA_API_BASE` |
 
-Default API base: `https://api.vanta.com/v1`  
+Default API base: `https://api.vanta.com/v1`. The API base must be one of the Vanta regions: `https://api.vanta.com/v1`, `https://api.eu.vanta.com/v1`, `https://api.aus.vanta.com/v1` or `https://api.vanta-gov.com/v1`. Any other value is rejected before credentials are used.  
 Default scope: `vanta-api.all:read vanta-api.all:write`
 
 ## Quick start
