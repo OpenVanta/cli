@@ -1,12 +1,14 @@
-// Credentials are only ever sent to these exact origins. Staging and custom
-// endpoints are deliberately absent: a flag, env var or config edit must not be
-// able to point production credentials at another host.
+// Credentials are only ever sent to these exact Vanta-controlled origins, so a
+// flag, env var or config edit cannot point them at another host.
 const allowedAPIHosts = new Set([
   "api.vanta.com",
   "api.eu.vanta.com",
   "api.aus.vanta.com",
   "api.vanta-gov.com",
 ]);
+
+// Accepted for Vanta's internal testing but left out of user-facing region lists.
+const unlistedAPIHosts = new Set(["api.staging.vanta.com"]);
 
 const apiPath = "/v1";
 
@@ -36,7 +38,7 @@ export function validateAPIBase(raw: string): string {
   if (url.protocol !== "https:") reject("must use https");
   if (url.username || url.password) reject("must not contain credentials");
   if (url.port) reject("must not set a port");
-  if (!allowedAPIHosts.has(url.hostname))
+  if (!allowedAPIHosts.has(url.hostname) && !unlistedAPIHosts.has(url.hostname))
     reject("host is not a Vanta API host");
   if (url.pathname !== apiPath && url.pathname !== `${apiPath}/`) {
     reject(`path must be ${apiPath}`);

@@ -19,17 +19,28 @@ describe("validateAPIBase", () => {
     }
   });
 
-  it("rejects bases that could send credentials somewhere other than Vanta production", () => {
+  it("accepts Vanta staging without listing it in the allowed regions", () => {
+    assert.equal(
+      validateAPIBase("https://api.staging.vanta.com/v1"),
+      "https://api.staging.vanta.com/v1",
+    );
+    assert.throws(
+      () => validateAPIBase("https://attacker.example/v1"),
+      (err: Error) => !err.message.includes("staging"),
+    );
+  });
+
+  it("rejects bases that could send credentials to a host other than an approved Vanta API host", () => {
     for (const input of [
       "http://api.vanta.com/v1",
       "https://attacker.example/v1",
       "https://api.vanta.com.attacker.example/v1",
       "https://attacker.api.vanta.com/v1",
       "https://evil-api.vanta.com/v1",
+      "https://api.eu.staging.vanta.com/v1",
       "https://api.vanta.com@attacker.example/v1",
       "https://user:pass@api.vanta.com/v1",
       "https://api.vanta.com:8443/v1",
-      "https://api.staging.vanta.com/v1",
       "https://api.vanta.com./v1",
       "https://api.vanta.com/v2",
       "https://api.vanta.com/",
