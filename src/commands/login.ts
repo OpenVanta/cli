@@ -1,6 +1,7 @@
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import type { Command } from "commander";
+import { validateAPIBase } from "../api-base.js";
 import {
   cacheAccessToken,
   configFilePath,
@@ -9,6 +10,7 @@ import {
   requestOAuthToken,
   resolveAPIBase,
   saveOAuthCredentials,
+  tokenBinding,
   type AuthOverrides,
 } from "../auth.js";
 
@@ -53,7 +55,9 @@ export function registerLoginCommand(
       }) => {
         const overrides = getOverrides();
         const apiBaseDefault = await resolveAPIBase(overrides);
-        const apiBase = await promptValue("API base URL", apiBaseDefault, true);
+        const apiBase = validateAPIBase(
+          await promptValue("API base URL", apiBaseDefault, true),
+        );
         const clientID = await promptValue(
           "OAuth client ID",
           opts.clientId ?? "",
@@ -79,7 +83,12 @@ export function registerLoginCommand(
           scope,
         );
         await saveOAuthCredentials(apiBase, clientID, clientSecret, scope);
-        await cacheAccessToken(accessToken, "Bearer", expiresAt);
+        await cacheAccessToken(
+          accessToken,
+          "Bearer",
+          expiresAt,
+          tokenBinding(apiBase, clientID, scope),
+        );
 
         console.log(
           `OAuth credentials saved to ${credentialStorageDescription()}`,
