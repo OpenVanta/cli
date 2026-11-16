@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
-import { afterEach, beforeEach, describe, it } from "node:test";
-import { createInstrumentedFetch, type GlobalFlags } from "./api-client.js";
-import { refreshAfterUnauthorized } from "./auth.js";
+import { afterEach, beforeEach, describe, it, mock } from "node:test";
+import {
+  createInstrumentedFetch,
+  newAPIClient,
+  type GlobalFlags,
+} from "./api-client.js";
+import { refreshAfterUnauthorized, useSystemCredentialStore } from "./auth.js";
+import { listPeople } from "./generated/sdk.gen.js";
+import { authorizationHeader, isolateCredentials } from "./test-helpers.js";
 import {
   jsonResponse,
   stubFetch,
@@ -9,9 +15,10 @@ import {
   type RecordedRequest,
 } from "./test-support.js";
 
-const apiBase = "http://127.0.0.1:10290/v1";
+const apiBase = "https://api.vanta.com/v1";
 const flags: GlobalFlags = { dryRun: false, verbose: false, pretty: true };
 const future = () => new Date(Date.now() + 10 * 60_000).toISOString();
+const past = () => new Date(Date.now() - 1000).toISOString();
 
 const userLogin = (over: Record<string, unknown> = {}) => ({
   api_base: apiBase,
@@ -159,4 +166,80 @@ describe("API requests after a 401", () => {
     assert.equal(res.status, 401);
     assert.equal(net.requests.filter(isApi).length, 1);
   });
+
+  it("dry run sends nothing and does not refresh or rotate a browser sign-in", async () => {
+    await home.writeConfig(userLogin({ cached_token_expires: past() }));
+    mock.method(process.stdout, "write", () => true);
+    try {
+      const api = await newAPIClient({ ...flags, apiBase, dryRun: true });
+      await listPeople({ client: api.client }).catch((err: unknown) =>
+        api.handleError(err),
+      );
+    } finally {
+      mock.restoreAll();
+    }
+    assert.equal(net.requests.length, 0);
+    const cfg = await home.readConfig();
+    assert.equal(cfg.oauth_refresh_token, "rt-old");
+    assert.equal(cfg.cached_access_token, "at-old");
+  });
 });
+
+const clientFlags = (overrides: Partial<GlobalFlags> = {}): GlobalFlags => ({
+  dryRun: false,
+  verbose: false,
+  pretty: false,
+  ...overrides,
+});
+
+describe(
+  "API client",
+  {
+    skip: useSystemCredentialStore()
+      ? "uses the OS credential store on this platform"
+      : false,
+  },
+  () => {
+    let env: Awaited<ReturnType<typeof isolateCredentials>>;
+    beforeEach(async () => {
+      env = await isolateCredentials();
+      await env.writeConfig({
+        oauth_client_id: "client-a",
+        oauth_client_secret: "secret-a",
+        oauth_scope: "vanta-api.all:read",
+      });
+      mock.method(process.stdout, "write", () => true);
+    });
+    afterEach(async () => {
+      mock.restoreAll();
+      await env.restore();
+    });
+
+    it("sends the bearer token only to the validated base and refuses redirects", async () => {
+      const api = await newAPIClient(
+        clientFlags({ apiBase: "https://api.eu.vanta.com/v1" }),
+      );
+      await listPeople({ client: api.client });
+
+      const apiRequests = env.requests.filter(
+        (r) => !r.url.endsWith("/oauth/token"),
+      );
+      assert.equal(apiRequests.length, 1);
+      const [request] = apiRequests;
+      assert.ok(request);
+      assert.equal(request.url, "https://api.eu.vanta.com/v1/people");
+      assert.equal(authorizationHeader(request), "Bearer minted-token");
+      assert.equal(request.init?.redirect, "error");
+    });
+
+    it("dry run sends no requests and does not refresh the cached token", async () => {
+      const api = await newAPIClient(clientFlags({ dryRun: true }));
+      await listPeople({ client: api.client }).catch((err: unknown) =>
+        api.handleError(err),
+      );
+
+      assert.equal(env.requests.length, 0);
+      assert.equal((await env.readConfig()).cached_access_token, undefined);
+    });
+  },
+);

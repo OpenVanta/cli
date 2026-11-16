@@ -82,7 +82,7 @@ You can also pass credentials via environment variables or flags:
 
 A client secret from a flag or environment variable always uses client credentials, even after a browser sign-in.
 
-Default API base: `https://api.vanta.com/v1`  
+Default API base: `https://api.vanta.com/v1`. The API base must be one of the Vanta regions: `https://api.vanta.com/v1`, `https://api.eu.vanta.com/v1`, `https://api.aus.vanta.com/v1` or `https://api.vanta-gov.com/v1`. Any other value is rejected before credentials are used.  
 Default web app URL: `https://app.vanta.com`  
 Default scope: `vanta-api.all:read vanta-api.all:write`
 

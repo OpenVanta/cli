@@ -1,13 +1,17 @@
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import {
-  loadStoredCredentials,
-  resolveAccessToken,
   credentialStorageDescription,
   decodeKeyringPassword,
   encodeKeyringPassword,
+  loadStoredCredentials,
+  requestOAuthToken,
+  resolveAccessToken,
+  resolveAPIBase,
   useSystemCredentialStore,
 } from "./auth.js";
+import { systemCredentialStoreAvailable } from "./keychain.js";
+import { inOneHour, isolateCredentials } from "./test-helpers.js";
 import {
   jsonResponse,
   stubFetch,
@@ -15,7 +19,6 @@ import {
   type RecordedRequest,
 } from "./test-support.js";
 import { FIRST_PARTY_CLI_CLIENT_ID } from "./user-login.js";
-import { systemCredentialStoreAvailable } from "./keychain.js";
 
 describe("credential store selection", () => {
   it("uses the system store on darwin and win32", () => {
@@ -70,7 +73,7 @@ describe("resolveAccessToken", () => {
     "VANTA_OAUTH_SCOPE",
   ];
   const savedEnv: Record<string, string | undefined> = {};
-  const apiBase = "http://127.0.0.1:10290/v1";
+  const apiBase = "https://api.vanta.com/v1";
   const past = () => new Date(Date.now() - 1000).toISOString();
   const future = () => new Date(Date.now() + 10 * 60_000).toISOString();
 
@@ -134,7 +137,7 @@ describe("resolveAccessToken", () => {
     assert.equal(token, "at-new");
     assert.equal(net.requests.length, 1);
     const req = net.requests[0]!;
-    assert.equal(req.url, "http://127.0.0.1:10290/oauth/token");
+    assert.equal(req.url, "https://api.vanta.com/oauth/token");
     assert.equal(
       req.headers.get("content-type"),
       "application/x-www-form-urlencoded",
@@ -151,16 +154,6 @@ describe("resolveAccessToken", () => {
     assert.ok(
       new Date(String(persistedBeforeReturn.cached_token_expires)) > new Date(),
     );
-  });
-
-  it("--dry-run does not refresh or rotate the stored grant", async () => {
-    await home.writeConfig(userConfig());
-    assert.equal(
-      await resolveAccessToken(apiBase, {}, { dryRun: true }),
-      "<dry-run>",
-    );
-    assert.equal(net.requests.length, 0);
-    assert.equal((await home.readConfig()).oauth_refresh_token, "rt-old");
   });
 
   it("refreshes inside the 30 s early-expiry margin", async () => {
@@ -297,5 +290,150 @@ describe("resolveAccessToken", () => {
       JSON.parse(net.requests[0]!.body).grant_type,
       "client_credentials",
     );
+  });
+});
+
+const usesOSStore = useSystemCredentialStore()
+  ? "uses the OS credential store on this platform"
+  : false;
+
+describe("API base resolution", { skip: usesOSStore }, () => {
+  let env: Awaited<ReturnType<typeof isolateCredentials>>;
+  beforeEach(async () => {
+    env = await isolateCredentials();
+  });
+  afterEach(() => env.restore());
+
+  it("accepts the default and approved regional bases from any source", async () => {
+    assert.equal(await resolveAPIBase(), "https://api.vanta.com/v1");
+    assert.equal(
+      await resolveAPIBase({ apiBase: "https://api.eu.vanta.com/v1/" }),
+      "https://api.eu.vanta.com/v1",
+    );
+    process.env.VANTA_API_BASE = "https://api.aus.vanta.com/v1";
+    assert.equal(await resolveAPIBase(), "https://api.aus.vanta.com/v1");
+    delete process.env.VANTA_API_BASE;
+    await env.writeConfig({ api_base: "https://api.vanta-gov.com/v1" });
+    assert.equal(await resolveAPIBase(), "https://api.vanta-gov.com/v1");
+  });
+
+  it("rejects an unapproved base from each source", async () => {
+    await assert.rejects(
+      resolveAPIBase({ apiBase: "https://attacker.example/v1" }),
+      /--api-base: invalid API base/,
+    );
+    process.env.VANTA_API_BASE = "http://api.vanta.com/v1";
+    await assert.rejects(resolveAPIBase(), /VANTA_API_BASE: invalid API base/);
+    delete process.env.VANTA_API_BASE;
+    await env.writeConfig({ api_base: "https://attacker.example/v1" });
+    await assert.rejects(resolveAPIBase(), /config api_base: invalid API base/);
+  });
+});
+
+describe("OAuth token request", { skip: usesOSStore }, () => {
+  let env: Awaited<ReturnType<typeof isolateCredentials>>;
+  beforeEach(async () => {
+    env = await isolateCredentials();
+  });
+  afterEach(() => env.restore());
+
+  it("never sends the client secret to an unapproved host", async () => {
+    await assert.rejects(
+      requestOAuthToken("https://attacker.example/v1", "id", "secret", "s"),
+      /invalid API base/,
+    );
+    assert.equal(env.requests.length, 0);
+  });
+
+  it("posts to the approved origin's token endpoint without following redirects", async () => {
+    await requestOAuthToken("https://api.eu.vanta.com/v1", "id", "secret", "s");
+    assert.equal(env.requests.length, 1);
+    assert.equal(env.requests[0]?.url, "https://api.eu.vanta.com/oauth/token");
+    assert.equal(env.requests[0]?.init?.redirect, "error");
+  });
+});
+
+describe("access token cache", { skip: usesOSStore }, () => {
+  let env: Awaited<ReturnType<typeof isolateCredentials>>;
+  beforeEach(async () => {
+    env = await isolateCredentials();
+  });
+  afterEach(() => env.restore());
+
+  const credentials = {
+    oauth_client_id: "client-a",
+    oauth_client_secret: "secret-a",
+    oauth_scope: "vanta-api.all:read",
+  };
+  const cachedForCommercial = {
+    ...credentials,
+    cached_access_token: "cached-token",
+    cached_token_type: "Bearer",
+    cached_token_origin: "https://api.vanta.com",
+    cached_token_client_id: "client-a",
+    cached_token_scope: "vanta-api.all:read",
+  };
+
+  it("reuses a cached token for the origin, client and scope it was minted for", async () => {
+    await env.writeConfig({
+      ...cachedForCommercial,
+      cached_token_expires: inOneHour(),
+    });
+    assert.equal(
+      await resolveAccessToken("https://api.vanta.com/v1"),
+      "cached-token",
+    );
+    assert.equal(env.requests.length, 0);
+  });
+
+  it("does not reuse a token minted for a different origin, client or scope", async () => {
+    const cases: Array<[string, Parameters<typeof resolveAccessToken>]> = [
+      ["origin", ["https://api.eu.vanta.com/v1"]],
+      [
+        "client",
+        [
+          "https://api.vanta.com/v1",
+          { clientId: "client-b", clientSecret: "secret-b" },
+        ],
+      ],
+      [
+        "scope",
+        [
+          "https://api.vanta.com/v1",
+          { scope: "vanta-api.all:read vanta-api.all:write" },
+        ],
+      ],
+    ];
+    for (const [name, args] of cases) {
+      await env.writeConfig({
+        ...cachedForCommercial,
+        cached_token_expires: inOneHour(),
+      });
+      assert.equal(await resolveAccessToken(...args), "minted-token", name);
+    }
+    assert.equal(env.requests[0]?.url, "https://api.eu.vanta.com/oauth/token");
+  });
+
+  it("discards a cached token saved before tokens were bound to an origin", async () => {
+    await env.writeConfig({
+      ...credentials,
+      cached_access_token: "legacy-token",
+      cached_token_type: "Bearer",
+      cached_token_expires: inOneHour(),
+    });
+    assert.equal(
+      await resolveAccessToken("https://api.vanta.com/v1"),
+      "minted-token",
+    );
+  });
+
+  it("binds a newly minted token to the origin, client and scope", async () => {
+    await env.writeConfig(credentials);
+    await resolveAccessToken("https://api.aus.vanta.com/v1");
+    const cfg = await env.readConfig();
+    assert.equal(cfg.cached_access_token, "minted-token");
+    assert.equal(cfg.cached_token_origin, "https://api.aus.vanta.com");
+    assert.equal(cfg.cached_token_client_id, "client-a");
+    assert.equal(cfg.cached_token_scope, "vanta-api.all:read");
   });
 });

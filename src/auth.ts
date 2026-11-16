@@ -11,6 +11,7 @@ import {
   systemCredentialStoreAvailable,
   useSystemCredentialStore,
 } from "./keychain.js";
+import { validateAPIBase } from "./api-base.js";
 import {
   FIRST_PARTY_CLI_CLIENT_ID,
   defaultWebBase,
@@ -52,6 +53,9 @@ export type CliConfig = {
   cached_access_token?: string;
   cached_token_type?: string;
   cached_token_expires?: string;
+  cached_token_origin?: string;
+  cached_token_client_id?: string;
+  cached_token_scope?: string;
 };
 
 type SecureCredentialState = {
@@ -63,6 +67,16 @@ type SecureCredentialState = {
   cached_access_token?: string;
   cached_token_type?: string;
   cached_token_expires?: string;
+  cached_token_origin?: string;
+  cached_token_client_id?: string;
+  cached_token_scope?: string;
+};
+
+/** What a cached access token was minted for; it is only reused on an exact match. */
+export type TokenBinding = {
+  origin: string;
+  clientID: string;
+  scope: string;
 };
 
 export type AuthOverrides = {
@@ -82,6 +96,9 @@ function clearSensitiveFields(cfg: CliConfig): void {
   cfg.cached_access_token = "";
   cfg.cached_token_type = "";
   cfg.cached_token_expires = "";
+  cfg.cached_token_origin = "";
+  cfg.cached_token_client_id = "";
+  cfg.cached_token_scope = "";
 }
 
 async function loadSecureCredentialState(
@@ -138,18 +155,26 @@ export async function saveConfig(cfg: CliConfig): Promise<void> {
   await writeFile(path, raw, { mode: 0o600 });
 }
 
+function validateAPIBaseFrom(source: string, raw: string): string {
+  try {
+    return validateAPIBase(raw);
+  } catch (err) {
+    throw new Error(`${source}: ${(err as Error).message}`);
+  }
+}
+
 export async function resolveAPIBase(
   overrides: AuthOverrides = {},
 ): Promise<string> {
   const fromFlag = overrides.apiBase?.trim();
-  if (fromFlag) return fromFlag;
+  if (fromFlag) return validateAPIBaseFrom("--api-base", fromFlag);
 
   const fromEnv = process.env[apiBaseEnvVar]?.trim();
-  if (fromEnv) return fromEnv;
+  if (fromEnv) return validateAPIBaseFrom(apiBaseEnvVar, fromEnv);
 
   const cfg = await loadConfig();
   const fromCfg = cfg.api_base?.trim();
-  if (fromCfg) return fromCfg;
+  if (fromCfg) return validateAPIBaseFrom("config api_base", fromCfg);
 
   return defaultAPIBase;
 }
@@ -208,6 +233,9 @@ export async function saveOAuthCredentials(
     secureState.cached_access_token = "";
     secureState.cached_token_type = "";
     secureState.cached_token_expires = "";
+    secureState.cached_token_origin = "";
+    secureState.cached_token_client_id = "";
+    secureState.cached_token_scope = "";
     await saveSecureCredentialState(secureState);
     clearSensitiveFields(cfg);
     await saveConfig(cfg);
@@ -222,32 +250,62 @@ export async function saveOAuthCredentials(
   cfg.cached_access_token = "";
   cfg.cached_token_type = "";
   cfg.cached_token_expires = "";
+  cfg.cached_token_origin = "";
+  cfg.cached_token_client_id = "";
+  cfg.cached_token_scope = "";
   await saveConfig(cfg);
+}
+
+export function tokenBinding(
+  apiBase: string,
+  clientID: string,
+  scope: string,
+): TokenBinding {
+  return {
+    origin: new URL(validateAPIBase(apiBase)).origin,
+    clientID: clientID.trim(),
+    scope: scope.trim(),
+  };
+}
+
+function writeCachedToken(
+  state: SecureCredentialState,
+  accessToken: string,
+  tokenType: string,
+  expiresAt: Date,
+  binding: TokenBinding,
+): void {
+  state.cached_access_token = accessToken.trim();
+  state.cached_token_type = tokenType.trim();
+  state.cached_token_expires = expiresAt.toISOString();
+  state.cached_token_origin = binding.origin;
+  state.cached_token_client_id = binding.clientID;
+  state.cached_token_scope = binding.scope;
 }
 
 export async function cacheAccessToken(
   accessToken: string,
   tokenType: string,
   expiresAt: Date,
+  binding: TokenBinding,
 ): Promise<void> {
   const cfg = await loadConfig();
 
   if (await systemCredentialStoreAvailable()) {
     const secureState = (await loadSecureCredentialState()) ?? {};
-    secureState.cached_access_token = accessToken.trim();
-    secureState.cached_token_type = tokenType.trim();
-    secureState.cached_token_expires = expiresAt.toISOString();
+    writeCachedToken(secureState, accessToken, tokenType, expiresAt, binding);
     await saveSecureCredentialState(secureState);
     cfg.cached_access_token = "";
     cfg.cached_token_type = "";
     cfg.cached_token_expires = "";
+    cfg.cached_token_origin = "";
+    cfg.cached_token_client_id = "";
+    cfg.cached_token_scope = "";
     await saveConfig(cfg);
     return;
   }
 
-  cfg.cached_access_token = accessToken.trim();
-  cfg.cached_token_type = tokenType.trim();
-  cfg.cached_token_expires = expiresAt.toISOString();
+  writeCachedToken(cfg, accessToken, tokenType, expiresAt, binding);
   await saveConfig(cfg);
 }
 
@@ -283,11 +341,7 @@ export async function resolveOAuthCredentials(
 }
 
 function oauthTokenURL(apiBase: string): string {
-  const base = apiBase.trim() || defaultAPIBase;
-  const u = new URL(base);
-  u.pathname = "/oauth/token";
-  u.search = "";
-  return u.toString();
+  return `${new URL(validateAPIBase(apiBase)).origin}/oauth/token`;
 }
 
 export async function requestOAuthToken(
@@ -310,6 +364,8 @@ export async function requestOAuthToken(
       scope,
       grant_type: "client_credentials",
     }),
+    // A redirect would resend the client secret to wherever it points.
+    redirect: "error",
   });
 
   const respBody = await resp.text();
@@ -335,42 +391,37 @@ export async function requestOAuthToken(
   };
 }
 
-async function loadCachedAccessToken(): Promise<{
-  token: string;
-  expiresAt: Date | null;
-}> {
-  const secureState = await loadSecureCredentialState();
-  if (secureState) {
-    const token = secureState.cached_access_token?.trim() ?? "";
-    if (token) {
-      const expiresRaw = secureState.cached_token_expires?.trim() ?? "";
-      if (expiresRaw) {
-        const expiresAt = new Date(expiresRaw);
-        if (!Number.isNaN(expiresAt.getTime())) {
-          return { token, expiresAt };
-        }
-      }
-    }
+// Entries without a binding (written before tokens were bound) never match.
+function readCachedToken(
+  state: SecureCredentialState,
+  binding: TokenBinding,
+): { token: string; expiresAt: Date } | null {
+  const token = state.cached_access_token?.trim() ?? "";
+  if (!token) return null;
+  if (
+    state.cached_token_origin !== binding.origin ||
+    state.cached_token_client_id !== binding.clientID ||
+    state.cached_token_scope !== binding.scope
+  ) {
+    return null;
   }
-
-  const cfg = await loadConfig();
-  const token = cfg.cached_access_token?.trim() ?? "";
-  if (!token) return { token: "", expiresAt: null };
-
-  const expiresRaw = cfg.cached_token_expires?.trim() ?? "";
-  if (!expiresRaw) return { token: "", expiresAt: null };
-
-  const expiresAt = new Date(expiresRaw);
-  if (Number.isNaN(expiresAt.getTime())) {
-    return { token: "", expiresAt: null };
-  }
+  const expiresAt = new Date(state.cached_token_expires?.trim() ?? "");
+  if (Number.isNaN(expiresAt.getTime())) return null;
   return { token, expiresAt };
+}
+
+async function loadCachedAccessToken(
+  binding: TokenBinding,
+): Promise<{ token: string; expiresAt: Date } | null> {
+  const secureState = await loadSecureCredentialState();
+  const fromSecure = secureState && readCachedToken(secureState, binding);
+  if (fromSecure) return fromSecure;
+  return readCachedToken(await loadConfig(), binding);
 }
 
 export async function resolveAccessToken(
   apiBase: string,
   overrides: AuthOverrides = {},
-  options: { dryRun?: boolean } = {},
 ): Promise<string> {
   const stored = await loadStoredCredentials();
   if (stored.authMode === "user") {
@@ -379,25 +430,20 @@ export async function resolveAccessToken(
       overrides.clientSecret?.trim() ||
       process.env[oauthClientSecretEnvVar]?.trim();
     return explicitSecret
-      ? requestUncachedClientToken(apiBase, overrides, explicitSecret, options)
-      : resolveUserAccessToken(apiBase, options);
-  }
-
-  const cached = await loadCachedAccessToken();
-  if (
-    cached.token &&
-    cached.expiresAt &&
-    Date.now() < cached.expiresAt.getTime() - 30_000
-  ) {
-    return cached.token;
+      ? requestUncachedClientToken(apiBase, overrides, explicitSecret)
+      : resolveUserAccessToken(apiBase);
   }
 
   const { clientID, clientSecret, scope } =
     await resolveOAuthCredentials(overrides);
+  const binding = tokenBinding(apiBase, clientID, scope);
+
+  const cached = await loadCachedAccessToken(binding);
+  if (cached && Date.now() < cached.expiresAt.getTime() - 30_000) {
+    return cached.token;
+  }
+
   if (!clientID || !clientSecret) {
-    if (options.dryRun) {
-      return "<dry-run>";
-    }
     throw new Error(
       "missing auth credentials: run `vanta login` or set VANTA_CLIENT_ID / VANTA_CLIENT_SECRET",
     );
@@ -409,7 +455,7 @@ export async function resolveAccessToken(
     clientSecret,
     scope,
   );
-  await cacheAccessToken(accessToken, "Bearer", expiresAt);
+  await cacheAccessToken(accessToken, "Bearer", expiresAt, binding);
   return accessToken;
 }
 
@@ -444,6 +490,8 @@ async function postTokenForm(
       "User-Agent": userAgent(),
     },
     body: new URLSearchParams(params).toString(),
+    // A redirect would resend the code or refresh token to wherever it points.
+    redirect: "error",
   });
 
   const respBody = await resp.text();
@@ -626,7 +674,7 @@ const reloginMessage = "run `vanta login --browser` to sign in again";
 
 async function resolveUserAccessToken(
   apiBase: string,
-  options: { dryRun?: boolean; rejectedToken?: string },
+  options: { rejectedToken?: string } = {},
 ): Promise<string> {
   // Re-read: another CLI process may have rotated the grant since we loaded it.
   const stored = await loadStoredCredentials({ fresh: true });
@@ -636,8 +684,6 @@ async function resolveUserAccessToken(
   ) {
     return stored.accessToken;
   }
-  // A dry run sends nothing, so it must not rotate the stored grant either.
-  if (options.dryRun) return "<dry-run>";
   if (!stored.refreshToken) {
     throw new Error(`not signed in: ${reloginMessage}`);
   }
@@ -671,10 +717,9 @@ export async function revokeUserToken(
   apiBase: string,
   token: string,
 ): Promise<void> {
-  const url = new URL(apiBase.trim() || defaultAPIBase);
-  url.pathname = "/v1/oauth/token/suspend";
-  url.search = "";
-  const resp = await fetch(url.toString(), {
+  const origin = new URL(validateAPIBase(apiBase.trim() || defaultAPIBase))
+    .origin;
+  const resp = await fetch(`${origin}/v1/oauth/token/suspend`, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
@@ -684,6 +729,8 @@ export async function revokeUserToken(
       client_id: FIRST_PARTY_CLI_CLIENT_ID,
       token,
     }).toString(),
+    // A redirect would resend the grant's token to wherever it points.
+    redirect: "error",
   });
   if (!resp.ok) {
     throw new Error(
@@ -742,17 +789,14 @@ async function requestUncachedClientToken(
   apiBase: string,
   overrides: AuthOverrides,
   clientSecret: string,
-  options: { dryRun?: boolean },
 ): Promise<string> {
   const clientID =
     overrides.clientId?.trim() || process.env[oauthClientIDEnvVar]?.trim();
   if (!clientID) {
-    if (options.dryRun) return "<dry-run>";
     throw new Error(
       "missing client ID: set VANTA_CLIENT_ID or --client-id along with the client secret",
     );
   }
-  if (options.dryRun) return "<dry-run>";
   const scope =
     overrides.scope?.trim() ||
     process.env[oauthScopeEnvVar]?.trim() ||

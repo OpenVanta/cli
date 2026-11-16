@@ -5,7 +5,7 @@ import { registerLogoutCommand } from "./logout.js";
 import { FIRST_PARTY_CLI_CLIENT_ID } from "../user-login.js";
 import { jsonResponse, stubFetch, useTempHome } from "../test-support.js";
 
-const apiBase = "http://127.0.0.1:10290/v1";
+const apiBase = "https://api.vanta.com/v1";
 
 async function runLogout() {
   const program = new Command().exitOverride();
@@ -76,7 +76,7 @@ describe("vanta logout", () => {
     assert.equal(net.requests.length, 1);
     const req = net.requests[0]!;
     assert.equal(req.method, "POST");
-    assert.equal(req.url, "http://127.0.0.1:10290/v1/oauth/token/suspend");
+    assert.equal(req.url, "https://api.vanta.com/v1/oauth/token/suspend");
     assert.equal(
       req.headers.get("content-type"),
       "application/x-www-form-urlencoded",

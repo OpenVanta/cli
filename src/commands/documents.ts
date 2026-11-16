@@ -5,6 +5,8 @@ import {
   createDocument,
   deleteDocument,
   listControlsForDocument,
+  evaluateDocument,
+  getDocumentDraftEvaluation,
   listLinksForDocument,
   createLinkForDocument,
   deleteLinkForDocument,
@@ -129,6 +131,33 @@ export function registerDocumentsCommand(
       );
     },
   );
+
+  documents
+    .command("evaluate")
+    .description(
+      "Evaluate the current draft evidence with Vanta AI (requires AI and evidence evaluation; poll get-evaluation for results)",
+    )
+    .requiredOption("--id <id>", "Document ID")
+    .action(async (opts: { id: string }) => {
+      await runSdk(getFlags, (api) =>
+        evaluateDocument({ client: api.client, path: { documentId: opts.id } }),
+      );
+    });
+
+  documents
+    .command("get-evaluation")
+    .description(
+      "Get the current draft evaluation summary (404 while unavailable; requires AI and evidence evaluation)",
+    )
+    .requiredOption("--id <id>", "Document ID")
+    .action(async (opts: { id: string }) => {
+      await runSdk(getFlags, (api) =>
+        getDocumentDraftEvaluation({
+          client: api.client,
+          path: { documentId: opts.id },
+        }),
+      );
+    });
 
   addPaginationOptions(
     documents

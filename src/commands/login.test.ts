@@ -188,7 +188,7 @@ describe("vanta login", () => {
 
     it("revokes a previous browser sign-in it replaces", async () => {
       await home.writeConfig({
-        api_base: "http://127.0.0.1:10290/v1",
+        api_base: "https://api.eu.vanta.com/v1",
         auth_mode: "user",
         oauth_refresh_token: "rt-old",
         cached_access_token: "at-old",
@@ -201,7 +201,7 @@ describe("vanta login", () => {
       const suspend = net.requests.find(isSuspend)!;
       assert.equal(
         suspend.url,
-        "http://127.0.0.1:10290/v1/oauth/token/suspend",
+        "https://api.eu.vanta.com/v1/oauth/token/suspend",
         "revokes on the API that issued the old grant",
       );
       assert.equal(new URLSearchParams(suspend.body).get("token"), "rt-old");
@@ -244,7 +244,7 @@ describe("vanta login", () => {
     });
 
     it("choosing 2 signs in through the browser", async () => {
-      const t = makeDeps(["2", "http://127.0.0.1:10290/v1", "", ""], code, {
+      const t = makeDeps(["2", "https://api.vanta.com/v1", "", ""], code, {
         interactive: true,
       });
       await runLogin(t.deps);
@@ -266,7 +266,7 @@ describe("vanta login", () => {
 
     it("asks again after an answer that is not 1 or 2", async () => {
       const t = makeDeps(
-        ["yes", "3", "2", "http://127.0.0.1:10290/v1", "", ""],
+        ["yes", "3", "2", "https://api.vanta.com/v1", "", ""],
         code,
         {
           interactive: true,
@@ -289,7 +289,7 @@ describe("vanta login", () => {
     });
 
     it("is skipped by --browser", async () => {
-      const t = makeDeps(["http://127.0.0.1:10290/v1", "", ""], code, {
+      const t = makeDeps(["https://api.vanta.com/v1", "", ""], code, {
         interactive: true,
       });
       await runLogin(t.deps, ["--browser"]);
@@ -310,7 +310,7 @@ describe("vanta login", () => {
 
   describe("--browser", () => {
     it("signs in through the browser without asking for client credentials", async () => {
-      const t = makeDeps(["http://127.0.0.1:10290/v1", "", ""], {
+      const t = makeDeps(["https://api.eu.vanta.com/v1", "", ""], {
         kind: "code",
         code: "the-code",
       });
@@ -324,14 +324,13 @@ describe("vanta login", () => {
           "OAuth scope (default: vanta-api.all:read vanta-api.all:write)",
         ],
       );
-      // A local API base derives the local web base.
-      assert.equal(t.prompts[1]!.defaultValue, "http://127.0.0.1:8080");
+      assert.equal(t.prompts[1]!.defaultValue, "https://app.vanta.com");
 
       assert.equal(t.opened.length, 1);
       const authorize = new URL(t.opened[0]!);
       assert.equal(
         authorize.origin + authorize.pathname,
-        "http://127.0.0.1:8080/oauth/authorize",
+        "https://app.vanta.com/oauth/authorize",
       );
       assert.equal(authorize.searchParams.get("redirect_uri"), redirectUri);
       assert.equal(authorize.searchParams.get("state"), t.state());
@@ -347,7 +346,7 @@ describe("vanta login", () => {
       const tokenReqs = net.requests.filter(isToken);
       assert.equal(tokenReqs.length, 1);
       const req = tokenReqs[0]!;
-      assert.equal(req.url, "http://127.0.0.1:10290/oauth/token");
+      assert.equal(req.url, "https://api.eu.vanta.com/oauth/token");
       assert.equal(
         req.headers.get("content-type"),
         "application/x-www-form-urlencoded",
@@ -371,8 +370,18 @@ describe("vanta login", () => {
       assert.equal(cfg.cached_access_token, "at-1");
       assert.equal(cfg.oauth_client_id, FIRST_PARTY_CLI_CLIENT_ID);
       assert.equal(cfg.oauth_client_secret, "");
-      assert.equal(cfg.web_base, "http://127.0.0.1:8080");
-      assert.equal(cfg.api_base, "http://127.0.0.1:10290/v1");
+      assert.equal(cfg.web_base, "https://app.vanta.com");
+      assert.equal(cfg.api_base, "https://api.eu.vanta.com/v1");
+    });
+
+    it("rejects an API base outside the Vanta regions before contacting anything", async () => {
+      const t = makeDeps(["http://127.0.0.1:10290/v1", "", ""], {
+        kind: "code",
+        code: "c",
+      });
+      await assert.rejects(runLogin(t.deps, ["--browser"]), /invalid API base/);
+      assert.equal(t.opened.length, 0);
+      assert.equal(net.requests.length, 0);
     });
 
     it("defaults the web base to app.vanta.com, or VANTA_WEB_BASE", async () => {

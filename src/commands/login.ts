@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import type { Command } from "commander";
+import { validateAPIBase } from "../api-base.js";
 import {
   cacheAccessToken,
   configFilePath,
@@ -13,6 +14,7 @@ import {
   revokePreviousBrowserLogin,
   saveOAuthCredentials,
   saveUserCredentials,
+  tokenBinding,
   type AuthOverrides,
   type UserTokens,
 } from "../auth.js";
@@ -317,10 +319,8 @@ export function registerLoginCommand(
           }
 
           const apiBaseDefault = await resolveAPIBase(overrides);
-          const apiBase = await deps.prompt(
-            "API base URL",
-            apiBaseDefault,
-            true,
+          const apiBase = validateAPIBase(
+            await deps.prompt("API base URL", apiBaseDefault, true),
           );
           const scopeDefault = opts.scope?.trim() || defaultOAuthScope;
 
@@ -360,7 +360,12 @@ export function registerLoginCommand(
           );
           await revokePreviousBrowserLogin(apiBase);
           await saveOAuthCredentials(apiBase, clientID, clientSecret, scope);
-          await cacheAccessToken(accessToken, "Bearer", expiresAt);
+          await cacheAccessToken(
+            accessToken,
+            "Bearer",
+            expiresAt,
+            tokenBinding(apiBase, clientID, scope),
+          );
 
           console.log(
             `OAuth credentials saved to ${credentialStorageDescription()}`,

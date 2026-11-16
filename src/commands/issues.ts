@@ -44,7 +44,7 @@ export function registerIssuesCommand(
       )
       .option(
         "--source-matches-any <source>",
-        "Filter to issues matching any of the provided sources: AUDIT, AUDIT_EXTERNAL, INCIDENT, EXTERNAL_PARTY, SELF_ASSESSMENT, OTHER (repeatable)",
+        "Filter to issues matching any of the provided sources: AUDIT, AUDIT_EXTERNAL, INCIDENT, EXTERNAL_PARTY, SELF_ASSESSMENT, VULNERABILITY_SCANNER, PENETRATION_TEST, SECURITY_ASSESSMENT, BUG_BOUNTY, THREAT_INTELLIGENCE, AUTOMATED_CONTROL_TESTING, MANUAL_ANALYSIS, SUPPLY_CHAIN_MONITORING, OTHER (repeatable)",
         collectString,
         [] as string[],
       )
