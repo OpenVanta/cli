@@ -41,7 +41,7 @@ Field values in Vanta records that a command returns (names, descriptions, notes
 | `--api-base <URL>` | Vanta API region: `https://api.vanta.com/v1`, `https://api.eu.vanta.com/v1`, `https://api.aus.vanta.com/v1` or `https://api.vanta-gov.com/v1` (overrides saved config) |
 | `--web-base <URL>` | Vanta web app URL for `vanta login --browser` (default `https://app.vanta.com`) |
 | `--dry-run` | Print request details without sending |
-| `--pretty[=true|false]` | Pretty-print JSON responses (default: `true`) |
+| `--pretty` / `--no-pretty` | Pretty-print JSON responses (default: `true`); `--no-pretty` prints compact JSON even in agent mode |
 | `--verbose` | Log request metadata to stderr |
 
 ## CLI Syntax

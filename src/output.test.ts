@@ -26,11 +26,23 @@ describe("printResponse", () => {
     });
   });
 
+  it("prints compact JSON for --no-pretty even in agent mode", () => {
+    let out = "";
+    printResponse(
+      { results: { data: [{ id: "1" }] } },
+      { pretty: false, agentMode: true },
+      (s) => {
+        out += s;
+      },
+    );
+    assert.equal(out, '{"data":[{"id":"1"}]}\n');
+  });
+
   it("removes terminal control bytes from agent-mode output", () => {
     let out = "";
     printResponse(
       { message: "\u001b]0;PWNED\u0007\u001b[31mred\u001b[0m" },
-      { pretty: false, agentMode: true },
+      { pretty: true, agentMode: true },
       (s) => {
         out += s;
       },
@@ -45,7 +57,7 @@ describe("printResponse", () => {
     let out = "";
     printResponse(
       { message: "line1\nline2\r\n\tindented" },
-      { pretty: false, agentMode: true },
+      { pretty: true, agentMode: true },
       (s) => {
         out += s;
       },

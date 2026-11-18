@@ -141,9 +141,9 @@ Run `vanta <resource> --help` for the full list of actions on each resource.
 | Flag | Description |
 | --- | --- |
 | `--dry-run` | Print the request without sending |
-| `--pretty` | Pretty-print JSON output (on by default; use `--no-pretty` for compact output) |
+| `--pretty` | Pretty-print JSON output (on by default; `--no-pretty` prints compact JSON, also in agent mode) |
 | `--verbose` | Log request details to stderr |
-| `--agent-mode` | Optimize output for AI coding agents (TOON) |
+| `--agent-mode` | Optimize output for AI coding agents (TOON; auto-detected in known agent runtimes, `--no-pretty` switches back to JSON) |
 
 ## Updates
 

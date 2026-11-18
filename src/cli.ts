@@ -29,7 +29,10 @@ function buildProgram(): Command {
     )
     .option("--dry-run", "Print request details without sending", false)
     .option("--pretty", "Pretty-print JSON responses", true)
-    .option("--no-pretty", "Compact JSON output")
+    .option(
+      "--no-pretty",
+      "Compact JSON output (also in agent mode, instead of TOON)",
+    )
     .option("--verbose", "Log request metadata to stderr", false)
     .option(
       "--agent-mode",
