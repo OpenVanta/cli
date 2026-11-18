@@ -1453,18 +1453,23 @@ export function registerTrustCentersCommand(
     trustCenters
       .command("list-updates")
       .description("List updates for a Trust Center")
-      .requiredOption("--slug-id <slug>", "Trust Center slug ID"),
+      .requiredOption("--slug-id <slug>", "Trust Center slug ID")
+      .option(
+        "--matches-tags <json>",
+        "JSON-encoded array of `{categoryId, tagId}` pairs. Tags within a category are OR'd; categories are AND'd. Untagged updates never match. Find category IDs with `vanta customer-trust list-tag-categories` and tag IDs with `vanta customer-trust get-tag-category --tag-category-id <id>`.",
+      ),
   ).action(
     async (opts: {
       slugId: string;
       pageSize?: number;
       pageCursor?: string;
+      matchesTags?: string;
     }) => {
       await runSdk(getFlags, (api) =>
         listTrustCenterUpdates({
           client: api.client,
           path: { slugId: opts.slugId },
-          query: paginationQuery(opts),
+          query: { ...paginationQuery(opts), matchesTags: opts.matchesTags },
         }),
       );
     },

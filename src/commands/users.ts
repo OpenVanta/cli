@@ -1,8 +1,11 @@
 import type { Command } from "commander";
-import { listUsers, getUser } from "../generated/sdk.gen.js";
+import { listUsers, getUser, deactivateUsers } from "../generated/sdk.gen.js";
+import type { DeactivateUsersData } from "../generated/types.gen.js";
 import {
+  addJsonFileOptions,
   addPaginationOptions,
   paginationQuery,
+  readJSONPayload,
   runSdk,
   type GetFlags,
 } from "./helpers.js";
@@ -30,4 +33,20 @@ export function registerUsersCommand(
         getUser({ client: api.client, path: { userId: opts.id } }),
       );
     });
+
+  addJsonFileOptions(
+    users
+      .command("deactivate")
+      .description(
+        'Deactivate manually added users with JSON {"updates":[{"id":"..."}]} (1-100 users; identity-provider users and the last active admin cannot be deactivated)',
+      ),
+  ).action(async (opts: { json?: string; file?: string }) => {
+    const body = (await readJSONPayload(
+      opts.json,
+      opts.file,
+    )) as DeactivateUsersData["body"];
+    await runSdk(getFlags, (api) =>
+      deactivateUsers({ client: api.client, body }),
+    );
+  });
 }

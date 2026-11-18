@@ -2,6 +2,7 @@ import type { Command } from "commander";
 import {
   listVendorAssessmentTypes,
   getVendorAssessmentTypeById,
+  getVendorAssessmentTypeRules,
 } from "../generated/sdk.gen.js";
 import type { ListVendorAssessmentTypesData } from "../generated/types.gen.js";
 import {
@@ -49,6 +50,19 @@ export function registerVendorAssessmentTypesCommand(
     .action(async (opts: { id: string }) => {
       await runSdk(getFlags, (api) =>
         getVendorAssessmentTypeById({
+          client: api.client,
+          path: { assessmentTypeId: opts.id },
+        }),
+      );
+    });
+
+  vendorAssessmentTypes
+    .command("list-rules")
+    .description("List rules for a vendor assessment type")
+    .requiredOption("--id <id>", "Vendor assessment type ID")
+    .action(async (opts: { id: string }) => {
+      await runSdk(getFlags, (api) =>
+        getVendorAssessmentTypeRules({
           client: api.client,
           path: { assessmentTypeId: opts.id },
         }),
