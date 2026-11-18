@@ -11,6 +11,7 @@ import {
   startAssessmentForVendor,
   getAssessmentById,
   uploadDocumentForAssessment,
+  listAssessmentQuestions,
   listVendorDocuments,
   uploadDocumentToVendor,
   listVendorExternalFindings,
@@ -41,6 +42,7 @@ import {
   addPaginationOptions,
   collectString,
   paginationQuery,
+  parseOptionalBoolString,
   readBinaryFile,
   readJSONPayload,
   runSdk,
@@ -288,6 +290,47 @@ export function registerVendorsCommand(
         );
       },
     );
+
+  addPaginationOptions(
+    vendors
+      .command("list-assessment-questions")
+      .description("List questions for a vendor assessment")
+      .requiredOption("--id <id>", "Vendor ID")
+      .requiredOption("--assessment-id <id>", "Assessment ID")
+      .option(
+        "--only-flagged <bool>",
+        "Only return questions whose Vanta AI answer has an active finding flag (true/false)",
+        (value) => parseOptionalBoolString(value, "only-flagged"),
+      )
+      .option(
+        "--search-query <query>",
+        "Only return questions whose text contains this phrase (case-insensitive), up to 50 words",
+      )
+      .option("--question-id <id>", "Only return the question with this ID"),
+  ).action(
+    async (opts: {
+      id: string;
+      assessmentId: string;
+      pageSize?: number;
+      pageCursor?: string;
+      onlyFlagged?: boolean;
+      searchQuery?: string;
+      questionId?: string;
+    }) => {
+      await runSdk(getFlags, (api) =>
+        listAssessmentQuestions({
+          client: api.client,
+          path: { vendorId: opts.id, assessmentId: opts.assessmentId },
+          query: {
+            ...paginationQuery(opts),
+            onlyFlagged: opts.onlyFlagged,
+            searchQuery: opts.searchQuery,
+            questionId: opts.questionId,
+          },
+        }),
+      );
+    },
+  );
 
   addPaginationOptions(
     vendors

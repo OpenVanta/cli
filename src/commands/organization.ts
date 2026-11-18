@@ -1,5 +1,5 @@
 import type { Command } from "commander";
-import { getOrganization } from "../generated/sdk.gen.js";
+import { getOrganization, getCompanyProfile } from "../generated/sdk.gen.js";
 import { runSdk, type GetFlags } from "./helpers.js";
 
 export function registerOrganizationCommand(
@@ -15,5 +15,14 @@ export function registerOrganizationCommand(
     .description("Get the connected organization")
     .action(async () => {
       await runSdk(getFlags, (api) => getOrganization({ client: api.client }));
+    });
+
+  organization
+    .command("get-company-profile")
+    .description("Get the connected organization's company profile")
+    .action(async () => {
+      await runSdk(getFlags, (api) =>
+        getCompanyProfile({ client: api.client }),
+      );
     });
 }

@@ -444,6 +444,286 @@
         "type": "object",
         "additionalProperties": false
       },
+      "VulnerabilityExport": {
+        "description": "A summary of one vulnerability export.",
+        "properties": {
+          "exportId": {
+            "type": "string",
+            "description": "Identifies the export. Stable and unique."
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The point in time the data represents."
+          },
+          "totalRowCount": {
+            "type": "number",
+            "format": "double",
+            "description": "Data rows across every report."
+          },
+          "totalFileCount": {
+            "type": "number",
+            "format": "double",
+            "description": "Files across every report."
+          },
+          "totalSizeBytes": {
+            "type": "number",
+            "format": "double",
+            "description": "Total compressed size of all files, in bytes."
+          }
+        },
+        "required": [
+          "exportId",
+          "time",
+          "totalRowCount",
+          "totalFileCount",
+          "totalSizeBytes"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedResponse_VulnerabilityExport_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/VulnerabilityExport"
+                },
+                "type": "array"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            },
+            "required": [
+              "data",
+              "pageInfo"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VulnerabilityExportReportId": {
+        "type": "string",
+        "enum": [
+          "open-vulnerabilities",
+          "vulnerable-assets",
+          "remediation-history-on-time",
+          "remediation-history-sla-missed"
+        ],
+        "description": "Identifies one report of a vulnerability export."
+      },
+      "VulnerabilityExportReportDataQuality": {
+        "description": "Vanta never drops a row from a report. If Vanta cannot resolve a linked\nrecord, it writes the row with the affected columns left blank and counts it\nhere. Each report counts only its own rows, so the two remediation-history\nreports can report different counts.",
+        "properties": {
+          "unresolvedVulnerabilityRows": {
+            "type": "number",
+            "format": "double",
+            "description": "Rows whose linked vulnerability could not be resolved. Its columns are blank."
+          },
+          "unresolvedAssetRows": {
+            "type": "number",
+            "format": "double",
+            "description": "Rows whose linked asset could not be resolved. Its columns are blank."
+          },
+          "rowsWithoutSeverityCounts": {
+            "type": "number",
+            "format": "double",
+            "description": "Asset rows whose severity counts could not be computed. Those columns are\nblank. Always 0 for reports other than vulnerable-assets."
+          }
+        },
+        "required": [
+          "unresolvedVulnerabilityRows",
+          "unresolvedAssetRows",
+          "rowsWithoutSeverityCounts"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VulnerabilityExportReport": {
+        "description": "One report of a vulnerability export.",
+        "properties": {
+          "reportId": {
+            "$ref": "#/components/schemas/VulnerabilityExportReportId",
+            "description": "One of the report identifiers."
+          },
+          "rowCount": {
+            "type": "number",
+            "format": "double",
+            "description": "Data rows across every file of this report."
+          },
+          "fileCount": {
+            "type": "number",
+            "format": "double",
+            "description": "Number of files in this report. Always at least 1."
+          },
+          "sizeBytes": {
+            "type": "number",
+            "format": "double",
+            "description": "Compressed size of this report's files, in bytes."
+          },
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "The CSV header, in column order. Every file of the report has its own column row."
+          },
+          "dataQuality": {
+            "$ref": "#/components/schemas/VulnerabilityExportReportDataQuality",
+            "description": "Counts of rows that have blank columns."
+          }
+        },
+        "required": [
+          "reportId",
+          "rowCount",
+          "fileCount",
+          "sizeBytes",
+          "columns",
+          "dataQuality"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VulnerabilityExportDetail": {
+        "description": "The details of one vulnerability export. Contains no download URLs or\ncredentials, so it can be stored and used later to check that every file\nwas downloaded.",
+        "properties": {
+          "exportId": {
+            "type": "string",
+            "description": "Identifies the export. Stable and unique."
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The point in time the data represents."
+          },
+          "totalRowCount": {
+            "type": "number",
+            "format": "double",
+            "description": "Data rows across every report."
+          },
+          "totalFileCount": {
+            "type": "number",
+            "format": "double",
+            "description": "Files across every report."
+          },
+          "totalSizeBytes": {
+            "type": "number",
+            "format": "double",
+            "description": "Total compressed size of all files, in bytes."
+          },
+          "reports": {
+            "items": {
+              "$ref": "#/components/schemas/VulnerabilityExportReport"
+            },
+            "type": "array",
+            "description": "Every report in the export, in a stable order."
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "Notes on the format and coverage of this export, for example how to join\na report's files and the period that remediation history covers."
+          }
+        },
+        "required": [
+          "exportId",
+          "time",
+          "totalRowCount",
+          "totalFileCount",
+          "totalSizeBytes",
+          "reports",
+          "notes"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VulnerabilityExportFile": {
+        "description": "One file of a vulnerability export, with a short-lived download URL.",
+        "properties": {
+          "fileId": {
+            "type": "string",
+            "description": "Identifies the file within its export. Stable and opaque."
+          },
+          "reportId": {
+            "$ref": "#/components/schemas/VulnerabilityExportReportId",
+            "description": "The report this file belongs to."
+          },
+          "partNumber": {
+            "type": "number",
+            "format": "double",
+            "description": "The file's position within its report, starting at 1 and running without\ngaps up to the report's fileCount."
+          },
+          "fileName": {
+            "type": "string",
+            "description": "The intended local filename, unique within the export."
+          },
+          "rowCount": {
+            "type": "number",
+            "format": "double",
+            "description": "Data rows in this file, excluding the header row. Can be 0."
+          },
+          "sizeBytes": {
+            "type": "number",
+            "format": "double",
+            "description": "Size of the file as stored, meaning the compressed gzip bytes."
+          },
+          "sha256": {
+            "type": "string",
+            "description": "Hex-encoded SHA-256 of the compressed gzip bytes. Use it to verify each download."
+          },
+          "downloadUrl": {
+            "type": "string",
+            "description": "Presigned HTTPS URL for the file. Valid for at most 15 minutes, and possibly\nless. Treat it as opaque and as a secret. The response body is the stored\ngzip bytes, sent as `application/gzip` with no `Content-Encoding`, so a\ndownload matches `sizeBytes` and `sha256` without changes."
+          }
+        },
+        "required": [
+          "fileId",
+          "reportId",
+          "partNumber",
+          "fileName",
+          "rowCount",
+          "sizeBytes",
+          "sha256",
+          "downloadUrl"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedResponse_VulnerabilityExportFile_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/VulnerabilityExportFile"
+                },
+                "type": "array"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            },
+            "required": [
+              "data",
+              "pageInfo"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "VulnerabilityType": {
         "type": "string",
         "enum": [
@@ -2476,6 +2756,415 @@
         "type": "object",
         "additionalProperties": false
       },
+      "VendorAssessmentQuestionType": {
+        "type": "string",
+        "enum": [
+          "TEXT",
+          "BOOLEAN",
+          "SINGLE_SELECT",
+          "MULTI_SELECT"
+        ]
+      },
+      "VendorAssessmentQuestionTextAnswer": {
+        "title": "VendorAssessmentQuestionTextAnswer",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "TEXT"
+            ],
+            "nullable": false
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorAssessmentQuestionBooleanAnswer": {
+        "title": "VendorAssessmentQuestionBooleanAnswer",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "BOOLEAN"
+            ],
+            "nullable": false
+          },
+          "value": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "The yes/no answer, or null when the answer is N/A."
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorAssessmentQuestionSingleSelectAnswer": {
+        "title": "VendorAssessmentQuestionSingleSelectAnswer",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "SINGLE_SELECT"
+            ],
+            "nullable": false
+          },
+          "value": {
+            "type": "string",
+            "nullable": true,
+            "description": "The selected option, or null when no option is selected."
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorAssessmentQuestionMultiSelectAnswer": {
+        "title": "VendorAssessmentQuestionMultiSelectAnswer",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "MULTI_SELECT"
+            ],
+            "nullable": false
+          },
+          "value": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "The selected options."
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorAssessmentQuestionAnswer": {
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/VendorAssessmentQuestionTextAnswer"
+          },
+          {
+            "$ref": "#/components/schemas/VendorAssessmentQuestionBooleanAnswer"
+          },
+          {
+            "$ref": "#/components/schemas/VendorAssessmentQuestionSingleSelectAnswer"
+          },
+          {
+            "$ref": "#/components/schemas/VendorAssessmentQuestionMultiSelectAnswer"
+          }
+        ],
+        "description": "An answer to an assessment question, shaped by the question's type."
+      },
+      "VendorAssessmentQuestionAiSource": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "description": "The excerpt of the source document that supports the AI answer."
+          },
+          "chunkId": {
+            "type": "string",
+            "description": "Unique identifier for the excerpt within its source document."
+          },
+          "documentId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Unique identifier for the source document."
+          },
+          "filename": {
+            "type": "string",
+            "nullable": true,
+            "description": "The source document's file name."
+          },
+          "page": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "The page of the source document the excerpt comes from."
+          },
+          "url": {
+            "type": "string",
+            "nullable": true,
+            "description": "The URL of the source, for web sources."
+          },
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "description": "The source's title."
+          },
+          "updatedDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "The timestamp of when the source was last updated."
+          }
+        },
+        "required": [
+          "content",
+          "chunkId",
+          "documentId",
+          "filename",
+          "page",
+          "url",
+          "title",
+          "updatedDate"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorAssessmentQuestionAiAnswer": {
+        "properties": {
+          "value": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorAssessmentQuestionAnswer"
+              }
+            ],
+            "nullable": true,
+            "description": "The answer Vanta AI suggested, or null when it could not answer."
+          },
+          "rationale": {
+            "type": "string",
+            "nullable": true,
+            "description": "Vanta AI's explanation of its answer."
+          },
+          "isValid": {
+            "type": "boolean",
+            "description": "Whether the AI answer is a valid answer for the question's type."
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/VendorAssessmentQuestionAiSource"
+            },
+            "type": "array",
+            "description": "The document excerpts that support the AI answer."
+          },
+          "flaggedAsFinding": {
+            "type": "boolean",
+            "description": "Whether Vanta AI flagged the answer as a finding. Remains true after the\nflag is dismissed; see `activeFindingText`."
+          },
+          "activeFindingText": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why Vanta AI flagged the answer, or null when there is no active\n(undismissed) flag."
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The timestamp of when the AI answer was generated."
+          }
+        },
+        "required": [
+          "value",
+          "rationale",
+          "isValid",
+          "sources",
+          "flaggedAsFinding",
+          "activeFindingText",
+          "createdDate"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorAssessmentQuestionVendorAnswer": {
+        "properties": {
+          "value": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorAssessmentQuestionAnswer"
+              }
+            ],
+            "nullable": true,
+            "description": "The vendor's answer, or null when the vendor has not answered."
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "SUBMITTED"
+            ],
+            "description": "Whether the vendor's answer is a draft or has been submitted."
+          },
+          "endorsesCurrentAiAnswer": {
+            "type": "boolean",
+            "description": "Whether the vendor accepted the current Vanta AI answer as its own."
+          },
+          "updatedDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "The timestamp of when the vendor's answer was last updated."
+          }
+        },
+        "required": [
+          "value",
+          "state",
+          "endorsesCurrentAiAnswer",
+          "updatedDate"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorAssessmentQuestionUserAnswer": {
+        "properties": {
+          "value": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorAssessmentQuestionAnswer"
+              }
+            ],
+            "nullable": true,
+            "description": "The answer a user in your organization entered, or null when it was cleared."
+          },
+          "originType": {
+            "type": "string",
+            "enum": [
+              "AI",
+              "VENDOR",
+              null
+            ],
+            "nullable": true,
+            "description": "Which answer the user's answer was copied from, or null when entered directly."
+          },
+          "updatedDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The timestamp of when the user's answer was last updated."
+          }
+        },
+        "required": [
+          "value",
+          "originType",
+          "updatedDate"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorAssessmentQuestion": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the question."
+          },
+          "questionnaireId": {
+            "type": "string",
+            "description": "Unique identifier for the questionnaire the question belongs to."
+          },
+          "question": {
+            "type": "string",
+            "description": "The question text."
+          },
+          "questionType": {
+            "$ref": "#/components/schemas/VendorAssessmentQuestionType",
+            "description": "The kind of answer the question takes."
+          },
+          "aiAnswer": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorAssessmentQuestionAiAnswer"
+              }
+            ],
+            "nullable": true,
+            "description": "The answer suggested by Vanta AI, if any."
+          },
+          "vendorAnswer": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorAssessmentQuestionVendorAnswer"
+              }
+            ],
+            "nullable": true,
+            "description": "The vendor's answer, if any."
+          },
+          "userAnswer": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorAssessmentQuestionUserAnswer"
+              }
+            ],
+            "nullable": true,
+            "description": "The answer entered by a user in your organization, if any."
+          },
+          "selectedSource": {
+            "type": "string",
+            "enum": [
+              "VENDOR",
+              "VANTA_USER",
+              "VANTA_AI",
+              null
+            ],
+            "nullable": true,
+            "description": "Which answer is selected as the answer of record."
+          },
+          "selectedAnswer": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VendorAssessmentQuestionAnswer"
+              }
+            ],
+            "nullable": true,
+            "description": "The answer of record. It can differ from the current source answers,\ne.g. when it is a snapshot taken at review."
+          }
+        },
+        "required": [
+          "id",
+          "questionnaireId",
+          "question",
+          "questionType",
+          "aiAnswer",
+          "vendorAnswer",
+          "userAnswer",
+          "selectedSource",
+          "selectedAnswer"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedResponse_VendorAssessmentQuestion_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/VendorAssessmentQuestion"
+                },
+                "type": "array"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            },
+            "required": [
+              "data",
+              "pageInfo"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "StartVendorAssessmentInput": {
         "properties": {
           "assessmentTypeId": {
@@ -3504,6 +4193,64 @@
         "type": "object",
         "additionalProperties": false
       },
+      "VendorQuestionnaire": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "questionCount": {
+            "type": "number",
+            "format": "double",
+            "description": "Number of top-level questions across all sections. Conditional follow-up questions are not counted."
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "questionCount",
+          "createdAt"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedResponse_VendorQuestionnaire_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/VendorQuestionnaire"
+                },
+                "type": "array"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            },
+            "required": [
+              "data",
+              "pageInfo"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "VendorDocumentTypeCatalogEntry": {
         "properties": {
           "id": {
@@ -3826,6 +4573,62 @@
         },
         "required": [
           "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorAssessmentTypeRiskLevelRules": {
+        "properties": {
+          "riskLevel": {
+            "$ref": "#/components/schemas/VendorRiskLevel",
+            "description": "The vendor risk level these rules apply to."
+          },
+          "preferredEvidenceTypes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "Document types requested as evidence from vendors at this risk level. Values match the `type` field returned by the list vendor document types endpoint."
+          },
+          "preferredQuestionnaireIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "IDs of the in-app and spreadsheet questionnaires sent to vendors at this risk level."
+          },
+          "cadence": {
+            "type": "string",
+            "nullable": true,
+            "description": "How often vendors at this risk level are reassessed, as an ISO 8601 duration (e.g. `P12M`). Null when no recurring assessment is required."
+          }
+        },
+        "required": [
+          "riskLevel",
+          "preferredEvidenceTypes",
+          "preferredQuestionnaireIds",
+          "cadence"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "VendorAssessmentTypeRules": {
+        "properties": {
+          "assessmentTypeId": {
+            "type": "string",
+            "description": "The ID of the assessment type the rules belong to."
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/VendorAssessmentTypeRiskLevelRules"
+            },
+            "type": "array",
+            "description": "The rules for each vendor risk level, ordered from CRITICAL to UNSCORED."
+          }
+        },
+        "required": [
+          "assessmentTypeId",
+          "rules"
         ],
         "type": "object",
         "additionalProperties": false
@@ -5027,6 +5830,22 @@
         ],
         "type": "string"
       },
+      "TagInput": {
+        "properties": {
+          "categoryId": {
+            "type": "string"
+          },
+          "tagId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "categoryId",
+          "tagId"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "TrustCenterUpdateAPIResponse": {
         "properties": {
           "id": {
@@ -5065,6 +5884,13 @@
             },
             "type": "array",
             "description": "Emails to notify about the update."
+          },
+          "tags": {
+            "items": {
+              "$ref": "#/components/schemas/TagInput"
+            },
+            "type": "array",
+            "description": "Tags on the update, in categories enabled for the Trust Center."
           }
         },
         "required": [
@@ -5074,7 +5900,8 @@
           "category",
           "creationDate",
           "updatedDate",
-          "visibilityType"
+          "visibilityType",
+          "tags"
         ],
         "type": "object",
         "additionalProperties": false
@@ -5150,6 +5977,13 @@
             },
             "type": "array",
             "description": "IDs of subscriber groups to notify. Required when `notificationTarget` is `GROUPS`."
+          },
+          "tags": {
+            "items": {
+              "$ref": "#/components/schemas/TagInput"
+            },
+            "type": "array",
+            "description": "The update's tags. Omit, or pass an empty array, to create the update without tags. Tags must belong to categories enabled for the Trust Center. Ignored without Trust Center Pro."
           }
         },
         "required": [
@@ -5177,6 +6011,13 @@
           "visibilityType": {
             "$ref": "#/components/schemas/UpdateVisibilityType",
             "description": "Visibility type of the update."
+          },
+          "tags": {
+            "items": {
+              "$ref": "#/components/schemas/TagInput"
+            },
+            "type": "array",
+            "description": "Replaces the update's tags in categories enabled for the Trust Center. Omit to leave tags unchanged; an empty array removes them. Tags in a disabled category are kept and return if it is enabled again. Tags must belong to enabled categories. Ignored without Trust Center Pro."
           }
         },
         "required": [
@@ -11187,22 +12028,6 @@
           "EXPIRED"
         ],
         "description": "Customer-facing expiration status used by knowledge-base API responses\n(answer library entries and resources). Derived from the persisted\n`expiresAt` field at read time."
-      },
-      "TagInput": {
-        "properties": {
-          "categoryId": {
-            "type": "string"
-          },
-          "tagId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "categoryId",
-          "tagId"
-        ],
-        "type": "object",
-        "additionalProperties": false
       },
       "KnowledgeBaseWebpageResourceOutput": {
         "title": "KnowledgeBaseWebpageResourceOutput",
@@ -18575,8 +19400,204 @@
         "type": "object",
         "additionalProperties": false
       },
+      "AiProductRiskLevel": {
+        "type": "string",
+        "enum": [
+          "none",
+          "low",
+          "medium",
+          "high",
+          "critical",
+          "unknown"
+        ]
+      },
+      "AiProductRiskResult": {
+        "properties": {
+          "score": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "known",
+              "incomplete",
+              "unknown"
+            ]
+          },
+          "level": {
+            "$ref": "#/components/schemas/AiProductRiskLevel"
+          }
+        },
+        "required": [
+          "score",
+          "status",
+          "level"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiProductRiskCategory": {
+        "properties": {
+          "score": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Rubric wording for the condition that set the score; null when there is none."
+          }
+        },
+        "required": [
+          "score",
+          "name",
+          "description"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiProductRiskUsage": {
+        "properties": {
+          "score": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Rubric wording for the condition that set the score; null when there is none."
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "people",
+              "devices",
+              null
+            ],
+            "nullable": true
+          },
+          "numerator": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "denominator": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "required": [
+          "score",
+          "name",
+          "description",
+          "unit",
+          "numerator",
+          "denominator"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiProductRiskGapFact": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Readable status, for example \"Unknown\" or \"Out of date\"."
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "Usage source names the gap concerns; empty for catalog facts."
+          }
+        },
+        "required": [
+          "status",
+          "explanation",
+          "sources"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiProductRiskGap": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "The category name, for example \"Usage and activity\"."
+          },
+          "fact": {
+            "$ref": "#/components/schemas/AiProductRiskGapFact"
+          }
+        },
+        "required": [
+          "category",
+          "fact"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiProductRiskAssessment": {
+        "properties": {
+          "overall": {
+            "$ref": "#/components/schemas/AiProductRiskResult"
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/AiProductRiskCategory"
+          },
+          "dataSensitivity": {
+            "$ref": "#/components/schemas/AiProductRiskCategory"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/AiProductRiskUsage"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/AiProductRiskGap"
+            },
+            "type": "array"
+          },
+          "summary": {
+            "type": "string",
+            "nullable": true,
+            "description": "Null when the overall exposure is Unknown."
+          }
+        },
+        "required": [
+          "overall",
+          "capabilities",
+          "dataSensitivity",
+          "usage",
+          "gaps",
+          "summary"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
       "AiProduct": {
         "properties": {
+          "currentRisk": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AiProductRiskAssessment"
+              }
+            ],
+            "nullable": true,
+            "description": "Omitted when product risk is disabled for the domain; null when the product is unassessed."
+          },
           "id": {
             "type": "string",
             "description": "Canonical product catalog ID."
@@ -18863,6 +19884,670 @@
         "type": "object",
         "additionalProperties": false
       },
+      "AiModel": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Canonical catalog ID when recognized, otherwise the observed identifier."
+          },
+          "assetId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Null until the model has a materialized asset for use-case linking."
+          },
+          "name": {
+            "type": "string"
+          },
+          "resolutionSource": {
+            "type": "string",
+            "enum": [
+              "CATALOG_MATCH",
+              "OBSERVATION"
+            ]
+          },
+          "vendor": {
+            "type": "string",
+            "nullable": true
+          },
+          "vendorUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "releaseDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastUpdated": {
+            "type": "string",
+            "nullable": true
+          },
+          "agentCount": {
+            "type": "number",
+            "format": "double"
+          },
+          "userCount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "Null when no attributable people were reported."
+          },
+          "lastActivityDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastActivityPrecision": {
+            "type": "string",
+            "enum": [
+              "EXACT",
+              "DAY",
+              null
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "assetId",
+          "name",
+          "resolutionSource",
+          "vendor",
+          "vendorUrl",
+          "releaseDate",
+          "lastUpdated",
+          "agentCount",
+          "userCount",
+          "lastActivityDate",
+          "lastActivityPrecision"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiModelPage_AiModel_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "totalCount": {
+                "type": "number",
+                "format": "double"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              },
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/AiModel"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "totalCount",
+              "pageInfo",
+              "data"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiModelsQuery": {
+        "properties": {
+          "pageSize": {
+            "$ref": "#/components/schemas/PageSize"
+          },
+          "pageCursor": {
+            "$ref": "#/components/schemas/PageCursor"
+          },
+          "searchTerm": {
+            "type": "string",
+            "description": "Case-insensitive match against model ID, name, or vendor."
+          },
+          "vendors": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiModelSpecifications": {
+        "properties": {
+          "inputTypes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "outputTypes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "contextWindowTokens": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "knowledgeCutoff": {
+            "type": "string",
+            "nullable": true
+          },
+          "openWeights": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "source": {
+            "properties": {
+              "vendorUrl": {
+                "type": "string"
+              },
+              "href": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "vendorUrl",
+              "href",
+              "label"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "inputTypes",
+          "outputTypes",
+          "contextWindowTokens",
+          "knowledgeCutoff",
+          "openWeights",
+          "capabilities",
+          "source"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiModelDetails": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Canonical catalog ID when recognized, otherwise the observed identifier."
+          },
+          "assetId": {
+            "type": "string",
+            "nullable": true,
+            "description": "Null until the model has a materialized asset for use-case linking."
+          },
+          "name": {
+            "type": "string"
+          },
+          "resolutionSource": {
+            "type": "string",
+            "enum": [
+              "CATALOG_MATCH",
+              "OBSERVATION"
+            ]
+          },
+          "vendor": {
+            "type": "string",
+            "nullable": true
+          },
+          "vendorUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "releaseDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastUpdated": {
+            "type": "string",
+            "nullable": true
+          },
+          "agentCount": {
+            "type": "number",
+            "format": "double"
+          },
+          "userCount": {
+            "type": "number",
+            "format": "double",
+            "nullable": true,
+            "description": "Null when no attributable people were reported."
+          },
+          "lastActivityDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastActivityPrecision": {
+            "type": "string",
+            "enum": [
+              "EXACT",
+              "DAY",
+              null
+            ],
+            "nullable": true
+          },
+          "specifications": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AiModelSpecifications"
+              }
+            ],
+            "nullable": true,
+            "description": "Null for observed models absent from the catalog."
+          }
+        },
+        "required": [
+          "id",
+          "assetId",
+          "name",
+          "resolutionSource",
+          "vendor",
+          "vendorUrl",
+          "releaseDate",
+          "lastUpdated",
+          "agentCount",
+          "userCount",
+          "lastActivityDate",
+          "lastActivityPrecision",
+          "specifications"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiModelUser": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Observation ID combining the model ID and email, not a personnel ID."
+          },
+          "email": {
+            "type": "string"
+          },
+          "lastActivityDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "lastActivityDate"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiModelPage_AiModelUser_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "totalCount": {
+                "type": "number",
+                "format": "double"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              },
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/AiModelUser"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "totalCount",
+              "pageInfo",
+              "data"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiModelAgent": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Vanta resource ID usable with the AI agent endpoints."
+          },
+          "assetId": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "entryType": {
+            "type": "string",
+            "enum": [
+              "MANAGED_AGENT",
+              "PREBUILT_AGENT",
+              "AGENT"
+            ]
+          },
+          "vendor": {
+            "type": "string"
+          },
+          "ownerEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "observedModels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "Model identifiers or labels reported in the agent's usage summaries."
+          },
+          "activeUserCount": {
+            "type": "number",
+            "format": "double"
+          },
+          "lastActivityDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastActivityDateForModel": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "assetId",
+          "name",
+          "entryType",
+          "vendor",
+          "ownerEmail",
+          "observedModels",
+          "activeUserCount",
+          "lastActivityDate",
+          "lastActivityDateForModel"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiModelPage_AiModelAgent_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "totalCount": {
+                "type": "number",
+                "format": "double"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              },
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/AiModelAgent"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "totalCount",
+              "pageInfo",
+              "data"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiMcpServer": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Catalog or observed inventory identity, not a durable asset UUID. URL-encode this ID in paths."
+          },
+          "resolutionSource": {
+            "type": "string",
+            "enum": [
+              "CATALOG_MATCH",
+              "OBSERVATION"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "vendorUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "agentCount": {
+            "type": "number",
+            "format": "double"
+          },
+          "userCount": {
+            "type": "number",
+            "format": "double"
+          },
+          "toolCount": {
+            "type": "number",
+            "format": "double"
+          },
+          "toolCallCount": {
+            "type": "number",
+            "format": "double",
+            "description": "Invocations over the last 30 UTC days, including today."
+          },
+          "lastActivityDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Latest reported activity, including observations older than the tool-call window."
+          },
+          "lastActivityDatePrecision": {
+            "type": "string",
+            "enum": [
+              "EXACT",
+              "DAY"
+            ],
+            "description": "DAY indicates the start of a reported UTC day rather than an exact timestamp."
+          },
+          "agents": {
+            "items": {
+              "properties": {
+                "lastActivityDatePrecision": {
+                  "type": "string",
+                  "enum": [
+                    "EXACT",
+                    "DAY"
+                  ]
+                },
+                "lastActivityDate": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "toolCallCount": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "agentId": {
+                  "type": "string",
+                  "description": "Vanta agent resource ID."
+                }
+              },
+              "required": [
+                "lastActivityDatePrecision",
+                "lastActivityDate",
+                "toolCallCount",
+                "agentId"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "observations": {
+            "items": {
+              "properties": {
+                "tools": {
+                  "items": {
+                    "properties": {
+                      "lastActivityDate": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Start of the latest UTC activity day within the tool-call window."
+                      },
+                      "callCount": {
+                        "type": "number",
+                        "format": "double"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "lastActivityDate",
+                      "callCount",
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "toolNames": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "serverUrl": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "tools",
+                "toolNames",
+                "serverUrl",
+                "name"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "resolutionSource",
+          "name",
+          "vendorUrl",
+          "agentCount",
+          "userCount",
+          "toolCount",
+          "toolCallCount",
+          "lastActivityDate",
+          "lastActivityDatePrecision",
+          "agents",
+          "observations"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiMcpServerPage": {
+        "properties": {
+          "results": {
+            "properties": {
+              "totalCount": {
+                "type": "number",
+                "format": "double",
+                "description": "Number of matching servers across all pages."
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              },
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/AiMcpServer"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "totalCount",
+              "pageInfo",
+              "data"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "AiMcpServersQuery": {
+        "properties": {
+          "pageSize": {
+            "$ref": "#/components/schemas/PageSize"
+          },
+          "pageCursor": {
+            "$ref": "#/components/schemas/PageCursor"
+          },
+          "searchTerm": {
+            "type": "string",
+            "description": "Case-insensitive name substring; surrounding whitespace is ignored."
+          },
+          "shouldExcludeIdentifierLikeNames": {
+            "type": "boolean",
+            "description": "Exclude servers whose reported names resemble UUIDs or other identifiers."
+          },
+          "sortField": {
+            "type": "string",
+            "enum": [
+              "NAME",
+              "AGENT_COUNT",
+              "LAST_ACTIVITY",
+              "TOOL_CALL_COUNT",
+              "TOOL_COUNT"
+            ],
+            "description": "Sort by this field; defaults to last activity descending, then inventory ID ascending."
+          },
+          "sortDirection": {
+            "type": "string",
+            "enum": [
+              "ASC",
+              "DESC"
+            ],
+            "description": "Direction for an explicit sort field. Defaults to DESC."
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
       "AiAgent": {
         "properties": {
           "id": {
@@ -18894,9 +20579,11 @@
             "type": "string",
             "nullable": true
           },
-          "createdAt": {
+          "agentCreatedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the vendor reports the agent was created; null when unavailable."
           },
           "firstSeenDate": {
             "type": "string",
@@ -18942,7 +20629,7 @@
           "entryType",
           "vendor",
           "ownerEmail",
-          "createdAt",
+          "agentCreatedAt",
           "firstSeenDate",
           "lastActivityDate",
           "activityLookbackDays",
@@ -19224,9 +20911,11 @@
             "type": "string",
             "nullable": true
           },
-          "createdAt": {
+          "agentCreatedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the vendor reports the agent was created; null when unavailable."
           },
           "firstSeenDate": {
             "type": "string",
@@ -19294,7 +20983,7 @@
           "entryType",
           "vendor",
           "ownerEmail",
-          "createdAt",
+          "agentCreatedAt",
           "firstSeenDate",
           "lastActivityDate",
           "activityLookbackDays",
@@ -28924,6 +30613,66 @@
         "parameters": []
       }
     },
+    "/organization/company-profile": {
+      "get": {
+        "operationId": "GetCompanyProfile",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyProfile"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "displayName": "Example",
+                      "legalName": "Example, Inc.",
+                      "mailingAddress": "123 Main St, San Francisco, CA 94105",
+                      "telephone": "+1 415 555 0100",
+                      "websiteUrl": "https://example.com",
+                      "urls": [
+                        "https://app.example.com"
+                      ],
+                      "USCompany": true,
+                      "emailDomain": "example.com",
+                      "companySize": "51-100",
+                      "operatingRegions": [
+                        "north-america",
+                        "europe"
+                      ],
+                      "workplaceTypes": [
+                        "company-office",
+                        "home"
+                      ],
+                      "physicalDataCenters": false,
+                      "boardOfDirectors": true,
+                      "portableDevices": true,
+                      "externalSupport": false,
+                      "sensitiveDataTypes": [
+                        "pii"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Returns the company profile of the organization selected by the\nauthenticated token: the business details Vanta uses to tailor its\ncompliance program, such as legal name, company size, operating regions,\nand the types of sensitive data the organization handles.\nFields that haven't been provided are null, and lists that haven't been\nprovided are empty.\nRequires vanta-api.all:read or vanta-api.all:write. No organization\nselector is accepted.",
+        "summary": "Get company profile",
+        "tags": [
+          "Organization"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": []
+      }
+    },
     "/people": {
       "get": {
         "operationId": "ListPeople",
@@ -30705,6 +32454,132 @@
         ]
       }
     },
+    "/risk-registers": {
+      "get": {
+        "operationId": "ListRiskRegisters",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_RiskRegister_"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "results": {
+                        "data": [
+                          {
+                            "id": "5f2c939a52855e725c8d5824",
+                            "name": "Default",
+                            "description": null,
+                            "registerType": "SCOPED",
+                            "creationDate": "2024-03-07T18:46:05.944Z",
+                            "settings": {
+                              "applicableCustomFields": [
+                                "Business unit"
+                              ]
+                            }
+                          }
+                        ],
+                        "pageInfo": {
+                          "hasNextPage": false,
+                          "hasPreviousPage": false,
+                          "startCursor": "5f2c939a52855e725c8d5824",
+                          "endCursor": "5f2c939a52855e725c8d5824"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "List the risk registers in this domain.\n\nThe `name` field of each register is the value to use in the\n`riskRegister` field on `POST /risk-scenarios` and\n`PATCH /risk-scenarios/{id}`. In domains with multiple registers,\n`riskRegister` is required on risk-scenario create. Registers with\n`registerType: \"ENTERPRISE\"` are system-managed. Each register's\n`settings.applicableCustomFields` lists the custom field labels that can be\nset on its risk scenarios.",
+        "summary": "List risk registers",
+        "tags": [
+          "Risk Registers"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageSize"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageCursor",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageCursor"
+            }
+          }
+        ]
+      }
+    },
+    "/risk-registers/{riskRegisterId}": {
+      "get": {
+        "operationId": "GetRiskRegister",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskRegister"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "id": "5f2c939a52855e725c8d5824",
+                      "name": "Default",
+                      "description": null,
+                      "registerType": "SCOPED",
+                      "creationDate": "2024-03-07T18:46:05.944Z",
+                      "settings": {
+                        "applicableCustomFields": [
+                          "Business unit"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Get a risk register by ID.\n\nReturns the same fields as each item in `GET /risk-registers`.",
+        "summary": "Get risk register by ID",
+        "tags": [
+          "Risk Registers"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "riskRegisterId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
     "/risk-scenarios": {
       "get": {
         "operationId": "ListRiskScenario",
@@ -32360,6 +34235,78 @@
             }
           }
         }
+      }
+    },
+    "/risk-settings": {
+      "get": {
+        "operationId": "GetRiskSettings",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskSettings"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "scoreProfile": {
+                        "profileType": "CLASSIC",
+                        "scoreStages": [
+                          {
+                            "stageKey": "CURRENT",
+                            "label": "Residual risk",
+                            "description": null
+                          },
+                          {
+                            "stageKey": "TARGET",
+                            "label": "Target risk",
+                            "description": null
+                          }
+                        ]
+                      },
+                      "categories": [
+                        {
+                          "name": "Access control",
+                          "type": "VANTA_DEFAULT"
+                        },
+                        {
+                          "name": "Supply chain",
+                          "type": "CUSTOM"
+                        }
+                      ],
+                      "customFields": [
+                        {
+                          "label": "Business unit",
+                          "description": null,
+                          "dataType": "PICKLIST",
+                          "picklistOptions": [
+                            "Engineering",
+                            "Finance"
+                          ],
+                          "decimalPlaces": null,
+                          "currency": null
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Get this domain's risk settings: the stages risks are scored at, the\ncategories risk scenarios can belong to, and the custom fields configured\nfor risk scenarios.\n\nUse `GET /risk-registers` to see which custom fields apply to each\nregister.",
+        "summary": "Get risk settings",
+        "tags": [
+          "Risk Settings"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": []
       }
     },
     "/task-requirement-sets": {
@@ -37627,6 +39574,12 @@
                             "visibilityType": "PUBLIC",
                             "notifiedEmails": [
                               "test@test.com"
+                            ],
+                            "tags": [
+                              {
+                                "categoryId": "507f1f77bcf86cd799439011",
+                                "tagId": "507f1f77bcf86cd799439012"
+                              }
                             ]
                           }
                         ]
@@ -37672,6 +39625,15 @@
             "schema": {
               "$ref": "#/components/schemas/PageCursor"
             }
+          },
+          {
+            "description": "JSON-encoded array of `{categoryId, tagId}` pairs. Tags within the\nsame category are OR'd together; tags across different categories\nare AND'd. For example, passing two tags from \"Framework\" and one\ntag from \"Region\" matches updates that have either of the two\nframeworks AND the given region. Untagged updates never match.\nDiscover valid `categoryId` and `tagId` values via\n`GET /v1/customer-trust/tag-categories` (to list categories) and\n`GET /v1/customer-trust/tag-categories/{tagCategoryId}` (to list tags\nwithin a category).",
+            "in": "query",
+            "name": "matchesTags",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ]
       },
@@ -37697,6 +39659,12 @@
                       "visibilityType": "PUBLIC",
                       "notifiedEmails": [
                         "test@test.com"
+                      ],
+                      "tags": [
+                        {
+                          "categoryId": "507f1f77bcf86cd799439011",
+                          "tagId": "507f1f77bcf86cd799439012"
+                        }
                       ]
                     }
                   }
@@ -37760,6 +39728,12 @@
                       "visibilityType": "PUBLIC",
                       "notifiedEmails": [
                         "test@test.com"
+                      ],
+                      "tags": [
+                        {
+                          "categoryId": "507f1f77bcf86cd799439011",
+                          "tagId": "507f1f77bcf86cd799439012"
+                        }
                       ]
                     }
                   }
@@ -37819,6 +39793,12 @@
                       "visibilityType": "PUBLIC",
                       "notifiedEmails": [
                         "test@test.com"
+                      ],
+                      "tags": [
+                        {
+                          "categoryId": "507f1f77bcf86cd799439011",
+                          "tagId": "507f1f77bcf86cd799439012"
+                        }
                       ]
                     }
                   }
@@ -38585,6 +40565,84 @@
         ]
       }
     },
+    "/users/deactivate": {
+      "post": {
+        "operationId": "DeactivateUsers",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkResponse"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "results": [
+                        {
+                          "id": "69c55d93ca5e7c5217d4c993",
+                          "status": "SUCCESS"
+                        },
+                        {
+                          "id": "OTHER_USER_ID",
+                          "status": "ERROR",
+                          "message": "Invalid Input"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Deactivate a list of users that were added to Vanta manually. Deactivated users can no longer sign in to Vanta.\nUsers provisioned by your identity provider, for example through SCIM, cannot be deactivated here; remove them through your identity provider instead.\nThe last active admin in the organization cannot be deactivated.\nEach user is processed independently, so a user that cannot be deactivated does not stop the others in the request.",
+        "summary": "Deactivate users",
+        "tags": [
+          "Users"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "updates": {
+                    "items": {
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "ID of the user to deactivate"
+                        }
+                      },
+                      "required": [
+                        "id"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array",
+                    "description": "List of the users to deactivate.",
+                    "minItems": 1,
+                    "maxItems": 100
+                  }
+                },
+                "required": [
+                  "updates"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
     "/users/{userId}": {
       "get": {
         "operationId": "GetUser",
@@ -39146,6 +41204,93 @@
         ]
       }
     },
+    "/vendor-assessment-types/{assessmentTypeId}/rules": {
+      "get": {
+        "operationId": "GetVendorAssessmentTypeRules",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendorAssessmentTypeRules"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "assessmentTypeId": "6696ea0595df50d5cd6ec3b8",
+                      "rules": [
+                        {
+                          "riskLevel": "CRITICAL",
+                          "preferredEvidenceTypes": [
+                            "SOC2_REPORT",
+                            "PENETRATION_TEST_REPORT"
+                          ],
+                          "preferredQuestionnaireIds": [
+                            "6696ea0595df50d5cd6ec3c1"
+                          ],
+                          "cadence": "P12M"
+                        },
+                        {
+                          "riskLevel": "HIGH",
+                          "preferredEvidenceTypes": [
+                            "SOC2_REPORT"
+                          ],
+                          "preferredQuestionnaireIds": [
+                            "6696ea0595df50d5cd6ec3c1"
+                          ],
+                          "cadence": "P12M"
+                        },
+                        {
+                          "riskLevel": "MEDIUM",
+                          "preferredEvidenceTypes": [
+                            "SOC2_REPORT"
+                          ],
+                          "preferredQuestionnaireIds": [],
+                          "cadence": "P24M"
+                        },
+                        {
+                          "riskLevel": "LOW",
+                          "preferredEvidenceTypes": [],
+                          "preferredQuestionnaireIds": [],
+                          "cadence": null
+                        },
+                        {
+                          "riskLevel": "UNSCORED",
+                          "preferredEvidenceTypes": [],
+                          "preferredQuestionnaireIds": [],
+                          "cadence": null
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Gets an assessment type's rules for each vendor risk level: the evidence and questionnaires requested from vendors at that level, and how often they are reassessed.",
+        "summary": "Get assessment type rules",
+        "tags": [
+          "Vendor Assessment Types"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assessmentTypeId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
     "/vendor-categories": {
       "get": {
         "operationId": "ListVendorCategories",
@@ -39523,6 +41668,74 @@
         "summary": "List vendor document types",
         "tags": [
           "Vendor Document Types"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageSize"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageCursor",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageCursor"
+            }
+          }
+        ]
+      }
+    },
+    "/vendor-questionnaires": {
+      "get": {
+        "operationId": "ListVendorQuestionnaires",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_VendorQuestionnaire_"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "results": {
+                        "data": [
+                          {
+                            "id": "65f1a8b2c3d4e5f60718293a",
+                            "name": "Security questionnaire",
+                            "description": null,
+                            "questionCount": 2,
+                            "createdAt": "2024-01-01T00:00:00.000Z"
+                          }
+                        ],
+                        "pageInfo": {
+                          "hasNextPage": false,
+                          "hasPreviousPage": false,
+                          "startCursor": "MA==",
+                          "endCursor": "MA=="
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Lists the organization's in-app vendor questionnaire templates.\nUploaded spreadsheet questionnaires are not included.",
+        "summary": "List vendor questionnaires",
+        "tags": [
+          "Vendor Questionnaires"
         ],
         "security": [
           {
@@ -40867,6 +43080,155 @@
             }
           }
         }
+      }
+    },
+    "/vendors/{vendorId}/assessments/{assessmentId}/questions": {
+      "get": {
+        "operationId": "ListAssessmentQuestions",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_VendorAssessmentQuestion_"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "results": {
+                        "data": [
+                          {
+                            "id": "6696eb2e95df50d5cd6ec3c1",
+                            "questionnaireId": "6696eb1a95df50d5cd6ec3c0",
+                            "question": "Do you encrypt customer data at rest?",
+                            "questionType": "BOOLEAN",
+                            "aiAnswer": {
+                              "value": {
+                                "type": "BOOLEAN",
+                                "value": true
+                              },
+                              "rationale": "The SOC 2 report states that customer data is encrypted at rest with AES-256.",
+                              "isValid": true,
+                              "sources": [
+                                {
+                                  "content": "All customer data is encrypted at rest using AES-256.",
+                                  "chunkId": "chunk-12",
+                                  "documentId": "6696eb4f95df50d5cd6ec3c2",
+                                  "filename": "soc2-type2-report.pdf",
+                                  "page": 14,
+                                  "url": null,
+                                  "title": "SOC 2 Type II Report",
+                                  "updatedDate": "2024-02-01T00:00:00.000Z"
+                                }
+                              ],
+                              "flaggedAsFinding": false,
+                              "activeFindingText": null,
+                              "createdDate": "2024-02-02T00:00:00.000Z"
+                            },
+                            "vendorAnswer": {
+                              "value": {
+                                "type": "BOOLEAN",
+                                "value": true
+                              },
+                              "state": "SUBMITTED",
+                              "endorsesCurrentAiAnswer": true,
+                              "updatedDate": "2024-02-05T00:00:00.000Z"
+                            },
+                            "userAnswer": null,
+                            "selectedSource": "VENDOR",
+                            "selectedAnswer": {
+                              "type": "BOOLEAN",
+                              "value": true
+                            }
+                          }
+                        ],
+                        "pageInfo": {
+                          "hasNextPage": false,
+                          "hasPreviousPage": false,
+                          "startCursor": "NjY5NmViMmU5NWRmNTBkNWNkNmVjM2Mx",
+                          "endCursor": "NjY5NmViMmU5NWRmNTBkNWNkNmVjM2Mx"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Lists the questions in an assessment's questionnaire with their Vanta AI,\nvendor, and user answers. Returns an empty list when the assessment has\nno questionnaire.",
+        "summary": "List assessment questions with answers",
+        "tags": [
+          "Vendors"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vendorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assessmentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageSize"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageCursor",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageCursor"
+            }
+          },
+          {
+            "description": "Only return questions whose Vanta AI answer has an active finding flag",
+            "in": "query",
+            "name": "onlyFlagged",
+            "required": false,
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Only return questions whose text contains this phrase (case-insensitive), up to 50 words",
+            "in": "query",
+            "name": "searchQuery",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only return the question with this ID",
+            "in": "query",
+            "name": "questionId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
       }
     },
     "/vendors/{vendorId}/documents": {
