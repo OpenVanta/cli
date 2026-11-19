@@ -1,4 +1,3 @@
-import { spawn } from "node:child_process";
 import type { Command } from "commander";
 import { validateAPIBase } from "../api-base.js";
 import {
@@ -18,6 +17,7 @@ import {
   type AuthOverrides,
   type UserTokens,
 } from "../auth.js";
+import { openBrowser } from "../browser-opener.js";
 import { InputClosedError, LineInput } from "../line-input.js";
 import {
   buildAuthorizeUrl,
@@ -28,23 +28,6 @@ import {
   type CallbackListener,
   type CallbackResult,
 } from "../user-login.js";
-
-/** Best effort: the URL is always printed too, so a failure here is harmless. */
-function openBrowser(url: string): void {
-  const [cmd, args] =
-    process.platform === "darwin"
-      ? ["open", [url]]
-      : process.platform === "win32"
-        ? ["rundll32", ["url.dll,FileProtocolHandler", url]]
-        : ["xdg-open", [url]];
-  try {
-    const child = spawn(cmd, args, { detached: true, stdio: "ignore" });
-    child.on("error", () => {});
-    child.unref();
-  } catch {
-    // Printed URL is the fallback.
-  }
-}
 
 export type LoginDeps = {
   /** True when a person is typing; piped input gets no menu, only the prompts. */
