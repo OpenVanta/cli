@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { win32 } from "node:path";
 import { describe, it } from "node:test";
 import {
   FIRST_PARTY_CLI_CLIENT_ID,
+  browserOpenCommand,
   buildAuthorizeUrl,
   createPkcePair,
   createState,
@@ -90,6 +92,44 @@ describe("buildAuthorizeUrl", () => {
       authorizePrefix("http://127.0.0.1:8080/c/acme"),
       "http://127.0.0.1:8080/c/acme/oauth/authorize",
     );
+  });
+});
+
+describe("browserOpenCommand", () => {
+  const url = "https://app.vanta.com/oauth/authorize?x=1";
+
+  it("on Windows, runs rundll32 from System32 by absolute path", () => {
+    const { cmd, args } = browserOpenCommand(url, "win32", {
+      SystemRoot: "D:\\Win",
+    });
+    assert.equal(cmd, "D:\\Win\\System32\\rundll32.exe");
+    assert.equal(win32.isAbsolute(cmd), true);
+    assert.deepEqual(args, ["url.dll,FileProtocolHandler", url]);
+  });
+
+  it("on Windows, falls back to windir and then C:\\Windows", () => {
+    assert.equal(
+      browserOpenCommand(url, "win32", { windir: "E:\\W" }).cmd,
+      "E:\\W\\System32\\rundll32.exe",
+    );
+    assert.equal(
+      browserOpenCommand(url, "win32", {}).cmd,
+      "C:\\Windows\\System32\\rundll32.exe",
+    );
+  });
+
+  it("on macOS, uses /usr/bin/open by absolute path", () => {
+    assert.deepEqual(browserOpenCommand(url, "darwin", {}), {
+      cmd: "/usr/bin/open",
+      args: [url],
+    });
+  });
+
+  it("elsewhere, uses xdg-open from PATH", () => {
+    assert.deepEqual(browserOpenCommand(url, "linux", {}), {
+      cmd: "xdg-open",
+      args: [url],
+    });
   });
 });
 

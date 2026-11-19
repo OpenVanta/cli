@@ -6,6 +6,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
+import { win32 } from "node:path";
 
 /**
  * The first-party CLI's public OAuth client id. Mirrors obsidian
@@ -17,6 +18,33 @@ export const FIRST_PARTY_CLI_CLIENT_ID =
   "vci_a59a504f274d3d0306c06d9cda079e374f6a10e9e18cd61d";
 
 export const defaultWebBase = "https://app.vanta.com";
+
+/**
+ * The command that opens a URL in the default browser. Where the opener has a
+ * fixed location it is given by absolute path, so no search by name happens:
+ * on Windows, Node and Bun look in the working directory before PATH, so a
+ * `rundll32.exe` planted in a cloned repo would run instead of the system one
+ * (CWE-427). Linux keeps `xdg-open` by name, since its location varies by
+ * distro and POSIX PATH lookup never includes the working directory.
+ */
+export function browserOpenCommand(
+  url: string,
+  platform: NodeJS.Platform = process.platform,
+  env: NodeJS.ProcessEnv = process.env,
+): { cmd: string; args: string[] } {
+  if (platform === "win32") {
+    const systemRoot =
+      env.SystemRoot?.trim() || env.windir?.trim() || "C:\\Windows";
+    return {
+      cmd: win32.join(systemRoot, "System32", "rundll32.exe"),
+      args: ["url.dll,FileProtocolHandler", url],
+    };
+  }
+  if (platform === "darwin") {
+    return { cmd: "/usr/bin/open", args: [url] };
+  }
+  return { cmd: "xdg-open", args: [url] };
+}
 export const localWebBase = "http://127.0.0.1:8080";
 export const callbackPath = "/callback";
 

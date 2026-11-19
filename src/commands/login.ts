@@ -20,6 +20,7 @@ import {
 } from "../auth.js";
 import { InputClosedError, LineInput } from "../line-input.js";
 import {
+  browserOpenCommand,
   buildAuthorizeUrl,
   createPkcePair,
   createState,
@@ -31,12 +32,7 @@ import {
 
 /** Best effort: the URL is always printed too, so a failure here is harmless. */
 function openBrowser(url: string): void {
-  const [cmd, args] =
-    process.platform === "darwin"
-      ? ["open", [url]]
-      : process.platform === "win32"
-        ? ["rundll32", ["url.dll,FileProtocolHandler", url]]
-        : ["xdg-open", [url]];
+  const { cmd, args } = browserOpenCommand(url);
   try {
     const child = spawn(cmd, args, { detached: true, stdio: "ignore" });
     child.on("error", () => {});
