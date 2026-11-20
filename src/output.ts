@@ -58,13 +58,15 @@ export function printResponse(
 
   const normalized = unwrapResultsData(value);
 
-  if (agentModeEnabled(options.agentMode)) {
-    write(`${sanitizeTerminalControls(encode(normalized))}\n`);
+  // --no-pretty is an explicit request for compact JSON, so it wins over
+  // agent mode, whether that was auto-detected or asked for.
+  if (!options.pretty) {
+    write(`${JSON.stringify(normalized)}\n`);
     return;
   }
 
-  if (!options.pretty) {
-    write(`${JSON.stringify(normalized)}\n`);
+  if (agentModeEnabled(options.agentMode)) {
+    write(`${sanitizeTerminalControls(encode(normalized))}\n`);
     return;
   }
 

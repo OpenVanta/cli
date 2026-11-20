@@ -305,7 +305,10 @@ export function registerLoginCommand(
           const apiBase = validateAPIBase(
             await deps.prompt("API base URL", apiBaseDefault, true),
           );
-          const scopeDefault = opts.scope?.trim() || defaultOAuthScope;
+          // --scope is a global option too, and commander keeps it on the
+          // program even when it follows `login`, so read both.
+          const scopeDefault =
+            overrides.scope?.trim() || opts.scope?.trim() || defaultOAuthScope;
 
           if (method === "browser") {
             await browserLogin({

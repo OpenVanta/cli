@@ -68,7 +68,7 @@ function makeDeps(
 async function runLogin(
   deps: LoginDeps,
   argv: string[] = [],
-  overrides: { clientId?: string; clientSecret?: string } = {},
+  overrides: { clientId?: string; clientSecret?: string; scope?: string } = {},
 ) {
   const program = new Command().exitOverride();
   registerLoginCommand(
@@ -206,6 +206,51 @@ describe("vanta login", () => {
       );
       assert.equal(new URLSearchParams(suspend.body).get("token"), "rt-old");
       assert.equal((await home.readConfig()).auth_mode, "client");
+    });
+  });
+
+  describe("--scope", () => {
+    const code: CallbackResult = { kind: "code", code: "the-code" };
+    const readOnly = "vanta-api.all:read";
+
+    it("as a global flag, pre-fills the browser scope prompt and the authorize URL", async () => {
+      const t = makeDeps(["https://api.vanta.com/v1", "", ""], code);
+      await runLogin(t.deps, ["--browser"], { scope: readOnly });
+
+      assert.deepEqual(t.prompts[2], {
+        label: `OAuth scope (default: ${readOnly})`,
+        defaultValue: readOnly,
+      });
+      assert.equal(new URL(t.opened[0]!).searchParams.get("scope"), readOnly);
+    });
+
+    it("on the login command, pre-fills the browser scope prompt too", async () => {
+      const t = makeDeps(["https://api.vanta.com/v1", "", ""], code);
+      await runLogin(t.deps, ["--browser", "--scope", readOnly]);
+
+      assert.equal(t.prompts[2]!.defaultValue, readOnly);
+      assert.equal(new URL(t.opened[0]!).searchParams.get("scope"), readOnly);
+    });
+
+    it("as a global flag, is sent with client credentials", async () => {
+      const t = makeDeps(["https://api.vanta.com/v1", "cid", "sec", ""], code);
+      await runLogin(t.deps, [], { scope: readOnly });
+
+      assert.equal(t.prompts[3]!.defaultValue, readOnly);
+      assert.equal(JSON.parse(net.requests[0]!.body).scope, readOnly);
+    });
+
+    it("a typed answer still overrides the flag", async () => {
+      const t = makeDeps(
+        ["https://api.vanta.com/v1", "", "vanta-api.all:write"],
+        code,
+      );
+      await runLogin(t.deps, ["--browser"], { scope: readOnly });
+
+      assert.equal(
+        new URL(t.opened[0]!).searchParams.get("scope"),
+        "vanta-api.all:write",
+      );
     });
   });
 
