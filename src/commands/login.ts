@@ -123,26 +123,23 @@ export function terminalDeps(
 
 type SignInMethod = "client" | "browser";
 
-/**
- * Shown only in a terminal with no mode flag. Client credentials stay the
- * default while browser sign-in is in beta; the GA change flips the default.
- */
+/** Shown only in a terminal when no sign-in method is specified. */
 async function chooseSignInMethod(deps: LoginDeps): Promise<SignInMethod> {
   console.log("How do you want to sign in?");
-  console.log("  1) With an API client ID and secret");
   console.log(
-    "  2) With your Vanta account in the browser (beta; may not be enabled for your workspace yet)",
+    "  1) With your Vanta account in the browser (beta; may not be enabled for your workspace yet)",
   );
+  console.log("  2) With an API client ID and secret");
   for (;;) {
     const answer = await deps.prompt("Choice", "1", false);
-    if (answer === "1") return "client";
-    if (answer === "2") return "browser";
+    if (answer === "1") return "browser";
+    if (answer === "2") return "client";
     console.log("Enter 1 or 2.");
   }
 }
 
 const browserSignInHint =
-  "browser sign-in is in beta and may not be enabled for your workspace yet; you can still sign in with client credentials: `vanta login`";
+  "browser sign-in is in beta and may not be enabled for your workspace yet. Run `vanta login` and choose option 2 to sign in with client credentials";
 
 async function browserLogin(args: {
   apiBase: string;
@@ -254,14 +251,14 @@ export function registerLoginCommand(
   program
     .command("login")
     .description(
-      "Sign in with an API client ID and secret, or with your Vanta account in the browser (--browser)",
+      "Sign in with your Vanta account in the browser or with an API client ID and secret",
     )
     .option("--client-id <id>", "OAuth client ID")
     .option("--client-secret <secret>", "OAuth client secret")
     .option("--scope <scope>", "OAuth scope", defaultOAuthScope)
     .option(
       "--browser",
-      "Sign in as yourself through the browser instead of with client credentials (beta)",
+      "Sign in as yourself in the browser (beta) and skip the sign-in menu",
     )
     .option(
       "--no-open",

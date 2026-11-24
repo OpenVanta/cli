@@ -258,42 +258,18 @@ describe("vanta login", () => {
     const code: CallbackResult = { kind: "code", code: "the-code" };
     const choice = "Choice";
 
-    it("in a terminal, asks how to sign in first and defaults to client credentials", async () => {
-      const t = makeDeps(
-        ["", "https://api.vanta.com/v1", "cid", "sec", ""],
-        code,
-        {
-          interactive: true,
-        },
-      );
-      const logs = await runLogin(t.deps);
-
-      assert.equal(t.prompts[0]!.label, choice);
-      assert.equal(t.prompts[0]!.defaultValue, "1");
-      assert.ok(logs.some((l) => /client ID and secret/.test(l)));
-      assert.ok(logs.some((l) => /browser.*beta/.test(l)));
-      assert.deepEqual(
-        t.prompts.slice(1).map((p) => p.label),
-        [
-          "API base URL",
-          "OAuth client ID",
-          "OAuth client secret",
-          "OAuth scope (default: vanta-api.all:read vanta-api.all:write)",
-        ],
-      );
-      assert.equal(t.opened.length, 0);
-      assert.equal(
-        JSON.parse(net.requests[0]!.body).grant_type,
-        "client_credentials",
-      );
-    });
-
-    it("choosing 2 signs in through the browser", async () => {
-      const t = makeDeps(["2", "https://api.vanta.com/v1", "", ""], code, {
+    it("in a terminal, lists browser sign-in first and selects it by default", async () => {
+      const t = makeDeps(["", "https://api.vanta.com/v1", "", ""], code, {
         interactive: true,
       });
-      await runLogin(t.deps);
+      const logs = await runLogin(t.deps);
 
+      assert.deepEqual(t.prompts[0], { label: choice, defaultValue: "1" });
+      assert.match(
+        logs[1]!,
+        /^  1\) With your Vanta account in the browser \(beta/,
+      );
+      assert.equal(logs[2], "  2) With an API client ID and secret");
       assert.deepEqual(
         t.prompts.map((p) => p.label),
         [
@@ -309,9 +285,34 @@ describe("vanta login", () => {
       assert.equal((await home.readConfig()).auth_mode, "user");
     });
 
+    it("choosing 2 signs in with client credentials", async () => {
+      const t = makeDeps(
+        ["2", "https://api.vanta.com/v1", "cid", "sec", ""],
+        code,
+        { interactive: true },
+      );
+      await runLogin(t.deps);
+
+      assert.deepEqual(
+        t.prompts.map((p) => p.label),
+        [
+          choice,
+          "API base URL",
+          "OAuth client ID",
+          "OAuth client secret",
+          "OAuth scope (default: vanta-api.all:read vanta-api.all:write)",
+        ],
+      );
+      assert.equal(t.opened.length, 0);
+      assert.equal(
+        JSON.parse(net.requests[0]!.body).grant_type,
+        "client_credentials",
+      );
+    });
+
     it("asks again after an answer that is not 1 or 2", async () => {
       const t = makeDeps(
-        ["yes", "3", "2", "https://api.vanta.com/v1", "", ""],
+        ["yes", "3", "1", "https://api.vanta.com/v1", "", ""],
         code,
         {
           interactive: true,
@@ -508,7 +509,7 @@ describe("vanta login", () => {
       await assert.rejects(runLogin(t.deps, ["--browser"]), (err: Error) => {
         assert.match(err.message, /browser sign-in failed: server_error/);
         assert.match(err.message, /may not be enabled for your workspace/);
-        assert.match(err.message, /client credentials: `vanta login`/);
+        assert.match(err.message, /`vanta login` and choose option 2/);
         return true;
       });
       assert.equal(net.requests.length, 0);
