@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import { chmod, stat } from "node:fs/promises";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import {
+  configFilePath,
   credentialStorageDescription,
   decodeKeyringPassword,
   encodeKeyringPassword,
@@ -8,6 +10,7 @@ import {
   requestOAuthToken,
   resolveAccessToken,
   resolveAPIBase,
+  saveConfig,
   useSystemCredentialStore,
 } from "./auth.js";
 import { systemCredentialStoreAvailable } from "./keychain.js";
@@ -19,6 +22,27 @@ import {
   type RecordedRequest,
 } from "./test-support.js";
 import { FIRST_PARTY_CLI_CLIENT_ID } from "./user-login.js";
+
+it(
+  "saves new and existing Linux configs with owner-only permissions",
+  { skip: process.platform !== "linux" },
+  async (t) => {
+    const home = await useTempHome();
+    t.after(home.restore);
+    const path = configFilePath();
+
+    await saveConfig({ oauth_refresh_token: "old" });
+    assert.equal((await stat(path)).mode & 0o777, 0o600);
+
+    await chmod(path, 0o644);
+    await saveConfig({ oauth_refresh_token: "rotated" });
+
+    assert.equal((await stat(path)).mode & 0o777, 0o600);
+    assert.deepEqual(await home.readConfig(), {
+      oauth_refresh_token: "rotated",
+    });
+  },
+);
 
 describe("credential store selection", () => {
   it("uses the system store on darwin and win32", () => {
