@@ -120,10 +120,7 @@ export function registerRiskScenariosCommand(
         "--type <type>",
         'Filter by risk scenario type. Defaults to "Risk Scenario". Only returns enterprise risks when explicitly set to "Enterprise Risk"',
       )
-      .option(
-        "--order-by <field>",
-        "Order by field (description or createdAt)",
-      ),
+      .option("--order-by <field>", "Order by field: description, createdAt"),
   ).action(
     async (opts: {
       pageSize?: number;
