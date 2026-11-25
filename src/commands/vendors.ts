@@ -20,6 +20,7 @@ import {
   createVendorFinding,
   updateVendorFinding,
   deleteFindingById,
+  listVendorFourthParties,
   getSecurityReviewsByVendorId,
   getSecurityReviewsById,
   getSecurityReviewDocuments,
@@ -569,6 +570,23 @@ export function registerVendorsCommand(
         }),
       );
     });
+
+  addPaginationOptions(
+    vendors
+      .command("list-fourth-parties")
+      .description("List fourth parties for a vendor")
+      .requiredOption("--id <id>", "Vendor ID from `vendors list`"),
+  ).action(
+    async (opts: { id: string; pageSize?: number; pageCursor?: string }) => {
+      await runSdk(getFlags, (api) =>
+        listVendorFourthParties({
+          client: api.client,
+          path: { vendorId: opts.id },
+          query: paginationQuery(opts),
+        }),
+      );
+    },
+  );
 
   addPaginationOptions(
     vendors
