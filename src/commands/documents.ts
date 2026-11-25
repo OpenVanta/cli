@@ -57,7 +57,7 @@ export function registerDocumentsCommand(
       )
       .option(
         "--status-matches-any <status>",
-        "Document statuses to filter by (repeatable)",
+        "Document statuses to filter by: Needs document, Needs update, Not relevant, OK (repeatable)",
         collectString,
         [] as string[],
       ),

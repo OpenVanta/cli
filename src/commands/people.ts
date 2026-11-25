@@ -45,13 +45,13 @@ export function registerPeopleCommand(
       )
       .option(
         "--task-type-matches-any <type>",
-        "Task types to filter by (repeatable)",
+        "Task types to filter by: COMPLETE_TRAININGS, ACCEPT_POLICIES, COMPLETE_CUSTOM_TASKS, COMPLETE_CUSTOM_OFFBOARDING_TASKS, INSTALL_DEVICE_MONITORING, COMPLETE_BACKGROUND_CHECKS (repeatable)",
         collectString,
         [] as string[],
       )
       .option(
         "--task-status-matches-any <status>",
-        "Task statuses to filter by (repeatable)",
+        "Task statuses to filter by: COMPLETE, DUE_SOON, OVERDUE, NONE (repeatable)",
         collectString,
         [] as string[],
       )

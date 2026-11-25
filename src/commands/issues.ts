@@ -44,13 +44,13 @@ export function registerIssuesCommand(
       )
       .option(
         "--source-matches-any <source>",
-        "Filter to issues matching any of the provided sources: AUDIT, AUDIT_EXTERNAL, INCIDENT, EXTERNAL_PARTY, SELF_ASSESSMENT, VULNERABILITY_SCANNER, PENETRATION_TEST, SECURITY_ASSESSMENT, BUG_BOUNTY, THREAT_INTELLIGENCE, AUTOMATED_CONTROL_TESTING, MANUAL_ANALYSIS, SUPPLY_CHAIN_MONITORING, OTHER (repeatable)",
+        "Filter to issues matching any of the provided sources. Some values never apply to a given organization; requesting them returns 400: AUDIT, AUDIT_EXTERNAL, INCIDENT, EXTERNAL_PARTY, SELF_ASSESSMENT, VULNERABILITY_SCANNER, PENETRATION_TEST, SECURITY_ASSESSMENT, BUG_BOUNTY, THREAT_INTELLIGENCE, AUTOMATED_CONTROL_TESTING, MANUAL_ANALYSIS, SUPPLY_CHAIN_MONITORING, OTHER (repeatable)",
         collectString,
         [] as string[],
       )
       .option(
         "--type-matches-any <type>",
-        "Filter to issues matching any of the provided types: AREA_OF_CONCERN, MAJOR_NONCONFORMITY, MINOR_NONCONFORMITY, OPP_FOR_IMPROVEMENT, EXCEPTION, PROCESS_FOR_IMPROVEMENT (repeatable)",
+        "Filter to issues matching any of the provided types. Some values never apply to a given organization; requesting them returns 400: AREA_OF_CONCERN, MAJOR_NONCONFORMITY, MINOR_NONCONFORMITY, OPP_FOR_IMPROVEMENT, EXCEPTION, PROCESS_FOR_IMPROVEMENT (repeatable)",
         collectString,
         [] as string[],
       )
@@ -121,7 +121,7 @@ export function registerIssuesCommand(
       )
       .option(
         "--audit-id-matches-any <id>",
-        "Filter to issues sourced from any of the provided audit IDs (repeatable)",
+        "Filter to issues sourced from any of the provided audit IDs. Returns 400 when audits don't apply to the organization (repeatable)",
         collectString,
         [] as string[],
       )

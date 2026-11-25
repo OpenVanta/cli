@@ -7255,6 +7255,7 @@
               "iso27017",
               "iso27017_2026",
               "iso27018",
+              "iso27018_2025",
               "iso27701",
               "iso27701_2025",
               "iso42001",
@@ -7341,6 +7342,7 @@
               "iso27017",
               "iso27017_2026",
               "iso27018",
+              "iso27018_2025",
               "iso27701",
               "iso27701_2025",
               "iso42001",
@@ -9181,6 +9183,166 @@
         },
         "required": [
           "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "RiskTaskStatus": {
+        "type": "string",
+        "enum": [
+          "OPEN",
+          "IN_PROGRESS",
+          "CLOSED"
+        ]
+      },
+      "RiskTaskExternalTicket": {
+        "properties": {
+          "integrationId": {
+            "type": "string",
+            "description": "The ID of the task tracker integration the ticket is in, such as `jira`."
+          },
+          "url": {
+            "type": "string",
+            "description": "The ticket's URL in the task tracker."
+          }
+        },
+        "required": [
+          "integrationId",
+          "url"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "RiskTask": {
+        "description": "A task in a risk scenario's treatment plan.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "description": "The task's name. For a task tracked in a task tracker, the ticket's\ntitle. Otherwise the same as `description`, or empty when the task\nhas no description."
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "What the task is, as entered in Vanta. `null` when the task has no\ndescription."
+          },
+          "status": {
+            "$ref": "#/components/schemas/RiskTaskStatus",
+            "description": "`CLOSED` means the task is done. A task tracked in a task tracker is\n`CLOSED` when its ticket is closed, and `OPEN` otherwise."
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the task is due. `null` when the task has no due date."
+          },
+          "completionDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the task was completed. `null` for a task that isn't done, and for a\ntask tracked in a task tracker."
+          },
+          "owner": {
+            "type": "string",
+            "nullable": true,
+            "description": "The email of the person who owns the task. `null` when no active person\nowns it, and for a task tracked in a task tracker."
+          },
+          "riskScenarioIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "description": "The `riskId` of each risk scenario the task is linked to, including\narchived ones."
+          },
+          "externalTicket": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RiskTaskExternalTicket"
+              }
+            ],
+            "nullable": true,
+            "description": "The task tracker ticket the task is tracked in. `null` for a task tracked\nonly in Vanta."
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "creationDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modificationDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "status",
+          "dueDate",
+          "completionDate",
+          "owner",
+          "riskScenarioIds",
+          "externalTicket",
+          "note",
+          "creationDate",
+          "modificationDate"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "PaginatedResponse_RiskTask_": {
+        "properties": {
+          "results": {
+            "properties": {
+              "data": {
+                "items": {
+                  "$ref": "#/components/schemas/RiskTask"
+                },
+                "type": "array"
+              },
+              "pageInfo": {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            },
+            "required": [
+              "data",
+              "pageInfo"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object",
+        "additionalProperties": false
+      },
+      "CompleteRiskTaskInput": {
+        "properties": {
+          "completionDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the task was completed. Defaults to the current time. It can't be in\nthe future."
+          }
+        },
+        "type": "object",
+        "additionalProperties": false
+      },
+      "UpdateRiskTaskInput": {
+        "properties": {
+          "dueDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the task is due."
+          }
+        },
+        "required": [
+          "dueDate"
         ],
         "type": "object",
         "additionalProperties": false
@@ -12049,6 +12211,11 @@
             "type": "string",
             "nullable": true
           },
+          "externalUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Durable Trust Center link, including for private resources. Null when unavailable.\nThis link does not grant access or publish the resource.\nThe resource may be inaccessible until added to the Trust Center with appropriate visibility and permissions."
+          },
           "url": {
             "type": "string"
           },
@@ -12110,6 +12277,7 @@
           "type",
           "title",
           "description",
+          "externalUrl",
           "url",
           "customerVisibility",
           "includeSubPages",
@@ -12287,6 +12455,11 @@
             "type": "string",
             "nullable": true
           },
+          "externalUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Durable Trust Center link, including for private resources. Null when unavailable.\nThis link does not grant access or publish the resource.\nThe resource may be inaccessible until added to the Trust Center with appropriate visibility and permissions."
+          },
           "fileUrl": {
             "type": "string",
             "description": "Presigned S3 URL for the underlying document. Expires after 1 hour due\nto AWS IAM Role limitations on presigned URL lifetimes. Re-fetch the\nresource to obtain a fresh URL once this one expires."
@@ -12354,6 +12527,7 @@
           "type",
           "title",
           "description",
+          "externalUrl",
           "fileUrl",
           "customerVisibility",
           "downloadPermission",
@@ -13188,6 +13362,18 @@
             "$ref": "#/components/schemas/StandardPOAM"
           }
         ]
+      },
+      "OutboundError": {
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object",
+        "additionalProperties": false
       },
       "PaginatedResponse_Issue_": {
         "properties": {
@@ -16023,18 +16209,6 @@
         "type": "object",
         "additionalProperties": false
       },
-      "OutboundError": {
-        "properties": {
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "message"
-        ],
-        "type": "object",
-        "additionalProperties": false
-      },
       "DocumentEvaluation": {
         "properties": {
           "summary": {
@@ -16670,8 +16844,8 @@
       "QuestionnaireStatus": {
         "type": "string",
         "enum": [
-          "APPROVED",
           "IN_PROGRESS",
+          "APPROVED",
           "IN_REVIEW",
           "READY_FOR_REVIEW",
           "WAITING_ON_ANSWERS",
@@ -20357,8 +20531,7 @@
           },
           "toolCallCount": {
             "type": "number",
-            "format": "double",
-            "description": "Invocations over the last 30 UTC days, including today."
+            "format": "double"
           },
           "lastActivityDate": {
             "type": "string",
@@ -23229,7 +23402,7 @@
             }
           }
         },
-        "description": "List questionnaires with filtering and pagination.",
+        "description": "List questionnaires with filtering and pagination.\n\nCallers with organization-level access to questionnaires see every\nquestionnaire. Other callers see only the questionnaires they can view,\nfor example ones they own, approve, or own a response on. Filters narrow\nthat set further. A caller with access to no questionnaires gets a 403;\none whose viewable questionnaires are all deleted or filtered out gets\nan empty page.",
         "summary": "List questionnaires",
         "tags": [
           "Customer Trust"
@@ -25932,6 +26105,230 @@
             "schema": {
               "format": "date-time",
               "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/fourth-parties": {
+      "get": {
+        "operationId": "ListFourthParties",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_FourthParty_"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "results": {
+                        "data": [
+                          {
+                            "id": "YXdzLmFtYXpvbi5jb20",
+                            "name": "Amazon Web Services",
+                            "url": "aws.amazon.com",
+                            "isMatched": true,
+                            "category": "Cloud hosting",
+                            "locations": [
+                              "US"
+                            ],
+                            "sources": [
+                              {
+                                "url": "https://vendor.example/subprocessors",
+                                "ingestionMethod": "ADMIN"
+                              }
+                            ],
+                            "dependentVendorCount": 12
+                          }
+                        ],
+                        "pageInfo": {
+                          "hasNextPage": false,
+                          "hasPreviousPage": false,
+                          "startCursor": null,
+                          "endCursor": null
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Lists fourth parties ordered by dependent vendor count, highest first. Risk filters recalculate counts using matching dependents; the used-by filter selects rows without further narrowing counts.\nRequires vendor and fourth-party read access, with fourth parties enabled for your organization. Otherwise returns 403.\nFourth parties and counts include all active and procurement vendors in your organization. Results aren't limited by per-vendor access.",
+        "summary": "List fourth parties",
+        "tags": [
+          "Fourth Parties"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "description": "Select fourth parties used by any of these vendors after risk filtering, preserving the remaining counts.",
+            "in": "query",
+            "name": "usedByVendorIdMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "description": "Keep dependents matching any residual risk level.",
+            "in": "query",
+            "name": "residualRiskLevelMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/VendorRiskLevel"
+              }
+            }
+          },
+          {
+            "description": "Keep dependents matching any inherent risk level; combines with residual risk using AND.",
+            "in": "query",
+            "name": "inherentRiskLevelMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/VendorRiskLevel"
+              }
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageCursor",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageCursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageSize"
+            }
+          }
+        ]
+      }
+    },
+    "/fourth-parties/{fourthPartyId}/vendors": {
+      "get": {
+        "operationId": "ListFourthPartyVendors",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_FourthPartyVendor_"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "results": {
+                        "data": [
+                          {
+                            "vendorId": "657000000000000000000000",
+                            "name": "Example vendor",
+                            "usage": {
+                              "purpose": "Cloud hosting",
+                              "category": "Infrastructure",
+                              "locations": [
+                                "US"
+                              ],
+                              "sources": [
+                                {
+                                  "url": "https://vendor.example/subprocessors",
+                                  "ingestionMethod": "ADMIN"
+                                }
+                              ]
+                            }
+                          }
+                        ],
+                        "pageInfo": {
+                          "hasNextPage": false,
+                          "hasPreviousPage": false,
+                          "startCursor": null,
+                          "endCursor": null
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Lists the vendors that depend on a fourth party, ordered by vendor name, optionally filtered by inherent and residual risk with AND semantics.\nRequires vendor and fourth-party read access, with fourth parties enabled for your organization. Otherwise returns 403.\nIncludes every active and procurement vendor in your organization that depends on the fourth party. Results aren't limited by per-vendor access.",
+        "summary": "List fourth party vendors",
+        "tags": [
+          "Fourth Parties"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fourthPartyId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Keep dependents matching any residual risk level.",
+            "in": "query",
+            "name": "residualRiskLevelMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/VendorRiskLevel"
+              }
+            }
+          },
+          {
+            "description": "Keep dependents matching any inherent risk level; combines with residual risk using AND.",
+            "in": "query",
+            "name": "inherentRiskLevelMatchesAny",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/VendorRiskLevel"
+              }
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageCursor",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageCursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageSize"
             }
           }
         ]
@@ -28744,9 +29141,19 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "The organization does not have Issues",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutboundError"
+                }
+              }
+            }
           }
         },
-        "description": "List issues on a domain (paginated).\nReturns a paginated list of issues that the authenticated app has\npermission to view, optionally filtered and sorted.",
+        "description": "List issues on a domain (paginated).\nReturns a paginated list of issues that the authenticated app has\npermission to view, optionally filtered and sorted.\nReturns 403 when the organization does not have Issues.",
         "summary": "List issues",
         "tags": [
           "Issues"
@@ -28828,7 +29235,7 @@
             ]
           },
           {
-            "description": "Filter to issues matching any of the provided sources.",
+            "description": "Filter to issues matching any of the provided sources. Some values never apply to a given organization; requesting them returns 400.",
             "in": "query",
             "name": "sourceMatchesAny",
             "required": false,
@@ -28844,7 +29251,7 @@
             ]
           },
           {
-            "description": "Filter to issues matching any of the provided types.",
+            "description": "Filter to issues matching any of the provided types. Some values never apply to a given organization; requesting them returns 400.",
             "in": "query",
             "name": "typeMatchesAny",
             "required": false,
@@ -29016,7 +29423,7 @@
             "example": "2023-12-31T23:59:59Z"
           },
           {
-            "description": "Filter to issues sourced from any of the provided audit IDs.",
+            "description": "Filter to issues sourced from any of the provided audit IDs. Returns 400 when audits don't apply to the organization.",
             "in": "query",
             "name": "auditIdMatchesAny",
             "required": false,
@@ -29124,9 +29531,19 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "The organization does not have Issues",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutboundError"
+                }
+              }
+            }
           }
         },
-        "description": "Get the details of an issue by its ID.",
+        "description": "Get the details of an issue by its ID.\nReturns 403 when the organization does not have Issues.",
         "summary": "Get issue by ID",
         "tags": [
           "Issues"
@@ -29624,6 +30041,7 @@
                             "type": "FILE",
                             "title": "SOC 2 Type II Report",
                             "description": "Annual SOC 2 Type II report covering 2024.",
+                            "externalUrl": "https://trust.example.com/resources?s=resource-slug&name=security-report",
                             "fileUrl": "https://files.example.s3.amazonaws.com/507f1f77bcf86cd799439021?X-Amz-Expires=3600&X-Amz-Signature=...",
                             "customerVisibility": "REQUEST_ACCESS",
                             "downloadPermission": "VIEW_AND_DOWNLOAD",
@@ -29650,6 +30068,7 @@
                             "type": "URL",
                             "title": "Vanta Security Overview",
                             "description": "Public-facing overview of Vanta's security posture.",
+                            "externalUrl": "https://trust.example.com/resources?s=resource-slug&name=security-report",
                             "url": "https://www.vanta.com/security",
                             "customerVisibility": "PUBLIC",
                             "includeSubPages": true,
@@ -29798,6 +30217,7 @@
                       "type": "FILE",
                       "title": "SOC 2 Type II Report",
                       "description": "Annual SOC 2 Type II report covering 2024.",
+                      "externalUrl": "https://trust.example.com/resources?s=resource-slug&name=security-report",
                       "fileUrl": "https://files.example.s3.amazonaws.com/507f1f77bcf86cd799439021?X-Amz-Expires=3600&X-Amz-Signature=...",
                       "customerVisibility": "REQUEST_ACCESS",
                       "downloadPermission": "VIEW_AND_DOWNLOAD",
@@ -29913,6 +30333,7 @@
                       "type": "FILE",
                       "title": "SOC 2 Type II Report",
                       "description": "Annual SOC 2 Type II report covering 2024.",
+                      "externalUrl": "https://trust.example.com/resources?s=resource-slug&name=security-report",
                       "fileUrl": "https://files.example.s3.amazonaws.com/507f1f77bcf86cd799439021?X-Amz-Expires=3600&X-Amz-Signature=...",
                       "customerVisibility": "REQUEST_ACCESS",
                       "downloadPermission": "VIEW_AND_DOWNLOAD",
@@ -29996,6 +30417,7 @@
                       "type": "FILE",
                       "title": "SOC 2 Type II Report",
                       "description": "Annual SOC 2 Type II report covering 2024.",
+                      "externalUrl": "https://trust.example.com/resources?s=resource-slug&name=security-report",
                       "fileUrl": "https://files.example.s3.amazonaws.com/507f1f77bcf86cd799439021?X-Amz-Expires=3600&X-Amz-Signature=...",
                       "customerVisibility": "REQUEST_ACCESS",
                       "downloadPermission": "VIEW_AND_DOWNLOAD",
@@ -30083,6 +30505,7 @@
                       "type": "URL",
                       "title": "Vanta Security Overview",
                       "description": "Public-facing overview of Vanta's security posture.",
+                      "externalUrl": "https://trust.example.com/resources?s=resource-slug&name=security-report",
                       "url": "https://www.vanta.com/security",
                       "customerVisibility": "PUBLIC",
                       "includeSubPages": true,
@@ -30166,6 +30589,7 @@
                       "type": "URL",
                       "title": "Vanta Security Overview",
                       "description": "Public-facing overview of Vanta's security posture.",
+                      "externalUrl": "https://trust.example.com/resources?s=resource-slug&name=security-report",
                       "url": "https://www.vanta.com/security",
                       "customerVisibility": "PUBLIC",
                       "includeSubPages": true,
@@ -30249,6 +30673,7 @@
                       "type": "FILE",
                       "title": "SOC 2 Type II Report",
                       "description": "Annual SOC 2 Type II report covering 2024.",
+                      "externalUrl": "https://trust.example.com/resources?s=resource-slug&name=security-report",
                       "fileUrl": "https://files.example.s3.amazonaws.com/507f1f77bcf86cd799439021?X-Amz-Expires=3600&X-Amz-Signature=...",
                       "customerVisibility": "REQUEST_ACCESS",
                       "downloadPermission": "VIEW_AND_DOWNLOAD",
@@ -30344,6 +30769,7 @@
                       "type": "FILE",
                       "title": "SOC 2 Type II Report",
                       "description": "Annual SOC 2 Type II report covering 2024.",
+                      "externalUrl": "https://trust.example.com/resources?s=resource-slug&name=security-report",
                       "fileUrl": "https://files.example.s3.amazonaws.com/507f1f77bcf86cd799439021?X-Amz-Expires=3600&X-Amz-Signature=...",
                       "customerVisibility": "REQUEST_ACCESS",
                       "downloadPermission": "VIEW_AND_DOWNLOAD",
@@ -43905,6 +44331,92 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/vendors/{vendorId}/fourth-parties": {
+      "get": {
+        "operationId": "ListVendorFourthParties",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_FourthParty_"
+                },
+                "examples": {
+                  "Example 1": {
+                    "value": {
+                      "results": {
+                        "data": [
+                          {
+                            "id": "YXdzLmFtYXpvbi5jb20",
+                            "name": "Amazon Web Services",
+                            "url": "aws.amazon.com",
+                            "isMatched": true,
+                            "category": "Cloud hosting",
+                            "locations": [
+                              "US"
+                            ],
+                            "sources": [
+                              {
+                                "url": "https://vendor.example/subprocessors",
+                                "ingestionMethod": "ADMIN"
+                              }
+                            ],
+                            "dependentVendorCount": 12
+                          }
+                        ],
+                        "pageInfo": {
+                          "hasNextPage": false,
+                          "hasPreviousPage": false,
+                          "startCursor": null,
+                          "endCursor": null
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Lists a vendor's fourth parties with full portfolio dependent counts.\nRequires vendor and fourth-party read access, with fourth parties enabled for your organization. Otherwise returns 403.\nFourth parties and counts include all active and procurement vendors in your organization. Results aren't limited by per-vendor access.",
+        "summary": "List vendor fourth parties",
+        "tags": [
+          "Vendors"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vendorId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageSize"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageCursor",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PageCursor"
             }
           }
         ]

@@ -27,6 +27,7 @@ import { registerCustomerTrustCommand } from "./customer-trust.js";
 import { registerKnowledgeBaseCommand } from "./knowledge-base.js";
 import { registerTrustCentersCommand } from "./trust-centers.js";
 import { registerCustomAssetsCommand } from "./custom-assets.js";
+import { registerFourthPartiesCommand } from "./fourth-parties.js";
 import { registerOrganizationCommand } from "./organization.js";
 import { registerRiskRegistersCommand } from "./risk-registers.js";
 import { registerRiskSettingsCommand } from "./risk-settings.js";
@@ -72,6 +73,7 @@ export function registerApiCommands(
   registerKnowledgeBaseCommand(program, getFlags);
   registerTrustCentersCommand(program, getFlags);
   registerCustomAssetsCommand(program, getFlags);
+  registerFourthPartiesCommand(program, getFlags);
   registerOrganizationCommand(program, getFlags);
   registerRiskRegistersCommand(program, getFlags);
   registerRiskSettingsCommand(program, getFlags);
