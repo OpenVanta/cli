@@ -18,7 +18,7 @@ The `vanta` binary must be on `$PATH`. See the project README for install option
 ## Authentication
 
 ```bash
-vanta login             # in a terminal, asks: client ID and secret (default) or browser; piped input gets the client prompts directly
+vanta login             # browser (1, default) or client credentials (2) in a terminal. Piped input gets client prompts
 vanta login --browser   # beta: sign in as yourself in the browser, no question asked (needs a person to approve)
 vanta logout            # remove saved credentials and revoke a browser sign-in
 ```

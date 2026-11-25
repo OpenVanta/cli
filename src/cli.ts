@@ -16,7 +16,7 @@ function buildProgram(): Command {
   program
     .name("vanta")
     .description(
-      'Vanta CLI for querying and updating resources through the Vanta API.\n\nStart by running "vanta login" to save your OAuth client credentials and default API base.',
+      'Vanta CLI for querying and updating resources through the Vanta API.\n\nStart by running "vanta login" to sign in and save your default API base.',
     )
     .version(displayVersion(Version), "-V, --version", "Print the CLI version")
     .option(

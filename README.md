@@ -46,19 +46,17 @@ Standalone binaries are published for Linux, macOS, and Windows. macOS builds ar
 
 ## Authenticate
 
-Create an OAuth client in the [Vanta developer portal](https://app.vanta.com/settings/developer-console), then run:
-
 ```bash
 vanta login
 ```
 
-In a terminal, `vanta login` first asks how you want to sign in: with an API client ID and secret (the default), or with your Vanta account in the browser (beta, see below). With piped input it asks no such question and behaves as before. For client credentials, you’ll be prompted for your API base URL, client ID, and client secret. Credentials are stored in the OS keychain when available (macOS Keychain or Windows Credential Manager), matching the previous Go CLI (`com.vanta.cli` / `oauth`). Your API base is saved to `~/.vanta/config.json`.
+In a terminal, `vanta login` defaults to signing in with your Vanta account in the browser (beta). To use an API client ID and secret, create an OAuth client in the [Vanta developer portal](https://app.vanta.com/settings/developer-console) and choose option 2. With piped input, `vanta login` goes directly to the client credentials prompts. Credentials are stored in the OS keychain when available (macOS Keychain or Windows Credential Manager), matching the previous Go CLI (`com.vanta.cli` / `oauth`). Your API base is saved to `~/.vanta/config.json`.
 
 To sign out, run `vanta logout`. It removes the saved credentials.
 
 ### Sign in with your browser (beta)
 
-Instead of an OAuth client, you can sign in as yourself. Choose option 2 at the `vanta login` prompt, or skip the question:
+To sign in as yourself, press Enter or choose option 1 at the `vanta login` prompt. Use `--browser` to go directly to browser sign-in.
 
 ```bash
 vanta login --browser
@@ -66,7 +64,7 @@ vanta login --browser
 
 Approve access in the browser window that opens. The CLI then calls the API as you, limited to what your Vanta role allows, and refreshes its token automatically. `vanta logout` also revokes the sign-in. If the browser can't reach the machine running the CLI (for example over SSH), add `--no-open`, open the printed URL yourself, and paste back the URL the browser was redirected to.
 
-Browser sign-in is rolling out gradually and may not be enabled for your workspace yet. If sign-in fails with `server_error`, use client credentials with `vanta login`.
+Browser sign-in is rolling out gradually and may not be enabled for your workspace yet. If sign-in fails with `server_error`, run `vanta login` and choose option 2 to use client credentials.
 
 The CLI keeps one login at a time. Signing in with the browser replaces saved client credentials, and signing in with client credentials replaces (and revokes) a browser sign-in.
 
