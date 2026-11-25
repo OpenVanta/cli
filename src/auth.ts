@@ -1,4 +1,12 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import {
+  mkdir,
+  open,
+  readFile,
+  rename,
+  unlink,
+  writeFile,
+} from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import {
@@ -150,9 +158,30 @@ export async function loadConfig(): Promise<CliConfig> {
 
 export async function saveConfig(cfg: CliConfig): Promise<void> {
   const path = configFilePath();
-  await mkdir(dirname(path), { recursive: true, mode: 0o700 });
+  const directory = dirname(path);
+  await mkdir(directory, { recursive: true, mode: 0o700 });
   const raw = `${JSON.stringify(cfg, null, 2)}\n`;
-  await writeFile(path, raw, { mode: 0o600 });
+  if (process.platform !== "linux") {
+    await writeFile(path, raw, { mode: 0o600 });
+    return;
+  }
+
+  // The mode passed to writeFile only applies on creation. Write to a private
+  // file first so an existing config's permissions never apply to these bytes.
+  const temporaryPath = join(directory, `.config-${randomUUID()}.tmp`);
+  const file = await open(temporaryPath, "wx", 0o600);
+  try {
+    try {
+      await file.chmod(0o600);
+      await file.writeFile(raw);
+    } finally {
+      await file.close();
+    }
+    await rename(temporaryPath, path);
+  } catch (err) {
+    await unlink(temporaryPath).catch(() => {});
+    throw err;
+  }
 }
 
 function validateAPIBaseFrom(source: string, raw: string): string {
